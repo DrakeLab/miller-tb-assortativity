@@ -1,39 +1,50 @@
-# The effects of sex-assortative mixing on the spread of respiratory-transmitted infections
+---
+output:
+  pdf_document: default
+  html_document: default
+---
+# The effects of assortative mixing and susceptibility on the spread of TB 
 
-### Paige Miller, John Drake
+## Background: 
 
-**(record any changes to this protocol at the end of this document)**
+__TB epidemiology:__ 
 
-### Background: 
+* TB is a globally distributed infectious disease
+* Concentrated in parts of Africa and Asia
+* Spread through respiratory transmission and is thought to require close contact
+* Across the world, TB is more common among adults and men
 
-Multiple types of assortative mixing: 
+__What causes observed variation in TB among men and women?__ 
 
-* mixing by degree (popular with popular); similar mixing by risk level
-* mixing by age (important enough that models without age-assortativity can't capture patterns in incidence very well)
-* mixing by sex 
+* Prevalence studies and incidence reports match up indicating that variation is not due to access to health care or reporting 
+* Most like a combination of factors alter susceptibility in men: genetics, immune responses, hormones, smoking, fat
+* Potentially, higher exposure among men could be equally as important: work, school, contact, travel, leisure.. basically who you contact
 
-Sex assortativity among social interactions is common across human populations (Mossong 2008) and male-bias in TB reporting is found in almost every country in the world (WHO). Inclusion of differential contact rates by age (Arregui 2018) and sex (Dodd 2016) are required to accurately model TB incidence patterns. 
+__Assortativity in the number of contacts can cause differences in overall prevalence__ 
 
-We're wondering whether sex assortativity is correlated with male-bias across countries in real data and whether we can observe sex-assortativity to drive male-bias in network simulations. 
+* Infections spread faster (i.e., higher $R_0$) in populations with assortative mixing among high-contact individuals
+* The overall prevalence of infection in population is maximized at intermediate levels of assortativity
+* Targeted contact-tracing and treating works better in populations with assortative mixing by contact 
+* We know less about the effects of assortativity in sex (i.e., sex-assortativity) on overall prevalence and male-bias in TB cases and whether that alone can explain male-bias 
 
-### Study design: 
+__Study questions:__ 
+
+1. Can sex-assortative mixing lead to observed levels of overall TB prevalence and sex-specific TB prevalence?
+2. Are sex-specific differences in susceptibility required to explain male-bias in TB cases? 
+
+## Study design: 
 
 We will simulate outbreaks of TB on networks of varying sex-assortativity and measure male-bias.
 
-We will find social network data (e.g., sociopatterns.com) or contact matrices data (Mossong 2008), calculate assortativity coefficient for sex, and compare with WHO estimated M:F incidence in the most recent year (I believe 2018). 
+## Data sources: 
 
-### Data sources: 
-
-* TBD on network/contact matrix data to inform sex-assortativity across countries, it seems like it may be possible to mine facebook data? 
-* WHO data is published online and has already been formatted for this analysis
+* WHO data for estimations of prevalence in high-burden countries (can be as high 1/4 people have LTBI)
 * TBD Outbreak simulation code
 
-### Analysis: 
+## Analysis: 
 
-* Correlation between male:female case reports and a measure of sex assortativity 
-* Simulated male bias (ratio of male:female cases) of outbreaks on networks will be plotted against programmed sex assortativty of networks
 
-### Checklist: 
+## Checklist: 
 
 * literature review on assortativity in social networks
 * decide on data source for assortativity across countries
@@ -41,6 +52,6 @@ We will find social network data (e.g., sociopatterns.com) or contact matrices d
 * decide on how to model epidemics on networks
 * pilot study on small number or size of networks
 
-### Protocol changes:
+## Protocol changes:
 
 * [bullet list of changes to protocols with reasons for each change]
