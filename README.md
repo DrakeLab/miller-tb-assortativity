@@ -1,57 +1,90 @@
 ---
+header-includes:
+   - \usepackage{physics}
 output:
   pdf_document: default
   html_document: default
 ---
-# The effects of assortative mixing and susceptibility on the spread of TB 
 
-## Background: 
+# PROTOCOL FOR: 
 
-__TB epidemiology:__ 
+Sex-assortativity and the spread of TB in contact networks
 
-* TB is a globally distributed infectious disease
-* Concentrated in parts of Africa and Asia
-* Spread through respiratory transmission and is thought to require close contact
-* Across the world, TB is more common among adults and men
+$\textit{Spring 2019}$
 
-__What causes observed variation in TB among men and women?__ 
+## Authors: 
 
-* Prevalence studies and incidence reports match up indicating that variation is not due to access to health care or reporting 
-* Most like a combination of factors alter susceptibility in men: genetics, immune responses, hormones, smoking, fat
-* Potentially, higher exposure among men could be equally as important: work, school, contact, travel, leisure.. basically who you contact
+* Paige Miller
+* John Drake
+* TBD
 
-__Assortativity in the number of contacts can cause differences in overall prevalence__ 
+### Background: 
 
-* Infections spread faster (i.e., higher $R_0$) in populations with assortative mixing among high-contact individuals
-* The overall prevalence of infection in population is maximized at intermediate levels of assortativity
-* Targeted contact-tracing and treating works better in populations with assortative mixing by contact 
-* We know less about the effects of assortativity in sex (i.e., sex-assortativity) on overall prevalence and male-bias in TB cases and whether that alone can explain male-bias 
+* The global male:female TB case ratio is 1.9 and this pattern is strikingly consistent across countries
+* This male-bias in TB case reports could be due to sex-specific differences in exposure to Mtb or susceptibility to disease following exposure, or a combination thereof
+* Behavioral characteristics due to different societal gender roles may contribute to sex-specific rates of exposure to Mtb: differences in number (no evidence from Miller et al. _in prep_ or other studies Mossong et al. 2008, etc.) or types of contacts 
+* Types of contacts could be mediated by assortative mixing which is where individuals tend to associate with others similar to them, creating sub-groups within a social network.
+* In addition to exposure, behavioral and biological differences may contribute to sex-specific susceptibility to disease following exposure: smoking, immune responses, hormones
+* We wondered whether the types of contacts that men have, specifically their preferential social mixing with other men, could contribute to male-bias in TB case reports per se or if previously described differences in susceptibility between the sexes are necessary to explain male-bias
 
-__Study questions:__ 
+### Research questions:
 
 1. Can sex-assortative mixing lead to observed levels of overall TB prevalence and sex-specific TB prevalence?
 2. Are sex-specific differences in susceptibility required to explain male-bias in TB cases? 
 
-## Study design: 
+### Study design: 
 
-We will simulate outbreaks of TB on networks of varying sex-assortativity and measure male-bias.
+We will examine the effects of sex-assortativity and sex-specific susceptibility on the ratio of male to female cases using models of disease spread on simulated social networks. 
 
-## Data sources: 
+| Variable  | Values tested  | 
+|:-:|:-:|
+| Assortativity, $r$  |  -0.4, - 0.2, 0, 0.2, 0.4 |
+| Size, $N$ | 500, $1\cdot 10 ^ 3$  |
 
-* WHO data for estimations of prevalence in high-burden countries (can be as high 1/4 people have LTBI)
-* TBD Outbreak simulation code
+Table: Design of pilot study. 
 
-## Analysis: 
+_Network simulation option 1: de Almeida et al. (2013)_
+
+We will generate scale-free networks that vary sex-assortativity using the algorithm of de Almeida et al. (2013). Their algorithm generates assorted networks with power-law degree distributions. The algorithm is as follows: 
+
+1. Start with $m_0$ nodes which are characterized by some intrinsic characteristic $\eta \in (0, 1)$ which represents a node's hypothetical placement along a gender axis. Let $A_{ij} = | \eta_i - \eta_j |$ be the difference in intrinsic characteristics of nodes $i$ and $j$. 
+2. At every time step, a new node $j$, with $\eta_j$ attributed randomly, attaches to other $m$ $(m \leq m_0)$ pre-existing nodes $i$ (note: unweighted, undirected, non-repeat edges) by considering jointly the connections between new sites and those having high number of nearest neighbors ($k_i$) and high similitude ($A_{ij}$) with probability 
+
+\[ \pi_i = \frac{(1-A_{ij})k_i}{\sum_{i}(1-A_{ij})k_i} \]
+
+3. This process is used to add the ($m_0 + 1$) site, ($m_0 + 2$), and so on until the network reaches the desired size, $N=m_0 + t$ where $t$ is the time variable.
+
+This process of connecting nodes based on similarity in $\eta$ has not yet introduced "groups" or in our case, node sex. Following de Almeida et al. (2013), we assign nodes to be male (0) or female (1) nodes before the onset of adding nodes and before drawing edges based on $\eta$. Females are composed of all nodes have $\eta$ in the interval $\Delta \eta = \eta_{max} - \eta_{min}$ and males are composed of all nodes not in this interval (i.e. $\textbf {FILL IN EXPLANATION}$). 
+
+Here, we will try $\textbf {INSERT VALUES FROM PAPER THAT MAKE SENSE}$ to get a feel for how values of these variables correspond to desired values for pilot study and then edit protocol accordingly. 
+
+_Network simulation option 2: re-wire edges of basic SF networks_
+
+We will generate scale-free networks that vary sex-assortativity using the classic BA-algorithm with the following adjustments: 
+
+1. Assign nodes randomly as male (0) or female (1).  
+2. Calculate network assortativity coefficient, r, from Newman (2003) where $\sum_{ij}{e_{ij}=1}$ is the sum of proportion of edges between nodes of each type (0 and 1), $\sum_{ij}{e_{ij}=a_i}$ is the proportion of 
 
 
-## Checklist: 
+__Simulate outbreaks on networks with and without differences in susceptibility by sex:__
+
+* Gillespie like simulation on networks 
+* Markov chain with exponential waiting times
+* Doesn't need to have analytical solution
+
+### Analysis: 
+
+_Measure overall prevalence:_
+
+_Measure ratio of male:female infections:_
+
+### Checklist: 
 
 * literature review on assortativity in social networks
-* decide on data source for assortativity across countries
 * decide on how to model assorted networks
 * decide on how to model epidemics on networks
 * pilot study on small number or size of networks
 
-## Protocol changes:
+### CHANGE-LOG:
 
 * [bullet list of changes to protocols with reasons for each change]
