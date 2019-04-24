@@ -1,10 +1,8 @@
 ---
 header-includes:
-   - \usepackage{physics}
-   - \usepackage{sectsty} \sectionfont{\centering}
-output:
-  pdf_document: default
-  html_document: default
+- \usepackage{physics}
+- \usepackage{sectsty} \sectionfont{\centering}
+- \usepackage{amsfonts}
 ---
 
 # PROTOCOL FOR: 
@@ -41,11 +39,12 @@ Simulated networks will vary in level of sex-assortativity, r, calculated accord
 
 \[ r = \frac{Tr \textbf{E} - ||E^2||}{1 - ||E^2||} \]
 
-A pilot study (Table 1) will be undertaken prior to epidemic simulations to determine the feasibility of different methods (described below as _option 1_ and _option 2_) to generate assorted networks.
+A pilot study (Table 1) will be undertaken prior to epidemic simulations to determine the feasibility of different methods (described below as _option 1_ and _option 2_) to generate networks that follow a power-law degree distribution overall.
 
 | Variable  | Value  | 
 |:-:|:-:|
 | Sex-assortativity, $r$  |  -0.4, - 0.2, 0, 0.2, 0.4 |
+| Degree distribution, $p(k)$ | $\frac{k^{-\alpha}}{\zeta (\alpha)}$  |
 | Mean degree, $<k>$ | 10  |
 | Network size, $N$ | 500, $1\cdot 10 ^ 3$  |
 
@@ -82,6 +81,8 @@ This process of connecting nodes based on similarity in $\eta$ has not yet intro
 
 Here, we will try $\Delta \eta = (0.1, 0.25, 0.5)$ to get a feel for how values of these intervals correspond to desired assortativity coefficients for pilot study and then update protocol accordingly. 
 
+<img src="images/dealmeida-schematic.png" width="400">
+
 _Network simulation option 2: re-wire edges of basic SF networks_
 
 "Top-down" approach of building networks: We will generate scale-free networks according to the parameters listed in Table 1 using the classic BA-algorithm. Following network generation, we will update the networks as following: 
@@ -90,6 +91,25 @@ _Network simulation option 2: re-wire edges of basic SF networks_
 2. Calculate temporary value of sex-assortativity in the network ($r_t$). 
 3. If $r_t$ is less than the desired $r$, randomly choose 2 edges of type 0--1 (i.e, a male--female edge) and re-wire such that both are within-sex edges. __Note: I'm not sure what this will do to global or local network statistics__. 
 4. Repeat step 3 until $r_t=r$
+
+_Network simulation option 3: Sah, Singh, Clauset and Bansal. (2014) _
+
+In between "bottom-up" and "top-down" approach: We will parameterize their model using values in Table 1 and model-specific parameters: expected modularity $E[Q]$), number of modules (i.e., male and female; K=2), module size distribution (i.e., proportion of males and females; P(s)=1/2), with mean $\bar{s}$. The algorith is as follows: 
+
+1. Assign n nodes to K modules based on the size distribution P(s)
+2. Assign degrees, $d(v_i)$ to each node $v_i$ based on $p(k)$ and $<k>$. Then, of these neighbors of v, assign how many within group contacts from same class of distribution as $p_d$ but with mean $<k_w>$ instead. This step has a number of conditions that need to be met (see paper)
+3. Connect "between-group" edges based on a Havel-Hakimi model (see paper) and randomize them. First, successively connect nodes with high values of "between-group" to each other if not already connected. Then randomize between-group edges by swapping using double-edge swaps (as long as new edge maintains between group identity).  
+4. Next connect "within-group" edges based on Havel-Hakimi applied to each module independently. Sort nodes of the module according to their within degree and then successively connect with other high within degree nodes. Rewire using double-edge swaps as before.
+
+<img src="images/sah-schematic.png" width="600">
+
+|Options for generating sex-structured networks| Pros  | Cons  | 
+|:-:|:-:|:-:|
+| de Almeida (2013)  |  Should be easily programmable (adding edges preferentially based on a simple distance calculation that corresponds with scale-free network) | Parameters don't correspond to basic network features (mean degree, assortativity coefficient), probably not as well-vetted as Sah (2014)  |
+| Simple edge-rewiring  |  Easy to explain and should be easily programmable | Might result in degree-correlation or other changes to network statistics (e.g., clustering, multiple components), checking for these pathologies might make programming more difficult |
+| Sah (2014)  |  Authors are very credible, python package for network generation, algorithm parameters correspond to basic network features | Currently only avaiable in python, coding in R would be more difficult |
+
+Table: Pros and cons of options for generating sex-structured networks.
 
 _Disease transmission modeled as SIS:_ 
 
@@ -134,6 +154,8 @@ Nhamoyebonde, Shepherd, and Alasdair Leslie. 2014. “Biological Differences Bet
 Pastor-Satorras, R, and A Vespignani. 2001. “Epidemic Dynamics and Endemic States in Complex Networks.” Physical Review. E, Statistical, Nonlinear, and Soft Matter Physics 63 (6 Pt 2): 066117. doi:10.1103/PhysRevE.63.066117.
 
 Perkins, S E, M F Ferrari, and P J Hudson. 2008. “The Effects of Social Structure and Sex-Biased Transmission on Macroparasite Infection.” Parasitology 135 (13): 1561–69. doi:10.1017/S0031182008000449.
+
+Sah, Pratha, Lisa O Singh, Aaron Clauset, and Shweta Bansal. 2014. “Exploring Community Structure in Biological Networks with Random Graphs.” BMC Bioinformatics 15 (220). BioMed Central. doi:10.1186/1471-2105-15-220.
 
 ### CHANGE-LOG:
 
