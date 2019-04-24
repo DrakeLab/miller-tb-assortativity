@@ -2,11 +2,11 @@
 header-includes:
 - \usepackage{physics}
 - \usepackage{sectsty} \sectionfont{\centering}
-- \usepackage{amsfonts}
+output: pdf_document
 ---
 
 # PROTOCOL FOR: 
-# Sex-assortativity and the spread of TB in contact networks
+# Sex-assortativity and the spread of TB on contact networks
 
 _Spring 2019_
 
@@ -39,7 +39,7 @@ Simulated networks will vary in level of sex-assortativity, r, calculated accord
 
 \[ r = \frac{Tr \textbf{E} - ||E^2||}{1 - ||E^2||} \]
 
-A pilot study (Table 1) will be undertaken prior to epidemic simulations to determine the feasibility of different methods (described below as _option 1_ and _option 2_) to generate networks that follow a power-law degree distribution overall.
+A pilot study (Table 1) will be undertaken prior to epidemic simulations to determine the feasibility of different methods (described below as _option 1_, _option 2_, _option 3_) to generate networks that follow a power-law degree distribution overall.
 
 | Variable  | Value  | 
 |:-:|:-:|
@@ -50,7 +50,7 @@ A pilot study (Table 1) will be undertaken prior to epidemic simulations to dete
 
 Table: Design of pilot study I for generating networks.   
 
-The model for disease transmission on the networks is TBD, but we may want to start with a simple SIS model (Table 2) as studied in Pastor-Satorras & Vespignani (2001). 
+The model for disease transmission on the networks is TBD, but oncen we decide on a network generation algorithm, we may want to start with a simple SIS model (Table 2) as studied in Pastor-Satorras & Vespignani (2001). 
 
 | Variable  | Value  | 
 |:-:|:-:|
@@ -83,6 +83,10 @@ Here, we will try $\Delta \eta = (0.1, 0.25, 0.5)$ to get a feel for how values 
 
 <img src="images/dealmeida-schematic.png" width="400">
 
+PROS: Should be easily programmable (adding edges preferentially based on a simple distance calculation that corresponds with scale-free network)
+
+CONS: Parameters don't correspond to basic network features (mean degree, assortativity coefficient), probably not as well-vetted as Sah (2014), paper seems not super-well written so I might run into trouble
+
 _Network simulation option 2: re-wire edges of basic SF networks_
 
 "Top-down" approach of building networks: We will generate scale-free networks according to the parameters listed in Table 1 using the classic BA-algorithm. Following network generation, we will update the networks as following: 
@@ -91,6 +95,10 @@ _Network simulation option 2: re-wire edges of basic SF networks_
 2. Calculate temporary value of sex-assortativity in the network ($r_t$). 
 3. If $r_t$ is less than the desired $r$, randomly choose 2 edges of type 0--1 (i.e, a male--female edge) and re-wire such that both are within-sex edges. __Note: I'm not sure what this will do to global or local network statistics__. 
 4. Repeat step 3 until $r_t=r$
+
+PROS: Easy to explain and should be easily programmable
+
+CONS: Might disrupt other network statistics (e.g., clustering, multiple components), checking for these pathologies might make programming more difficult 
 
 _Network simulation option 3: Sah, Singh, Clauset and Bansal. (2014) _
 
@@ -103,13 +111,9 @@ In between "bottom-up" and "top-down" approach: We will parameterize their model
 
 <img src="images/sah-schematic.png" width="600">
 
-|Options for generating sex-structured networks| Pros  | Cons  | 
-|:-:|:-:|:-:|
-| de Almeida (2013)  |  Should be easily programmable (adding edges preferentially based on a simple distance calculation that corresponds with scale-free network) | Parameters don't correspond to basic network features (mean degree, assortativity coefficient), probably not as well-vetted as Sah (2014)  |
-| Simple edge-rewiring  |  Easy to explain and should be easily programmable | Might result in degree-correlation or other changes to network statistics (e.g., clustering, multiple components), checking for these pathologies might make programming more difficult |
-| Sah (2014)  |  Authors are very credible, python package for network generation, algorithm parameters correspond to basic network features | Currently only avaiable in python, coding in R would be more difficult |
+PROS: Authors are very credible and features of resulting networks are well-studied, python package for network generation, algorithm parameters correspond to basic network features
 
-Table: Pros and cons of options for generating sex-structured networks.
+CONS: Currently only avaiable in python, coding in R would be difficult (checking for all the conditions in the paper)
 
 _Disease transmission modeled as SIS:_ 
 
@@ -124,16 +128,19 @@ Note: Need to determine ranges for parameter $\nu$ for males and females once we
 _Degree distribution of networks:_
 
 * Check overall network structure (mean node degree, degree distribution, clustering, average shortest path length)
+* How these values vary with network size and assortativity
 
 _Measure overall prevalence:_
 
 * As a function of assortativity
 * As a function of sex-specific susceptibility
+* Relationship with network size 
 
 _Measure ratio of male:female infections:_
 
 * As a function of assortativity
 * As a function of sex-specific susceptibility
+* Relationship with network size 
 
 ### Checklist: 
 
