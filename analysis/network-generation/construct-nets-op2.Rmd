@@ -1,0 +1,181 @@
+---
+title: "Making assorted networks by re-wiring"
+output: pdf_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(dplyr)
+library(readr)
+library(magrittr)
+library(tidyr)
+library(igraph)
+library(ggplot2)
+library(cowplot)
+library(plotrix)
+library(knitr)
+
+knitr::opts_chunk$set(cache=FALSE, fig.path = "assort-nets-op2/",  warning = FALSE, message=FALSE, echo=FALSE) 
+
+```
+
+We will generate scale-free networks according to the parameters listed in Table 1 using the classic BA-algorithm. Following network generation, we will update the networks as following: 
+
+1. Assign nodes randomly as male (0) or female (1). 
+2. Calculate temporary value of sex-assortativity in the network ($r_t$). 
+3. If $r_t$ is less than the desired $r$, randomly choose a percentage of type 0--1 edges (i.e, a male--female edge) and re-wire them. 
+4. Repeat step 3 until $r_t=r$ or until a max number of re-wirings is completed. 
+
+| Variable  | Value  | 
+|:-:|:-:|
+| Sex-assortativity, $r$  |  -0.4, - 0.2, 0, 0.2, 0.4 |
+| Degree distribution, $p(k)$ | $\frac{k^{-\alpha}}{\zeta (\alpha)}$  |
+| Mean degree, $<k>$ | 10  |
+| Network size, $N$ | 500, $1\cdot 10 ^ 3$  |
+
+Table: Design of pilot study I for generating networks.   
+
+```{r}
+# Trial: 1 SF network
+Gg <- sample_pa(n=100, # number of vertices
+                power=1, # preferential attach.; linear=1
+                m=5, 
+                directed = FALSE)
+
+```
+
+### Step 1: Assign node sex
+
+```{r}
+males <- sample(1:100, 50)
+females <- setdiff(1:100, males)
+sexes <- data.frame(num=c(males, females), sex=c(rep(1, 50), rep(2, 50))) %>% arrange(num)
+
+V(Gg)$sex <- sexes$sex
+
+```
+
+### Step 2: Calculate $r_t$
+
+```{r}
+
+rt <- assortativity_nominal(Gg, types=V(Gg)$sex) # basically 0
+
+```
+
+### Step 3: Re-wire if less than $r_f$
+
+```{r}
+
+get_e_type <- function(elRow, types){
+  ifelse(diff(types[elRow])==0, "w", "b")
+}
+
+Gg0 <- Gg # copy for plotting
+
+# network generation parameters
+alph <- 0.05 # re-wire % of between edges at once
+r_f <- 0.3
+
+w <- c()
+
+for(i in 1:5000){
+  # Step 3a: label edges as within or between 
+  el <- get.edgelist(Gg)
+  eTypes <- apply(el, 1, get_e_type, types=V(Gg)$sex)
+  
+  # Step 3b: select all between edges for potential rewiring
+  eb <- which(eTypes=="b")
+
+  # Step 3c: select specific between edges for re-wiring
+  re <- sample(length(eb), length(eb)*alph)
+  
+  es0 <- matrix(cbind(re, el[re, ]), ncol=3)
+  
+  es <- matrix(cbind(c(es0[2:nrow(es0),2], es0[1,2]), 
+                     es0[,3]), ncol=2)
+  
+  el[es0[,1], ] <- es
+  
+  Gg1 <- graph_from_edgelist(el, directed=FALSE)
+  V(Gg1)$sex <- sexes$sex
+  rt1 <- assortativity_nominal(Gg1, types=V(Gg1)$sex) # basically 0
+  
+  if(rt1 < rt) next
+  Gg <- Gg1
+  rt <- rt1
+  w <- c(w, rt)
+  if(rt >= r_f) break
+}
+
+
+
+```
+
+
+```{r}
+
+plot_assort_graph <- function(graph){
+  
+  ##basic network layout
+  nn <- 1
+  types <- V(graph)$sex
+  xy1 <- c(-1.5, .1) # males
+  xy2 <- c(1.5, -.1) # females
+  
+  get_coords <- function(tps, loc1, loc2){
+    # function that takes in type and loc of types and 
+    # returns assignedn location with noise based on type
+    
+    if(tps==1){
+      x=rnorm(1, mean=loc1[1], sd=.65)
+      y=rnorm(1, mean=loc1[2], sd=.65)
+    }
+    if(tps==2){
+      x=rnorm(1, mean=loc2[1], sd=.65)
+      y=rnorm(1, mean=loc2[2], sd=.65)
+    }
+    return(c(x,y))
+  }
+  
+  coords=lapply(types, get_coords, loc1=xy1, loc2=xy2)
+  coords=do.call(rbind, coords)
+  
+  plot(graph, layout=coords, 
+       vertex.label="", 
+       vertex.size=3, vertex.color=V(graph)$sex, 
+       edge.width=.1, edge.color="black")
+}
+
+# plots of network generation process
+layout(matrix(c(1,2,3,4,5,6), 2, 3, byrow = TRUE))
+#layout.show(n=6)
+
+# DISASSORTATIVE
+par(mar=c(1,1,2,1))
+plot_assort_graph(Gg0)
+rt0 <- assortativity_nominal(Gg0, types=V(Gg)$sex) # basically 0
+mtext(round(rt0, 3))
+el <- get.edgelist(Gg0)
+eTypes <- apply(el, 1, get_e_type, types=V(Gg0)$sex)
+par(mar=c(3,3,3,3))
+barplot(table(eTypes))
+par(mar=c(3,3,3,3))
+plot(degree_distribution(Gg0))
+
+# ASSORTATIVE
+par(mar=c(1,1,2,1))
+plot_assort_graph(Gg)
+mtext(round(rt, 3))
+el <- get.edgelist(Gg)
+eTypes <- apply(el, 1, get_e_type, types=V(Gg)$sex)
+par(mar=c(3,3,3,3))
+barplot(table(eTypes))
+par(mar=c(3,3,3,3))
+plot(degree_distribution(Gg))
+
+```
+
