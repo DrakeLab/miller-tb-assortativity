@@ -38,6 +38,20 @@ We will parameterize their model using values in Table 1 and model-specific para
 
 Table: Design of pilot study I for generating networks.   
 
+Parameter definitions and limits given Sah et al. (2006) paper: 
+
+Expected value of Q given other parameters: 
+
+$E[Q]=\frac{\bar{d_w}}{\bar{d}} - \frac{1}{K}$
+
+The algorithm figures out what $\bar{d_w}$ based on: 
+
+$\bar{d_w}=\bar{d}\cdot (Q + \frac{1}{m})$
+
+And the max Q (i.e., as $\bar{d_w}\rightarrow \bar{d}$)
+
+$Q_{max}=1-\frac{1}{K}$
+
 ```{r eval=FALSE}
 
 # PYTHON CODE FOR NETWORK GENERATION
@@ -85,11 +99,110 @@ nx.write_graphml(G, "random_graph_poisson_N"+str(N)+"_d"+str(d)+".graphml")
 Need to figure out how to know which nodes are in which module
 
 ```{r}
-
-Gg <- read.graph("~/Desktop/modular_graph_generator-master/random_graph_poisson_N1000_d10.graphml",
+#### Q=0.4 ###
+Gg <- read.graph("~/Desktop/modular_graph_generator-master/scalefree_Q0.4_N1000_d10_m2.graphml",
                  format = "graphml")
 
 vertex_attr_names(Gg)
+
+table(V(Gg)$module)
+
+V(Gg)$sex <- ifelse(V(Gg)$module==1, 1, 2)
+
+assortativity_nominal(Gg, types=V(Gg)$sex, directed = FALSE)
+
+plot.igraph(Gg, vertex.color=V(Gg)$sex, vertex.label="", vertex.size=2)
+
+```
+
+```{r}
+
+#### Q=0.3 ###
+Gg <- read.graph("~/Desktop/modular_graph_generator-master/scalefree_Q0.3_N1000_d10_m2.graphml",
+                 format = "graphml")
+
+vertex_attr_names(Gg)
+
+table(V(Gg)$module)
+
+V(Gg)$sex <- ifelse(V(Gg)$module==1, 1, 2)
+
+assortativity_nominal(Gg, types=V(Gg)$sex, directed = FALSE)
+
+plot.igraph(Gg, vertex.color=V(Gg)$sex, vertex.label="", vertex.size=2)
+
+
+```
+
+```{r}
+
+#### Q=0.2 ###
+Gg <- read.graph("~/Desktop/modular_graph_generator-master/scalefree_Q0.2_N1000_d10_m2.graphml",
+                 format = "graphml")
+
+vertex_attr_names(Gg)
+
+table(V(Gg)$module)
+
+V(Gg)$sex <- ifelse(V(Gg)$module==1, 1, 2)
+
+assortativity_nominal(Gg, types=V(Gg)$sex, directed = FALSE)
+
+plot.igraph(Gg, vertex.color=V(Gg)$sex, vertex.label="", vertex.size=2)
+
+
+```
+
+
+```{r}
+
+#### Q=0.1 ###
+Gg <- read.graph("~/Desktop/modular_graph_generator-master/scalefree_Q0.1_N1000_d10_m2.graphml",
+                 format = "graphml")
+
+vertex_attr_names(Gg)
+
+table(V(Gg)$module)
+
+V(Gg)$sex <- ifelse(V(Gg)$module==1, 1, 2)
+
+assortativity_nominal(Gg, types=V(Gg)$sex, directed = FALSE)
+
+plot.igraph(Gg, vertex.color=V(Gg)$sex, vertex.label="", vertex.size=2)
+
+
+```
+
+
+```{r}
+
+#### Q=0.05 ###
+Gg <- read.graph("~/Desktop/modular_graph_generator-master/scalefree_Q0.05_N1000_d10_m2.graphml",
+                 format = "graphml")
+
+vertex_attr_names(Gg)
+
+table(V(Gg)$module)
+
+V(Gg)$sex <- ifelse(V(Gg)$module==1, 1, 2)
+
+assortativity_nominal(Gg, types=V(Gg)$sex, directed = FALSE)
+
+plot.igraph(Gg, vertex.color=V(Gg)$sex, vertex.label="", vertex.size=2)
+
+
+```
+
+
+```{r}
+
+comp <- data.frame(Q=c(0.4, 0.2, 0.1, .05),
+                   rho=c(0.8052884,
+                         0.4164493,
+                         0.2254197,
+                         0.1090637))
+
+plot(comp,type="b", ylab=expression(rho))
 
 ```
 

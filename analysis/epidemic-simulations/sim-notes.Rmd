@@ -1,0 +1,32 @@
+---
+title: "Simulations on networks"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Characteristics of SIR epidemics on networks: 
+
+For large enough networks, there are two epidemic sizes: small outbreaks and large outbreaks. But if networks have multiple large components with only a few paths joining them, this assumption can break down. 
+
+As networks get bigger, the probability of an epidemic and the proportion infected converge. 
+
+### Continuous-time Markovian model
+
+Probability of an epidemic [Definitions on page 221 of Kiss]: 
+
+$\mathcal{P} = 1 - \int_{0}^{\infty} \psi(\alpha(T))\gamma e^{-\gamma T} dT$
+
+$\alpha_d(T) = 1- p(T) + p(T) \int_{0}^{\infty} ...dT $
+
+and $p(T) = 1-e ^ {-\tau T}$. Kiss shows that if 
+
+$\frac{\tau}{\tau + \gamma} \frac{<K^2 - K>}{{K}}>1$ then an epidemic is possible otherwise, they are not. 
+
+Gillespie algorithm: well-known algorithm that calculates the time to the next even and then separately calculates what that event will be. It then jumps to that time, updates statuses and repeats. Efficient for well-mixed systems (just updating the counts). But for networks, it's important to know exactly which node changes status. Choosing nodes can be a slow process. 
+
+Event-driven approach: involves a priority queue. Rather than calculating at each time what the next event might be, when a node is infected, instead calculate when it will transmit and recover. 
+
+
