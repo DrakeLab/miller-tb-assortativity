@@ -55,24 +55,31 @@ vars <- expand.grid(q=qs, n=ns, rep=rs)
 setwd("~/Documents/phd/research-projects/miller-tb-assortativity/analysis/modular_graph_generator-master/simulations-5-29/")
 
 
-algDat <- data.frame(size=NA, r=NA, rep=NA, degAssort=NA, clustering=NA, pathLen=NA)
+algDat <- data.frame(size=NA, q=NA, rep=NA, degAssort=NA, clustering=NA, pathLen=NA,r=NA)
 
 for(i in 1:nrow(vars)){
-  assign("g",read.graph(paste0("G_", 
+  g <- read.graph(paste0("G_", 
                         vars[i, "q"], "_N", 
                         vars[i, 'n'], "_rep", 
                         vars[i, 'rep'], ".graphml"),
-                 format = "graphml"))
+                  format = "graphml")
   
     s=vars[i, "n"]
-    r=vars[i, "q"]
+    q=vars[i, "q"]
     rep=vars[i, "rep"]
+    r=assortativity.nominal(g, (V(g)$module +1), directed = FALSE) # Newman2003 measurement
     
-    foo <- c(s, as.numeric(gsub("Q", "", as.character(r))), rep, assortativity_degree(g, directed = FALSE),
-           transitivity(g), diameter(g, directed = FALSE))
+    foo <- c(s, as.numeric(gsub("Q", "", as.character(q))), rep, assortativity_degree(g, directed = FALSE),
+           transitivity(g), diameter(g, directed = FALSE), r)
     algDat[i, ] <- foo
 }
 
+
+```
+
+```{r assortCompare, fig.cap="Comparison between measures of community structure from Newman 2003 and Sah 2014. "}
+
+plot(algDat$q, algDat$r, xlab="Modularity (Q)", ylab="Assortativity (r)")
 
 ```
 
