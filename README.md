@@ -19,9 +19,11 @@ _Spring 2019_
 
 TB is a respiratory-transmitted infectious disease that is heterogeneously distributed globally and concentrated in Africa and Asia. In addition, TB is heterogeneously distributed within populations; in particular, men face higher risk factors than women. The global male:female TB case ratio is 1.9, a pattern strikingly consistent across countries. 
 
-Male-bias in TB case reports is thought to be due to sex-specific differences in exposure to Mtb or susceptibility to disease following exposure, or a combination of the two. Exposure rates could be mediated by differences in behaviors and societal gender roles. For example males may have more contacts or be more central in social networks though previous studies have failed to substantiate this (Miller et al. _in prep_ , Mossong et al. 2008, etc.). Alternatively, sex-specific exposure rates could be driven by differences in the types of contacts that males have in comparison to females. Specifically, exposure could be higher in males due to assortative mixing which is where individuals tend to associate with others similar to them, creating sub-groups within a social network. However, we lack studies analyzing the role of hypothesized exposure mechanisms at driving male-bias. More studies identify sex-specific susceptibility (smoking, hormones, genetics, immunology) as the key component driving male bias. 
+Male-bias in TB case reports is thought to be due to sex-specific differences in exposure to Mtb or susceptibility to disease following exposure, or a combination of the two. Exposure rates could be mediated by differences in behaviors and societal gender roles. For example men may have more contacts or be more central in social networks though previous studies have failed to substantiate this (Mossong et al. 2008, etc.). Alternatively, sex-specific exposure rates could be driven by differences in the types of contacts that men compared to women. Specifically, exposure could be higher in men due to assortative mixing which is where individuals tend to associate with others similar to them, creating sub-groups within a social network. However, we lack studies analyzing the role of hypothesized exposure mechanisms at driving male-bias. 
 
-We wondered whether the types of contacts that men have, specifically their preferential social mixing with other men, could contribute to male-bias in TB case reports per se or if previously described differences in susceptibility between the sexes are necessary to explain male-bias
+The effects of assortativity (i.e., modularity) on aggregated (i.e., regardless of subgroup) epidemic dynamics (e.g., total outbreak size or equilibrium prevalence) depend on the infection process (SIR, SIS) and the distribution of subgroup size. Tuberculosis transmission is better represented by an SIR than an SIS process. In SIR systems, the total outbreak size of diseases with SIR dynamics decrease with increasing assortativity, perhaps due to a build-up of recovered nodes within-subgroups and transmission bottlenecks between subgroups (Nandini 2018). However, very high assortativity may be required to produce this "protective" effect of assortativity (Salathe & Jones 2015, Sah et al. 2017). In contrast, for SIS processes, infected nodes return to susceptible nodes and a build-up of recovered nodes does not occur, resulting in intensely connected subgroups which increase the equilibrium prevalence of infection (Nandini 2018). Subgroup size also affects disease spread: networks with larger subgroups increase epidemic size when compared with networks with constant subgroup size. Most prior studies have focused on networks with multiple (in the range of 10 to 100), highly connected subgroups. For our purposes, an open question remains about how disease spreads within lightly assorted networks with two subgroups (i.e., men and women) which potentially vary in their susceptibility to infection.
+
+We wondered whether sex-assortativity in social networks could contribute to male-bias or if previously described differences in susceptibility between the sexes are necessary to explain male-bias. 
 
 ### Research questions:
 
@@ -32,15 +34,23 @@ We wondered whether the types of contacts that men have, specifically their pref
 
 We will examine the effects of sex-assortativity and sex-specific susceptibility on the ratio of male to female cases using models of disease spread on simulated networks. In the simulated networks, each node will represent an individual and each link is a connection between individuals that infection can spread. 
 
-_Network simulation:_
+_Network generation:_
 
-Simulated networks will vary in level of sex-assortativity, r, calculated according to Newman (2003) as  
+Simulated networks will vary in level of sex-assortativity, r, calculated according to Newman's discrete assortativity coefficient (Newman 2003) as  
 
-\[ r = \frac{\sum_i{e_{ii}} - \sum_i{(a(i)b(i))}}{1-\sum_i{(1-a(i)b(i))}}  = \frac{Tr \textbf{E} - ||E^2||}{1 - ||E^2||}\]
+\[ r = \frac{\sum_i{e_{ii}} - \sum_i{(a(i)^2)}}{1-\sum_i{(1-a(i)^2)}}  = \frac{Tr \textbf{E} - ||E^2||}{1 - ||E^2||}\]
 
-where $e_{ij}$ is the fraction of edges connecting vertices of type i and j, $a(i)=\sum_{j}{e_(ij)}$ and $b(j)=\sum_i{e_(ij)}$. Alternatively, if $\textbf{E}$ is the matrix of $e_{ij}$ and $||x||$ is the sum of all elements in a matrix $\textbf{X}$, then assortativity can be calculated with the fraction of edges within-sex ($Tr \textbf{E}$) and the fraction of edges that would be within groups if connections were random $||E^2||$. Here, if edges were distributed randomly, $Tr \textbf{E} = ||E^2|| = 0.5$ and $r=0$. Typically, r ranges from $0 \gg r \geq 1$ because disassortative networks are much closer to random networks than are assortative networks. 
+where $e_{ij}$ is the proportion of edges connecting nodes in subgroup i to subgroup j (undirected), $a(i)=\sum_{j}{e_(ij)}$. Alternatively, if $\textbf{E}$ is the matrix of $e_{ij}$ and $||X||$ is the sum of all elements in a matrix $\textbf{X}$, then assortativity can be calculated with the proportion of edges within-sex ($Tr \textbf{E}$) and the proportion of edges that would be within groups if connections were random $||E^2||$. Here, if edges were distributed randomly, $Tr \textbf{E} = ||E^2|| = 0.5$ and $r=0$. Typically, r ranges from $-1 \gg r \geq 1$ because disassortative networks are much closer to random networks (r=0) than are assortative networks. 
 
-Network modularity (Q) is another measure of non-random mixing in networks: $Q=\sum_{i}{e_{ii}-a^2_i}$ where $e_{ij}$ is the fraction of edges in the network that link nodes in community i to community j and $a_i=\sum_{j}{e_{ij}}$ represents the fraction of edges in the network that link nodes to community i. In this formulation, if edges were to fall between nodes without any regard for communities, $e_{ij}=a_i a_j$ and have Q=0. The maximum value of Q is $1-\frac{1}{K}$ where K is the number of modules. 
+Network modularity (Q) is a similar measure of non-random mixing in networks: $Q=\sum_{i}{e_{ii}-a^2_i}$ where $e_{ij}$ is the proportion of edges in the network that link nodes in community i to community j and $a_i=\sum_{j}{e_{ij}}$ represents the proportion of edges in the network that link to nodes in subgroup i. In this formulation, if edges were to fall between nodes without any regard for communities, $e_{ij}=a_i a_j$ and have Q=0. The maximum value of Q is $1-\frac{1}{K}$ where K is the number of modules (Sah 2014). 
+
+The relationship between assortativity and modularity for networks with two subgroups is 
+
+modularity = assortativity / (1 - expected.prop.between.edges)
+
+where the expected proportion of between edges is calculated by taking the proportion of edges "touching" each subgroup, squaring it, and summing them all up. 
+
+Since groups have equal size, you would expect 1/2 to occur between groups by chance. Thus, assortativity gets divided by while modularity does not. 
 
 We will generate scale-free networks according to the parameters listed in Table 1 using the classic BA-algorithm. Following network generation, we will update the networks as following: 
 
@@ -53,7 +63,7 @@ Network will be generated with parameters shown in Table 1.
 
 | Variable  | Value  | 
 |:-:|:-:|
-| Sex-assortativity, $r$  | (-0.5, 0.5) by 0.1 |
+| Sex-assortativity, $r$  | (-0.9, 0.9) by 0.1 |
 | Degree distribution, $p(K)$ | $\frac{k^{-\alpha}}{\zeta (\alpha)}$  |
 | Mean degree, $<K>$ | 10  |
 | Network size, $N$ | 500, $1\cdot 10 ^ 3, 2\cdot 10 ^ 3, 5\cdot 10 ^ 3$  |
@@ -103,8 +113,8 @@ _Disease spread:_
 
 ### Checklist: 
 
-* Understand the relationship between measures of community structure (Q vs. r) for K=2 modules
-* Run study across larger parameter grid and more replicates
+* X Understand the relationship between measures of community structure (Q vs. r) for K=2 modules
+X Run study across larger parameter grid and more replicates
 * Understand and relate results to Salathe and Sah research 
 * Decide on next steps which could be: (1) Seed epidemics disproportionately in one module; (2) Incorporate sex-specific susceptibility; (3) Incorporate latent class of individuals; (4) Sample epidemics according to COHSONET and validate results
 

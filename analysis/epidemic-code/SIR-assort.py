@@ -1,10 +1,13 @@
 import networkx as nx
 import EoN
 import matplotlib.pyplot as plt
+import numpy as np
+import os
+import csv
 
-#G = nx.configuration_model([1,5,10]*100000)
+os.chdir('/Users/paigemiller/Documents/phd/research-projects/miller-tb-assortativity/analysis/modular_graph_generator-master')
 
-#G = nx.barabasi_albert_graph(10000, 5)
+
 
 G = nx.read_graphml(path="scalefree_Q0_N1000_d10_m2.graphml")
 
