@@ -14,10 +14,10 @@ import sequence_generator as sg
 
 ################################################################################################
 # Enter the network size(N), average network degree (d), total modules in the network (m), and modularity (Q)
-N= 1000
+N= 500
 d= 10
 m= 6
-Q= 0.8
+Q= 0.4
 
 # specify the degree distribution of the graph. In it's current format the code can generate
 # four well known degree distribution found in biological networks - scalefree, geometric, poisson and regular distribution

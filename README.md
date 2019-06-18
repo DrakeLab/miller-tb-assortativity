@@ -42,15 +42,11 @@ Simulated networks will vary in level of sex-assortativity, r, calculated accord
 
 where $e_{ij}$ is the proportion of edges connecting nodes in subgroup i to subgroup j (undirected), $a(i)=\sum_{j}{e_(ij)}$. Alternatively, if $\textbf{E}$ is the matrix of $e_{ij}$ and $||X||$ is the sum of all elements in a matrix $\textbf{X}$, then assortativity can be calculated with the proportion of edges within-sex ($Tr \textbf{E}$) and the proportion of edges that would be within groups if connections were random $||E^2||$. Here, if edges were distributed randomly, $Tr \textbf{E} = ||E^2|| = 0.5$ and $r=0$. Typically, r ranges from $-1 \gg r \geq 1$ because disassortative networks are much closer to random networks (r=0) than are assortative networks. 
 
-Network modularity (Q) is a similar measure of non-random mixing in networks: $Q=\sum_{i}{e_{ii}-a^2_i}$ where $e_{ij}$ is the proportion of edges in the network that link nodes in community i to community j and $a_i=\sum_{j}{e_{ij}}$ represents the proportion of edges in the network that link to nodes in subgroup i. In this formulation, if edges were to fall between nodes without any regard for communities, $e_{ij}=a_i a_j$ and have Q=0. The maximum value of Q is $1-\frac{1}{K}$ where K is the number of modules (Sah 2014). 
+Note: Network modularity (Q) is a similar measure of non-random mixing in networks: $Q=\sum_{i}{e_{ii}-a^2_i}=Tr \textbf{E} - ||E^2||$ where $e_{ij}$ is the proportion of edges in the network that link nodes in community i to community j and $a_i=\sum_{j}{e_{ij}}$ represents the proportion of edges in the network that link to nodes in subgroup i. The maximum value of Q is $1-\frac{1}{K}$ where K is the number of modules (Sah 2014). Thus, the relationship between assortativity and modularity for networks with two subgroups is 
 
-The relationship between assortativity and modularity for networks with two subgroups is 
+\[ assortativity = modularity / (1 - expected.prop.within.edges) \]
 
-modularity = assortativity / (1 - expected.prop.between.edges)
-
-where the expected proportion of between edges is calculated by taking the proportion of edges "touching" each subgroup, squaring it, and summing them all up. 
-
-Since groups have equal size, you would expect 1/2 to occur between groups by chance. Thus, assortativity gets divided by while modularity does not. 
+where the expected proportion of within edges is the proportion of nodes in that subgroup. Since groups have equal size, you would expect 1/2 to occur within group by chance. Thus, assortativity gets divided by 0.5 while modularity does not. 
 
 We will generate scale-free networks according to the parameters listed in Table 1 using the classic BA-algorithm. Following network generation, we will update the networks as following: 
 
@@ -114,7 +110,8 @@ _Disease spread:_
 ### Checklist: 
 
 * X Understand the relationship between measures of community structure (Q vs. r) for K=2 modules
-X Run study across larger parameter grid and more replicates
+* X Run study across larger parameter grid and more replicates
+* Analyze and interpret results from extended simulations
 * Understand and relate results to Salathe and Sah research 
 * Decide on next steps which could be: (1) Seed epidemics disproportionately in one module; (2) Incorporate sex-specific susceptibility; (3) Incorporate latent class of individuals; (4) Sample epidemics according to COHSONET and validate results
 

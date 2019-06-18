@@ -1,0 +1,229 @@
+---
+title: "Analysis: Network structure and TB transmission"
+author: "Paige Miller"
+date: "Summer 2019"
+output: pdf_document
+header-includes: \usepackage[section]{placeins}
+editor_options: 
+  chunk_output_type: console
+---
+
+## Research questions:
+
+1. Can sex-assortative mixing lead to male-bias by itself or is sex-specific susceptibility required to explain male-bias?
+2. What are the effects of sex-assortative mixing on disease spread (peak size/time, variation in outbreak size/duration)? 
+
+```{r setup, include=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+
+library(dplyr)
+library(readr)
+library(magrittr)
+library(tidyr)
+library(igraph)
+library(ggplot2)
+library(cowplot)
+library(plotrix)
+library(knitr)
+library(moments)
+
+knitr::opts_chunk$set(cache=FALSE, fig.path = "analysis-figures/", 
+                      warning = FALSE, message=FALSE, echo=FALSE) 
+
+```
+
+```{r dataSetup}
+
+res <- read.csv("simulations-rewiring/results.csv")
+
+# focusing on positive assorativity for now
+res %<>% filter(r>0)
+
+# rounding r to nearest tenth (will fix in final simulations to save value instead)
+res$roundR <- round(res$r, 1)
+
+# fixing calculation of prev_ratio (max/min prev) and calculating diff_prev
+res$max_prev <- apply(res, 1, function(x){max(x["prev_1"], x["prev_2"])})
+res$min_prev <- apply(res, 1, function(x){min(x["prev_1"], x["prev_2"])})
+res$diff_prev <- apply(res, 1, function(x){x["max_prev"] - x["min_prev"]})
+res$prev_ratio <- apply(res, 1, function(x){x["max_prev"]/x["min_prev"]})
+
+```
+
+_How we measure community structure:_
+
+Synthetic networks were generated using a rewiring algorithm that selectively rewires edges  within or between groups (i.e., sex) until the measured assortativity (r) is within 0.035 of the desired r.  
+
+Because modularity (Q) is a common network statistic when measuring community structure, I wanted to check the relationship between assortativity and modularity in these synthetic networks. 
+
+```{r commMeasures, fig.height=2.5, fig.width=6, fig.cap="Measures of community structure in synthestic networks. Columns faceted by network size. "}
+
+res %>%
+  ggplot(aes(r, q, color=factor(size))) + 
+  geom_point() + 
+  facet_wrap(.~size) + 
+  xlab("Assortativity (r)") + ylab("Modularity (Q)") +
+  theme_gray() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = "none")
+
+```
+
+As expected, the relationship between assorativity and modularity is assortativity = modularity / (1 - expected.prop.within.edges). Where expected proportion of edges within sex is equal to the 1 - 1/number of subgroups). 
+
+\FloatBarrier
+
+## Network structure:
+
+_Measures of network structure relevant to disease spread:_
+
+* Clustering: Propensity of a node's neighborhood to also have edges among them. 
+
+* Network diameter (Path length):  Typical number of edges between aris of nodes in a graph
+
+* Degree assortativity: Correlation between a node's degree and its neighbors degrees
+
+Small-world networks are noted for having high clustering coefficients and low network diameters. Watts & Strogatz (1998) first showed how pathogens can spread more easily (lower transmission rates to generate same outbreak size) and quickly in small-world networks. Less transmissable pathogens can infect more individuals in highly clustered networks with short average path length than in random or regular networks. 
+
+Disease spread on degreee assorted networks can percoloate more easily than disassortative networks due to presence of a giant component at lower edge densities (Newman 2003). Since networks generated here remain one connected component, I think this is less of an issue. 
+
+_How rewiring algorithm changes network structure:_
+
+```{r structure, fig.height=2.5, fig.width=6, fig.cap="Measures of network structure across assortativity values. Columns faceted by network statistic. Colors show network size. Boxplots show median and IQR of 100 replicates at each size and assortativity level.  "}
+
+res %>%
+  select(roundR, size, degAssort, clustering, pathLen) %>%
+  gather("stat", "val", 3:5) %>%
+  ggplot(aes(factor(roundR), val, color=factor(size))) + 
+  geom_boxplot() + 
+  facet_wrap(stat ~., scales="free_y") + 
+  labs(color="Network size", x="Assortativity (r)", y= " ") +
+  theme_gray() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+We see that network structure measured by clustering, degree assortativity, and network diameter can is altered by the process of rewiring edges to be highly assortative or highly disassortative. 
+
+At intermediate levels of assortativity (including level measured in Kampala, r=0.25), the network struture is less affected by rewiring. 
+
+\FloatBarrier
+
+## Pathogen spread on assorted networks
+
+The male:female case ratio globally is around 1.9 (+-0.6) male cases for each female case. For research question 1, we wondered whether assortativity could generate this level of inequality in TB infection. 
+
+_How network assortativity affects male-bias:_
+
+To measure the prevalence ratio in simulations, I calculated the prevalence for each sex. Then, I assumed men have the higher prevalence and divided by the lower prevalence. 
+
+```{r heatRatio, fig.height=2.5, fig.width=6, fig.cap="Prevalence ratio across assortativity values. Columns faceted by network size. Rows faceted by transmission rate (R0=1,2,3). Each block shows the mean of 100 simulations. Brighter colors show more male-bias." }
+
+res %>%
+  group_by(tau, roundR, size) %>%
+  summarise(mean_prev_ratio=mean(prev_ratio)) %>%
+  ggplot(aes(factor(roundR), factor(tau))) + 
+  geom_tile(aes(fill=mean_prev_ratio)) + 
+  scale_fill_continuous(type = "viridis") +
+  facet_grid(.~size) + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.title.y.left = element_text(angle = 0)) + 
+  labs(fill="Prevalence \n ratio (mean)", x="Assortativity (r)", 
+       y=expression(tau))
+
+```
+
+```{r ratio, fig.height=6, fig.width=6, fig.cap="Prevalence ratio across assortativity values. Columns faceted by network size. Rows faceted by transmission rate (R0=1,2,3). Boxplots show median and IQR of prevalence ratio for each combination of assortativity, network size, and transmission rate (100 replicates).  "}
+
+res %>%
+  ggplot(aes(factor(roundR), prev_ratio, color=factor(size))) + 
+  geom_boxplot() + 
+  facet_grid(tau ~ size) +
+  labs(color="Network size", x="Assortativity (r)", y= "Prevalence ratio") +
+    theme_gray() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1), 
+        legend.position = "none")  
+```
+
+To see the range of prevalence ratios when assortativity resembles real-world values of sex-assortative mixing, I plotted histograms of prevalence ratios with varying network size and transmission rates. 
+
+```{r prevHistogram, fig.height=4, fig.width=6, fig.cap="Histograms of prevalence ratios on assorted networks (r=[0.1, 0.3]. Columns faceted by network size. Rows faceted by transmission rate (R0=1,2,3). "}
+
+res %>%
+  filter(r<=0.3 & r>=0.1) %>%
+  ggplot(aes(prev_ratio, fill=factor(size))) + 
+  geom_histogram() + 
+  facet_grid(tau ~ size) + 
+  labs(color="Network size", x="Prevalence ratio", 
+       y= "Frequency", title="Simulated prevalence ratio when \n assortativity ranges between 0.1 and 0.3") +
+  theme_gray() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1), 
+        legend.position = "none")  
+
+```
+
+We see that when assortativity resembles real-world values of sex-assortative mixing, most simulations result in prevalence ratios close to 1 meaning there is no difference in prevalence by sex. 
+
+In general, assortativity has little effect on the prevalence ratio when both sexes have equal suceptibility and starting infection prevalence. The other variables analzyed are transmission rate and network size. More transmissable pathogens on larger networks have lower prevalence ratios (ratio of prevalence between sexes is more similar for pathogens with higher R0) and less variation in prevalence ratios across outbreaks. 
+
+\FloatBarrier
+
+_How network assortativity affects other measures of disease spread:_
+
+
+```{r prev, fig.height=6, fig.width=6, fig.cap="Peak prevalence across assortativity values. Columns faceted by network size. Rows faceted by transmission rate (R0=1,2,3). Boxplots show median and IQR of peak prevalence for each combination of assortativity, network size, and transmission rate (100 replicates)."}
+
+res %>%
+  mutate(rel_peak=peak_size/size) %>%
+  ggplot(aes(factor(roundR), rel_peak, color=factor(size))) + 
+  geom_boxplot() + 
+  #geom_smooth() +
+  facet_grid(tau ~ size, scales="free") +
+  labs(color="Network size", x="Assortativity (r)", 
+       y= "Peak prevalence") +
+    theme_gray() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1), 
+        legend.position = "none")  
+
+```
+
+Increasing assortativity has opposite effects on peak prevalence (peak of outbreak divided by network size) for pathogens with different transmission rates. At lower transmission rates, increasing assortativity increases the peak prevalence. At higher transmission rates, increasing assortativity decreases the peak prevalence. 
+
+```{r size, fig.height=6, fig.width=6, fig.cap="Total outbreak size across assortativity values. Columns faceted by network size. Rows faceted by transmission rate (R0=1,2,3). Boxplots show median and IQR of peak prevalence for each combination of assortativity, network size, and transmission rate (100 replicates)."}
+
+res %>%
+  ggplot(aes(factor(roundR), tot_inf, color=factor(size))) + 
+  geom_boxplot() + 
+  facet_grid(tau ~ size, scales="free") +
+  labs(color="Network size", x="Assortativity (r)", y= "Outbreak size") +
+    theme_gray() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1), 
+        legend.position = "none")  
+
+```
+
+Total outbreak size varies with sex-assortativity for pathogens with higher transmission rates. For pathogens with transmission rate leading to R0=1, assortativity has little effect on outbreak size (for R0=1, there might be an intermediate level of assortativity leading to largest outbreak?). For pathogens with R0>1, more assortativity leads to smaller outbreaks. These relationships were not changed by network size (larger networks had smaller variation).  
+
+\FloatBarrier
+
+## Summary: 
+
+Sex-assortative mixing, where same-sex social contacts are more common than within-sex social contact, does not lead to  sex-bias in infection as seen in prevalence studies of Tuberculosis. Even at very high levels of assortativity (r > 0.7), the mean prevalence ratio never exceeds 1.1 across all parameter combinations tested. At realistic levels of assortativity (observed in Uganda), $0.1 < r < 0.3$, individual  simulations on smaller networks with less transmissible pathogens had an upper range of 1.36 (N=500, $\tau=0.125$). There are many caveats to these results but at face value, it seems sex-assortativity by itself cannot explain sex-bias in TB. 
+
+Sex-assortative mixing and pathogen transmissability affected various measures of disease spread on networks. The total proportion infected before epidemic die-off depended on assortativity and transmissability. For less transmissable pathogens, increasing assortativity increased peak prevalence. In contrast, for more transmissable pathogens, more assortativity decreased peak prevalence. Assortativity also had some affect on total outbreak size. For less transmissable pathogens, assorativitiy had nore relationsihp with outbreak size. For more transmissable pathogens, increasing assortativity resulted in much smaller outbreaks. These patterns, peak size and total outbreak size, were not affected by network size (except that bigger networks had less variation across replicates). 
+
+_Next steps:_
+
+* Incorporate differences in susceptibility by group
+
+_Possible directions:_
+
+* Varying network type (small-world)
+* Varying disease model (SLIR)
+* Varying initial conditions (seeding infection in one group)
+
+_Limitations:_ 
+
+* Potential bias (clustering, path length, degree assortativity)  introduced by the rewiring algorithm at high levels of assortativity
+
+
