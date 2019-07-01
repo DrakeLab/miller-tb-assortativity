@@ -1,3 +1,5 @@
+###### SIR.py simulates SIR model on assorted networks ###### 
+
 import networkx as nx
 import EoN
 import matplotlib.pyplot as plt
@@ -16,7 +18,8 @@ R = [-0.9, -0.8, -0.7, -0.6, -0.5,
      0,
       0.1,  0.2,  0.3,  0.4,  0.5,
       0.6,  0.7,  0.8,  0.9]
-reps=100 +1
+
+reps = 100 +1
 
 ###### Parameters for epidemics on networks
 Tau = [0.125, 0.25, 0.375]
