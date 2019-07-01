@@ -21,7 +21,7 @@ TB is a respiratory-transmitted infectious disease that is heterogeneously distr
 
 Male-bias in TB case reports is thought to be due to sex-specific differences in exposure to Mtb or susceptibility to disease following exposure, or a combination of the two. Exposure rates could be mediated by differences in behaviors and societal gender roles. For example men may have more contacts or be more central in social networks though previous studies have failed to substantiate this (Mossong et al. 2008, etc.). Alternatively, sex-specific exposure rates could be driven by differences in the types of contacts that men compared to women. Specifically, exposure could be higher in men due to assortative mixing which is where individuals tend to associate with others similar to them, creating sub-groups within a social network. However, we lack studies analyzing the role of hypothesized exposure mechanisms at driving male-bias. 
 
-The effects of assortativity (i.e., modularity) on aggregated (i.e., regardless of subgroup) epidemic dynamics (e.g., total outbreak size or equilibrium prevalence) depend on the infection process (SIR, SIS) and the distribution of subgroup size. Tuberculosis transmission is better represented by an SIR than an SIS process. In SIR systems, the total outbreak size of diseases with SIR dynamics decrease with increasing assortativity, perhaps due to a build-up of recovered nodes within-subgroups and transmission bottlenecks between subgroups (Nandini 2018). However, very high assortativity may be required to produce this "protective" effect of assortativity (Salathe & Jones 2015, Sah et al. 2017). In contrast, for SIS processes, infected nodes return to susceptible nodes and a build-up of recovered nodes does not occur, resulting in intensely connected subgroups which increase the equilibrium prevalence of infection (Nandini 2018). Subgroup size also affects disease spread: networks with larger subgroups increase epidemic size when compared with networks with constant subgroup size. Most prior studies have focused on networks with multiple (in the range of 10 to 100), highly connected subgroups. For our purposes, an open question remains about how disease spreads within lightly assorted networks with two subgroups (i.e., men and women) which potentially vary in their susceptibility to infection.
+The effects of assortativity (i.e., modularity) on aggregated (i.e., regardless of subgroup) epidemic dynamics (e.g., total outbreak size or equilibrium prevalence) depend on the infection process (SIR, SIS) and the distribution of subgroup size. Tuberculosis transmission is better represented by an SIR than an SIS process. In SIR systems, the total outbreak size of diseases with SIR dynamics decrease with increasing assortativity, perhaps due to a build-up of recovered nodes within-subgroups and transmission bottlenecks between subgroups (Nadini 2018). However, very high assortativity may be required to produce this "protective" effect of assortativity (Salathe & Jones 2015, Sah et al. 2017). In contrast, for SIS processes, infected nodes return to susceptible nodes and a build-up of recovered nodes does not occur, resulting in intensely connected subgroups which increase the equilibrium prevalence of infection (Nandini 2018). Subgroup size also affects disease spread: networks with larger subgroups increase epidemic size when compared with networks with constant subgroup size (Sah et al. 2017). The number of subgroups also affects how assortativity relates to outbreak size: outbreak size on less fragmented (fewer subgroups) networks are not affected by assortativity but outbreak size on more fragmented networks increases with assortativity (Sah et al. 2017). Most prior studies have focused on networks with multiple (in the range of 10 to 1000, Sah et al. 2017), highly connected subgroups. For our purposes, an open question remains about how disease spreads within lightly assorted networks with two subgroups (i.e., men and women) which potentially vary in their susceptibility to infection (i.e., are men "supersusceptibles", Kraft 2015).
 
 We wondered whether sex-assortativity in social networks could contribute to male-bias or if previously described differences in susceptibility between the sexes are necessary to explain male-bias. 
 
@@ -59,37 +59,52 @@ Network will be generated with parameters shown in Table 1.
 
 | Variable  | Value  | 
 |:-:|:-:|
-| Sex-assortativity, $r$  | (-0.9, 0.9) by 0.1 |
+| Sex-assortativity, $r$  | (0, 0.9) by 0.1 |
 | Degree distribution, $p(K)$ | $\frac{k^{-\alpha}}{\zeta (\alpha)}$  |
 | Mean degree, $<K>$ | 10  |
-| Network size, $N$ | 500, $1\cdot 10 ^ 3, 2\cdot 10 ^ 3, 5\cdot 10 ^ 3$  |
+| Network size, $N$ | $1\cdot 10 ^ 3$|
 | Tolerance, $\epsilon$ | 0.035  |
 | Rewiring proportion, $\alpha$ | 0.2  |
 | Replicates | 100  |
 
 Table: Network parameters.   
 
-_Disease transmission modeled as SIR:_ 
+_Models of disease transmission:_ 
 
-Nodes can exist as either susceptible, infected, or recovered (Table 2). 
+We were interested in comparing models of TB that assume outbreak (SIR) and persistent levels of infection (SIRS). 
 
-We will model disease spread on networks as a continuous time Markov chain with infection spreading along an edge at rate $\tau$ and recovery happening at rate $\gamma$. 
+Due to sex-specific susceptibility, models will assume a non-Markovian process at first because the transmission rate will vary depending on susceptibility of each node. Once susceptibility is assigned, the process can be treated as Markovian (see Kiss, Miller, and Simon, page 224). We will use an event-driven, non-Markovian algorithm to implement simulations (Kiss, Miller & Simon 2017). 
 
-An infected node transmits to each of its uninfected neighbors independently with probability $p(T)=1-e^{- \tau T}$ where T is the duration of infection for the infected node. 
+To hold mean node susceptibility to 1, with a m:f ratio of $\alpha$, we solved the following equations to find $\sigma_m, \sigma_f$: 
 
-We will use an event-driven algorithm for simulations on synthetic networks implented in the python module EoN (Kiss, Miller & Simon 2017). 
+\[ 0.5 \sigma_m + 0.5 \sigma_f = 1 \]
+\[ \sigma_m = \alpha \sigma_f \]
 
-We will assume SIR dynamics as our model of disease spread (Table 2). 
+Leading to solutions: 
+
+\[ \sigma_f = \frac{2}{\alpha + 1} \]
+\[ \sigma_m = \frac{2 \alpha}{\alpha + 1} \]
+
+SIR: 
+
+An infection spreads along an edge at probability depending on the baseline transmission rate, $\tau$, the susceptibility of the target node, and the duration of infection, T: $p(T)=1-e^{- \tau \alpha T}$. Susceptibility will be altered by changing $\alpha$, the ratio of male:female susceptibility. Infecteds recover at exponentially distributed recovery rate $\gamma$.
+
+Parameters for the SIR model are given in Table 2. 
 
 | Variable  | Value  | 
 |:-:|:-:|
 | Initial susceptible, $S_0$  |  $N - 0.05 \cdot N$ |
 | Initial infected, $I_0$  |  $0.05 \cdot N$ |
-| Infection rate, $\tau$  |  0.125, 0.25, 0.375 |
+| Infection rate, $\tau$  |  0.08, 0.12, 0.16, 0.2, .24, .28, .32, 0.36 |
 | Recovery rate, $\gamma$  |  1 |
-| Estimated $R_0$  |  $[\frac{\tau}{\tau+\gamma}][\frac{<K^2-K>}{<K>}]$ |
+| M:F susceptibility ratio, $\alpha$  |  1, 1.25, 1.5, 1.75 |
 
-Table: Disease parameters.
+Table: Disease parameters for SIR model.
+
+SIRS: 
+
+The SIRS model can be interpreted as an SIR model with births (Keeling & Eames 2005).
+
 
 ### Analysis: 
 
@@ -97,9 +112,11 @@ _Network structure:_
 
 * Relationship between network structure (clustering, degree assortativity, diameter, degree variation) and assortativity
 
-_Case ratio:_
+_M:F ratio:_
 
-* Relationsihp between assortativity and M:F case ratio
+* Relationship between assortativity and M:F case ratio
+* Relationship between susceptibility and M:F case ratio
+* Interaction between assortativity and susceptibility on M:F case ratio
 * Variation by network size and $R_0$
 
 _Disease spread:_
@@ -111,13 +128,22 @@ _Disease spread:_
 
 * X Understand the relationship between measures of community structure (Q vs. r) for K=2 modules
 * X Run study across larger parameter grid and more replicates
-* Analyze and interpret results from extended simulations
-* Understand and relate results to Salathe and Sah research 
-* Decide on next steps which could be: (1) Seed epidemics disproportionately in one module; (2) Incorporate sex-specific susceptibility; (3) Incorporate latent class of individuals; (4) Sample epidemics according to COHSONET and validate results
+* X Analyze and interpret results from extended simulations
+* X Understand and relate results to Salathe and Sah research 
+* X Decide on next steps which could be: (1) Seed epidemics disproportionately in one module; (2) Incorporate sex-specific susceptibility; (3) Incorporate latent class of individuals; (4) Sample epidemics according to COHSONET and validate results
+* X edit protocol to add variable susceptibility for SIR
+* X Analyze pilot study of variable susceptibility for SIR
+* Run extended analysis of variable susceptibility for SIR
+* Figure out SIRS model with variable susceptibility 
+* Run pilot of SIRS model with variable susceptibility
+* Run extended SIRS model 
+* Write up analysis with variable susceptibility
 
 ### Important background papers: 
 
 Kiss, I Z, J C Miller, and PL Simon Cham Springer. 2017. “Mathematics of Epidemics on Networks.” Springer.
+
+Miller, Joel C. 2007. “Epidemic Size and Probability in Populations with Heterogeneous Infectivity and Susceptibility..” Physical Review. E, Statistical, Nonlinear, and Soft Matter Physics 76 (1 Pt 1): 010101. doi:10.1103/PhysRevE.76.010101.
 
 Newman, MEJ. 2003. “Mixing Patterns in Networks.” Physical Review E 67 (2). American Physical Society. doi:10.1103/PhysRevE.67.026126.
 
@@ -135,4 +161,7 @@ Salathé, Marcel, and James H Jones. 2010. “Dynamics and Control of Diseases i
 
 ### CHANGE-LOG:
 
-* [bullet list of changes to protocols with reasons for each change]
+* First stage of project found little variation in M:F case ratio with assortativity only so next stage will compare the effects of sex-specific susceptibility and assortativity 
+* SIR model on networks died out fairly quickly, not representative of TB in populations so next stage will compare SIR and SIRS models on networks
+* First stage of project found little variation in disease spread on networks of different sizes so next stage will focus on networks with 1000 nodes
+
