@@ -12,7 +12,7 @@ os.chdir('/Users/paigemiller/Documents/phd/research-projects/miller-tb-assortati
 
 ###### Parameters for network generation
 
-N = [50000] #[500, 1000, 1500]
+N = [1500] #[500, 1000, 1500]
 ##R = [-0.9, -0.8, -0.7, -0.6, -0.5,
 ##     -0.4, -0.3, -0.2, -0.1,
 ##     0,
@@ -22,13 +22,12 @@ R = [0]  # Network assortativity (Can be one of above)
 
 ###### Parameters for epidemics on networks
 
-Rho = [0.05]  # Determine initial infected proportion
-Tau = [0.35] # IS->II
+Tau = [1] # IS->II
 Gamma = [1.0]   # I->R
 Sigma = [0.2] # R->S
 
 var_grid = list(ParameterGrid({'N' : N, 'R' : R, 'Tau': Tau, 'Sigma': Sigma,
-                               'Gamma': Gamma, 'Rho': Rho}))
+                               'Gamma': Gamma}))
 
 reps=1 #100 +1
 
@@ -40,7 +39,6 @@ for x in range(0, len(var_grid)):
         tau=var_grid[x]["Tau"]
         gamma=var_grid[x]["Gamma"]
         sigma=var_grid[x]["Sigma"]
-        i0=var_grid[x]["Rho"] * n
 
         #G = nx.read_graphml(path="networks/G_"+str(r)+"N"+str(n)+"rep"+str(y)+".graphml")
         G = nx.fast_gnp_random_graph(n, 5./(n-1))
@@ -53,12 +51,12 @@ for x in range(0, len(var_grid)):
         J.add_edge(('I', 'S'), ('I', 'I'), rate = tau)  #IS->II
 
         IC = defaultdict(lambda: 'S')
-        for node in range(int(i0)):
+        for node in range(20):
             IC[node] = 'I'
 
         return_statuses = ('S', 'I', 'R')
 
-        t, S, I, R = EoN.Gillespie_Arbitrary(G, H, J, IC, return_statuses, tmax = 30)
+        t, S, I, R = EoN.Gillespie_Arbitrary(G, H, J, IC, return_statuses, tmax = 50)
 
         plt.plot(t, S, label = 'Susceptible')
         plt.plot(t, I, label = 'Infected')

@@ -75,6 +75,8 @@ We were interested in comparing models of TB that assume outbreak (SIR) and pers
 
 Due to sex-specific susceptibility, models will assume a non-Markovian process at first because the transmission rate will vary depending on susceptibility of each node. Once susceptibility is assigned, the process can be treated as Markovian (see Kiss, Miller, and Simon, page 224). We will use an event-driven, non-Markovian algorithm to implement simulations (Kiss, Miller & Simon 2017). 
 
+NEED TO FIGURE OUT WHICH CALCULATION APPLIES TO OUR SITUATION OF HOMOGENEOUS INFECTIOUSNESS, HETEROGENEOUS SUSCEPTIBILITY: Using percolation concepts, Kiss et al. calculate epidemic probabilities $P$ for continuous-time SIR epidemics on configuration models defined by degree distributions. 
+
 To hold mean node susceptibility to 1, with a m:f ratio of $\alpha$, we solved the following equations to find $\sigma_m, \sigma_f$: 
 
 \[ 0.5 \sigma_m + 0.5 \sigma_f = 1 \]
@@ -88,6 +90,8 @@ Leading to solutions:
 SIR: 
 
 An infection spreads along an edge at probability depending on the baseline transmission rate, $\tau$, the susceptibility of the target node, and the duration of infection, T: $p(T)=1-e^{- \tau \alpha T}$. Susceptibility will be altered by changing $\alpha$, the ratio of male:female susceptibility. Infecteds recover at exponentially distributed recovery rate $\gamma$.
+
+
 
 Parameters for the SIR model are given in Table 2. 
 
