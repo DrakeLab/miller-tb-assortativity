@@ -33,23 +33,23 @@ We will generate scale-free networks according to the parameters listed in Table
 
 | Variable  | Value  | 
 |:-:|:-:|
-| Sex-assortativity, $r$  |  -0.3, -0.2, - 0.1, 0, 0.1, 0.2, 0.3 |
+| Sex-assortativity, $r$  |  0, 0.9 by 0.1 |
 | Degree distribution, $p(k)$ | $\frac{k^{-\alpha}}{\zeta (\alpha)}$  |
 | Mean degree, $<k>$ | 10  |
-| Network size, $N$ | 500, $1\cdot 10 ^ 3$, $1.5\cdot 10 ^ 3$  |
+| Network size, $N$ | 1000, $1\cdot 10 ^ 3$, $1.5\cdot 10 ^ 3$  |
 | Tolerance, $\epsilon$ | 0.035  |
 | Rewiring proportion, $\alpha$ | 0.2  |
 
 Table: Design of pilot study to test rewiring algorithm.   
 
 ```{r}
-setwd("~/Documents/phd/research-projects/miller-tb-assortativity/analysis/network-generation/op-2-simulations/")
+setwd("~/Documents/phd/research-projects/miller-tb-assortativity/analysis/simulations-rewiring/networks")
 
-algDat <- data.frame(size=NA, r=NA, rep=NA, degAssort=NA, clustering=NA, pathLen=NA)
+algDat <- data.frame(size=NA, r=NA, rep=NA, degAssort=NA, clustering=NA, pathLen=NA, ncomponents=NA)
 
-parms=expand.grid(size=c(5e2, 1e3, 1.5e3), 
-                  r=c(-0.3, -0.2, -0.1, 0, 0.1, 0.2, 0.3), 
-                  rep=1:15)
+parms=expand.grid(size=c(1000), 
+                  r=seq(0, 0.9, by=0.1), 
+                  rep=1:100)
 
 for(i in 1:nrow(parms)){
   s=parms[i, "size"]
@@ -60,32 +60,43 @@ for(i in 1:nrow(parms)){
   g=read.graph(paste0(net, ".graphml"), format = "graphml")
   
   foo <- c(s, r, rep, assortativity_degree(g, directed = FALSE),
-           transitivity(g), diameter(g, directed = FALSE))
+           transitivity(g), diameter(g, directed = FALSE), ncomponents=count_components(g))
   algDat[i, ] <- foo
 }
 
 ```
 
-```{r algCompare, fig.cap="Values of clustering, degree assortativity, and path length with varying assortativity for networks generated using rewiring algorithm. "}
+# Unintended creation of isolated components during re-wiring
+
+This will need to be fixed prior to any more analysis. 
+
+```{r algCompare, fig.cap="Values of clustering, degree assortativity, path length, and number of components with varying assortativity for networks generated using rewiring algorithm. "}
 
 algDat %>%
   select(-rep) %>%
-  gather(stat, value, 3:5) %>%
-  ggplot(aes(x=r, y=value, color=factor(size))) + 
-  geom_smooth() +
-  geom_point() + 
-  facet_grid(stat ~ ., scales="free") + 
+  gather(stat, value, 3:6) %>%
+  ggplot(aes(x=as.factor(r), y=value)) + 
+  #geom_smooth() +
+  geom_boxplot() + 
+  facet_wrap(stat ~ ., scales="free") + 
   ylab("") + xlab("Assortativity (r)")
   
 ```
 
+```{r exampleNets, fig.height=7, fig.cap="Subgraphs of networks generated using rewiring algorithm (N=1000) with corresponding edge and degree distributions. Subgraphs taken by randomly selecting one node and then finding their neighbors (subgraphs shown for illustrative purposes). Edge distribution of full networks shows number of edges within module (sex) and between module (sex). "}
 
-```{r exampleNets, fig.height=7, fig.cap="Networks generated using rewiring algorithm (N=500) with corresponding edge and degree distributions. Edge distribution shows number of edges within module (sex) and between module (sex). "}
-plot_assort_graph <- function(graph){
+plot_assort_graph <- function(graph, randNode=sample(1:1000, 1), outward=1){
+  
+  ## plot subgraph to more easily see edges
+  V(graph)$id <- 1:vcount(graph)
+  graph <- induced_subgraph(graph, vids=unlist(ego(graph, order=outward, nodes=randNode))) 
+  V(graph)$shape=V(graph)$id
+  V(graph)$shape=ifelse(as.numeric(V(graph)$shape)==randNode, "square", "circle")
   
   ##basic network layout
   nn <- 1
   types <- V(graph)$sex
+  shapes <- V(graph)$shape
   xy1 <- c(-1.5, .1) # males
   xy2 <- c(1.5, -.1) # females
   
@@ -109,14 +120,14 @@ plot_assort_graph <- function(graph){
   
   plot(graph, layout=coords, 
        vertex.label="", 
-       vertex.size=3, vertex.color=V(graph)$sex, 
+       vertex.size=9, vertex.color=types, vertex.shape=shapes, 
        edge.width=.1, edge.color="black")
 }
 get_e_type <- function(elRow, types){
   ifelse(diff(types[elRow])==0, "w", "b")
 }
 
-setwd("~/Documents/phd/research-projects/miller-tb-assortativity/analysis/network-generation/op-2-simulations/")
+setwd("~/Documents/phd/research-projects/miller-tb-assortativity/analysis/simulations-rewiring/networks")
 
 # plots of network generation process
 layout(matrix(1:9, 3, 3, byrow = TRUE))
@@ -124,9 +135,9 @@ layout(matrix(1:9, 3, 3, byrow = TRUE))
 
 # DISASSORTATIVE
 par(mar=c(1,1,2,1))
-net=paste0("G_", as.character(-0.3), "N", 500, "rep", 1)
+net=paste0("G_", as.character(-0.3), "N", 1000, "rep", 1)
 gD=read.graph(paste0(net, ".graphml"), format = "graphml")
-plot_assort_graph(gD)
+plot_assort_graph(gD, randNode = 500)
 rt0 <- assortativity_nominal(gD, types=V(gD)$sex) # basically 0
 mtext(round(rt0, 3))
 el <- get.edgelist(gD)
@@ -138,7 +149,7 @@ plot(degree_distribution(gD))
 
 # Random
 par(mar=c(1,1,2,1))
-net=paste0("G_", as.character(0), "N", 500, "rep", 1)
+net=paste0("G_", as.character(0), "N", 1000, "rep", 1)
 gR=read.graph(paste0(net, ".graphml"), format = "graphml")
 plot_assort_graph(gR)
 rt0 <- assortativity_nominal(gR, types=V(gR)$sex) # basically 0
@@ -152,7 +163,7 @@ plot(degree_distribution(gR))
 
 # ASSORTATIVE
 par(mar=c(1,1,2,1))
-net=paste0("G_", as.character(0.3), "N", 500, "rep", 1)
+net=paste0("G_", as.character(0.3), "N", 1000, "rep", 1)
 gA=read.graph(paste0(net, ".graphml"), format = "graphml")
 plot_assort_graph(gA)
 rt0 <- assortativity_nominal(gA, types=V(gA)$sex) # basically 0
@@ -166,9 +177,9 @@ plot(degree_distribution(gA))
 
 ```
 
+
 Notes: 
 
-* 15 replicates of each size and assortativity
-* Takes less than one hour to run
+* 100 replicates of each assortativity
 * Algorithm needs to be re-run to remove multiple edges
 

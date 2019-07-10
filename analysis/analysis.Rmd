@@ -27,7 +27,7 @@ library(plotrix)
 library(knitr)
 library(moments)
 
-knitr::opts_chunk$set(cache=FALSE, fig.path = "analysis-figures/", 
+knitr::opts_chunk$set(cache=TRUE, fig.path = "analysis-figures/", 
                       warning = FALSE, message=FALSE, echo=FALSE) 
 
 ```
@@ -39,12 +39,6 @@ res <- read.csv("simulations-rewiring/SIR/constant_results.csv") # has different
 # rounding r to nearest tenth (will fix in final simulations to save value instead)
 res$roundR <- round(res$r, 1)
 res <- filter(res, "roundR">=0)
-
-# fixing calculation of prev_ratio (max/min prev) and calculating diff_prev
-res$max_prev <- apply(res, 1, function(x){max(x["prev_1"], x["prev_2"])})
-res$min_prev <- apply(res, 1, function(x){min(x["prev_1"], x["prev_2"])})
-res$diff_prev <- apply(res, 1, function(x){x["max_prev"] - x["min_prev"]})
-res$prev_ratio <- apply(res, 1, function(x){x["max_prev"]/x["min_prev"]})
 
 ```
 
@@ -138,6 +132,44 @@ get_tau(c(1,2,3,4,5,6), G)
 
 ```
 
+_Visualizations of simulations:_
+
+```{r plotTrajectories, fig.height=6, fig.width=6, fig.cap="Simulated outbreak trajectories (5 replicates shown for each parameter combination). Columns faceted by R0 and rows faceted both by alpha (i.e., ratio of male:female susceptibility) and assortativity (r)."}
+
+pvars <- expand.grid(reps=1:5, tau=c(.2, .36), alph=c(1,1.5), rs=c(0, .3, .6, .9))
+
+simList <- list()
+
+for(i in 1:nrow(pvars)){
+  
+  foo <- pvars[i, ]
+  
+  sim <- read.csv(paste0("simulations-rewiring/SIR/var-suscept/SIR_R", foo$rs, 
+                         "_N", 1000, 
+                         "_tau", foo$tau, "_alph", foo$alph,
+                         "_rep", foo$reps, ".csv"))
+  sim$tau <- get_r0(foo$tau, read_graph("simulations-rewiring/networks/G_0N1500rep1.graphml", format="graphml"))
+  sim$alph <- foo$alph
+  sim$rep <- foo$reps
+  sim$rs <- foo$rs
+  
+  simList[[i]] <- sim
+}
+
+simDf <- bind_rows(simList)
+  
+simDf %>%
+  ggplot(aes(t, i, color=factor(rep))) + 
+  geom_line() + 
+  facet_grid(factor(rs) ~ alph ~ tau) + 
+  labs(color="Replicate", x="Time", y="Infecteds")
+
+```
+
+Starting from one initially infected individual, many simulations die out before becoming outbreaks. Most simulations last around 10 time steps and the peak depends on R0. It seems like more simulations die out at higher levels of assortativity (probably especially if the initially infected is a female and alpha > 1). 
+
+\FloatBarrier
+
 _Distribution of outbreak sizes across simulations:_
 
 Many of the disease simulations on networks, especially when $R_0$ was close to 1, faded out. 
@@ -146,7 +178,7 @@ Many of the disease simulations on networks, especially when $R_0$ was close to 
 
 res <- read.csv("simulations-rewiring/SIR/variable_results.csv")
 #res$R0 <- apply(res, 1, function(x){get_r0(x["tau"], G)})
-#write.csv(res, "simulations-rewiring/SIR/variable_results.csv") # add R0
+#write.csv(res, "simulations-rewiring/SIR/variable_results.csv") # how I added R0 for now
 
 res %>%
   ggplot(aes(tot_inf)) + 
@@ -160,12 +192,6 @@ res %>%
 outs <- res %>%  # filter out outbreaks
   filter(tot_inf > 0.05) 
 
-# fixing calculation of prev_ratio (max/min prev) and calculating diff_prev
-outs$max_prev <- apply(outs, 1, function(x){max(x["prev_1"], x["prev_2"])})
-outs$min_prev <- apply(outs, 1, function(x){min(x["prev_1"], x["prev_2"])})
-outs$diff_prev <- apply(outs, 1, function(x){x["max_prev"] - x["min_prev"]})
-outs$prev_ratio <- apply(outs, 1, function(x){x["max_prev"]/x["min_prev"]})
-
 ```
 
 \FloatBarrier
@@ -176,15 +202,24 @@ To measure the prevalence ratio in simulations, I calculated the number infected
 
 ```{r lineSus, fig.cap="Male-bias across assortativity and male:female susceptibility ratios. Plots faceted by R0. Lines and colors show susceptibility ratio between men and women. Points are mean prevalence ratio of 100 simulations on networks with 1,000 nodes (fadeouts simulations excluded). ", fig.height=6, fig.width=6}
 
-outs %>%
-  group_by(R0, r, size, alph) %>%
-  summarise(mean_prev_ratio=mean(prev_ratio, na.rm = TRUE)) %>%
+## NREPS
+n = 100
+
+summ <- outs %>% group_by(R0, r, alph) %>%
+  summarise(mean_prev_ratio=mean(prev_ratio, na.rm=TRUE), se=(sd(prev_ratio, na.rm=TRUE)/sqrt(n)))
+
+summ %>%
   ggplot(aes(r, mean_prev_ratio, color=factor(alph))) + 
-  geom_point() + 
+  geom_point(size=.75) + 
   geom_hline(yintercept=1.9, linetype="dashed", 
                 color = "red", size=.75) + 
+    geom_hline(yintercept=1, linetype="dashed", 
+                color = "grey", size=.5) + 
+
   geom_line() + #ylim(0.9,2.1) + 
-  facet_wrap(.~R0, scales='free') +
+  geom_errorbar(aes(ymin=mean_prev_ratio-se, ymax=mean_prev_ratio+se), width=.2,
+                 position=position_dodge(0)) +
+  facet_wrap(.~R0) +
   labs(x="Assortativity (r)", 
        y="Prevalence ratio (mean)", color=expression(alpha)) + 
   theme_gray()

@@ -3,7 +3,7 @@ library(igraph)
 library(tidyverse)
 library(magrittr)
 
-setwd("~/Documents/phd/research-projects/miller-tb-assortativity/analysis/network-generation/op-2-simulations")
+setwd("~/Documents/phd/research-projects/miller-tb-assortativity/analysis/simulations-rewiring/test-nets")
 
 # function for finding within and between edges
 get_e_type <- function(elRow, types){
@@ -12,14 +12,14 @@ get_e_type <- function(elRow, types){
 
 
 # net reps
-reps <- 100
+reps <- 1
 
 # max number of trials to make assorted graphs
 max.iter <- 2000
 
 # sizes
-ns <- c(5e2, 1e3, 1.5e3)
-rs <- seq(-9, 9, by=1)/10
+ns <- 500 #c(5e2, 1e3, 1.5e3)
+rs <- seq(0, 9, by=1)/10
 alph <- 0.2
 eps <- 0.035
 
@@ -65,9 +65,10 @@ for(v in 1:nrow(vars)){
       el <- get.edgelist(Gg)
       eTypes <- apply(el, 1, get_e_type, types=V(Gg)$sex)
       
-      if(r_f >=0) er <- which(eTypes=="b")
+      if(r_f >0) er <- which(eTypes=="b")
       if(r_f < 0) er <- which(eTypes=="w")
       
+      # edges to re-wire
       er <- sample(er, size=round(alph * length(er)))
       GgSub <- subgraph.edges(Gg, eids=er)
       
@@ -77,15 +78,33 @@ for(v in 1:nrow(vars)){
       
       Gg1 <- graph_from_edgelist(el, directed=FALSE)
       
-      # Rewire edges if multiples (1)
-      el <- get.edgelist(Gg1) # new edge list
-      m <- which(which_multiple(Gg1)) # multiple edge ids
-      GgSub <- subgraph.edges(Gg, eids=m)
-      GgSub <- get.edgelist(rewire(GgSub, each_edge(prob=1, multiple = FALSE, 
-                                                    loops=FALSE)))
-      el[m, ] <- GgSub
-      Gg1 <- graph_from_edgelist(el, directed=FALSE)
+      # SOMETHING IS MESSED UP HERE
+      # # Check for connectivity of components
+      # if(count_components(Gg1)>1){
+      #   while(count_components(Gg1)>1){
+      #     Gg1 %>%
+      #       rewire(each_edge(p = .1, loops = FALSE))
+      #   }
+      # } 
       
+      # check for # components and # multiple edges 
+      elFull <- get.edgelist(Gg1)
+      
+      multiples <- elFull[which(duplicated(elFull)), ]
+      
+      for(j in 1:nrow(multiples)){
+        node1 <- multiples[i, 1]
+        node2 <- multiples[i, 2]
+        
+        neighs1 <- as.numeric(neighbors(Gg1, node1))
+        neighs2 <- as.numeric(neighbors(Gg1, node2))
+        
+        Gg1 %<>% add.edges(c(node1, sample(setdiff(1:vcount(Gg1), neighs1), 1)))
+        Gg1 %<>% add.edges(c(node2, sample(setdiff(1:vcount(Gg1), neighs2), 1)))
+      }
+
+      Gg1 <- igraph::simplify(Gg1, remove.loops=TRUE, remove.multiple=TRUE)
+            
       # Calculate assortativity
       V(Gg1)$sex <- sexes$sex
       rt1 <- assortativity_nominal(Gg1, types=V(Gg1)$sex)  
