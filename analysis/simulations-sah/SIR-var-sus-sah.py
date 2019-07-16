@@ -11,20 +11,20 @@ import os
 import csv
 from sklearn.model_selection import ParameterGrid
 
-os.chdir('/Users/paigemiller/Documents/phd/research-projects/miller-tb-assortativity/analysis/simulations-rewiring')
+#os.chdir('/Users/paigemiller/Documents/phd/research-projects/miller-tb-assortativity/analysis/simulations-sah')
 
 ###### Model parameters ######
 
 N = [1000] # Network Size
-R = [0, 0.3, 0.6, 0.9] # Assortativity coefficient (Newman)
+Q = [0.45] #[0, 0.15, 0.3, 0.45]
 
-Tau = [0.08, 0.16, .24, .32] # Baseline transmission rate 
+Tau = [0.32] #[0.08, 0.16, .24, .32] # Baseline transmission rate 
 Gamma = 1 # Recovery rate
-Alph = [1.75] #[1, 1.25, 1.5, 1.75] # Ratio of male:female susceptibility
+Alph = [1.25] # [1, 1.25, 1.5, 1.75] # Ratio of male:female susceptibility
 
-var_grid = list(ParameterGrid({'N' : N, 'R' : R, 'Tau': Tau, 'Alph': Alph}))
+var_grid = list(ParameterGrid({'N' : N, 'Q' : Q, 'Tau': Tau, 'Alph': Alph}))
 
-reps = 30 + 1 #300 +1 # Number of reps
+reps = 1  # Number of reps
 
 ##### Model functions ########
 
@@ -38,40 +38,43 @@ def rec_time_function(node, gamma):
 ############# RUN MODEL, SAVE RESULTS #################
 
 for x in range(0, len(var_grid)):
-    for y in range(1, reps):
+    for y in range(0, reps):
+
+        yy = y % 100  # only 100 replicates of networks  (and R starts at 1)
 
         n=var_grid[x]["N"]
-        r=var_grid[x]["R"]
+        r=var_grid[x]["Q"]
         tau=var_grid[x]["Tau"]
         alph=var_grid[x]["Alph"]
 
-        G = nx.read_graphml(path="networks2/G_"+str(r)+"N"+str(n)+"rep"+str(y)+".graphml")
+        G = nx.read_graphml(path="networks/G_Q"+str(r)+"_N"+str(n)+"_rep"+str(yy)+".graphml")
 
         for node in G:
-            if G.node[node]['sex'] == 1.0:
-                G.node[node]['sus'] = (2 * alph) / (alph + 1)
+            if G.node[str(node)]['module'] == 0:
+                G.node[str(node)]['sus'] = (2 * alph) / (alph + 1)
 
             else:
-                G.node[node]['sus'] = 2 / (alph + 1)
+                G.node[str(node)]['sus'] = 2 / (alph + 1)
 
 
         sim = EoN.fast_nonMarkov_SIR(G, transmission_rate, rec_time_function,
                                      trans_time_args=(tau,), rec_time_args=(Gamma,),
-                                     rho=0.025, 
                                      return_full_data=True)
 
         tots = sim.summary()
-        with open("SIR/var-suscept-3/SIR_R"+str(r)+"_N"+str(n)+"_tau"+str(tau)+"_alph"+str(alph)+"_rep"+str(y)+".csv",'wb') as out:
+        with open("SIR/SIR_Q"+str(r)+"_N"+str(n)+"_tau"+str(tau)+"_alph"+str(alph)+"_rep"+str(y)+".csv",'wb') as out:
             csv_out=csv.writer(out)
             csv_out.writerow(['t','s','i','r'])
             csv_out.writerows(zip(*tots))
 
         # extract data on node infection at last time step
         res = sim.get_statuses(time=sim.t()[-1])
-        with open("SIR/var-suscept-3/Final_R"+str(r)+"_N"+str(n)+"_tau"+str(tau)+"_alph"+str(alph)+"_rep"+str(y)+".csv",'wb') as csv_file:
+        with open("SIR/Final_Q"+str(r)+"_N"+str(n)+"_tau"+str(tau)+"_alph"+str(alph)+"_rep"+str(y)+".csv",'wb') as csv_file:
            writer = csv.writer(csv_file)
            for key, value in res.items():
                writer.writerow([key, value])
+
+
 
 ##### WORKING EXAMPLE OF SIR WITH SUSCEPTIBILITY ######
 

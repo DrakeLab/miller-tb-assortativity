@@ -18,8 +18,6 @@ res <- data.frame(size=NA, rep=NA, tau=NA,
                   peak_time=NA, tot_inf=NA, 
                   prev_1=NA, prev_2=NA, prev_ratio=NA)
 
-sims <- list()
-
 setwd("~/Documents/phd/research-projects/miller-tb-assortativity/analysis/simulations-rewiring")
 
 for(i in 1:nrow(vars)){
@@ -86,7 +84,7 @@ for(i in 1:nrow(vars)){
 
 write.csv(res, "constant_results.csv")
 
-###### ----------- SIR w/ variable susceptibility -----------  ###### 
+###### ----------- SIR w/ variable susceptibility 100 REPS-----------  ###### 
 
 # graphs from first set of simulations -- run if needed
 rs <- 0:9/10
@@ -103,8 +101,6 @@ res <- data.frame(size=NA, rep=NA, tau=NA, alph=NA,
                   time_steps=NA, peak_size=NA, 
                   peak_time=NA, tot_inf=NA, 
                   prev_1=NA, prev_2=NA, prev_ratio=NA)
-
-sims <- list()
 
 setwd("~/Documents/phd/research-projects/miller-tb-assortativity/analysis/simulations-rewiring")
 
@@ -171,9 +167,10 @@ write.csv(res, "SIR/variable_results.csv") # has initial infected =1; other one 
 
 
 
-###### ----------- SIR2 w/ variable susceptibility (MORE REPS) -----------  ###### 
-
+###### ----------- SIR2 w/ variable susceptibility (300 REPS) -----------  ###### 
+###### ----------- Also algorithm to account for single component -----------  ###### 
 # graphs from first set of simulations -- run if needed
+
 rs <- c(0, 0.3, 0.6, 0.9)
 ns <- 1e3
 reps <- 1:300
@@ -183,13 +180,11 @@ alpha <- c(1, 1.25, 1.5, 1.75)
 vars <- expand.grid(r=rs, n=ns, rep=reps, tau=tau, alpha=alpha)
 
 res <- data.frame(size=NA, rep=NA, tau=NA, alph=NA,
-                  degAssort=NA, clustering=NA, pathLen=NA, 
+                  degAssort=NA, clustering=NA, pathLen=NA, n_components=NA,
                   r=NA, q=NA, 
                   time_steps=NA, peak_size=NA, 
                   peak_time=NA, tot_inf=NA, 
                   prev_1=NA, prev_2=NA, prev_ratio=NA)
-
-sims <- list()
 
 setwd("~/Documents/phd/research-projects/miller-tb-assortativity/analysis/simulations-rewiring")
 
@@ -201,13 +196,11 @@ for(i in 1:nrow(vars)){
   tau=vars[i, "tau"]
   alph=vars[i, "alpha"]
   
-  repg <- rep %% 100 
-  
   ## Network data ###
-  g <- read.graph(paste0("networks/G_",
+  g <- read.graph(paste0("networks2/G_",
                          r, "N",
                          s, "rep",
-                         repg, ".graphml"),
+                         rep, ".graphml"),
                   format = "graphml")
   
   res[i, "r"] <- r
@@ -217,6 +210,7 @@ for(i in 1:nrow(vars)){
   res[i, "alph"] <- alph
   res[i, "degAssort"] <- assortativity_degree(g, directed = FALSE)
   res[i, "clustering"] <- transitivity(g)
+  res[i, "n_components"] <- count_components(g)
   res[i, "pathLen"] <- diameter(g, directed = FALSE)
   res[i, "r_actual"] <- assortativity_nominal(g, types=V(g)$sex, directed=FALSE)
   res[i, "q"] <- modularity(g, membership=V(g)$sex)
@@ -240,8 +234,10 @@ for(i in 1:nrow(vars)){
   nodeOut$node <- as.numeric(nodeOut$node)
   
   nodeOut <- dplyr::arrange(nodeOut, node)
-  nodeOut$sex <- V(g)$sex
+  if(nrow(nodeOut) != length(V(g)$sex)) next 
   
+  nodeOut$sex <- V(g)$sex
+
   # Last value for state information (last time point for all ndoes)
   # simulation variables
   res[i, "time_steps"] <- tail(simOut$t, 1)

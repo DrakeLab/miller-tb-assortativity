@@ -1,79 +1,63 @@
 import networkx as nx
+import random
+import heapq
+import scipy
 import EoN
-import matplotlib.pyplot as plt
-import numpy as np
-import os
-import csv
-from sklearn.model_selection import ParameterGrid
 from collections import defaultdict
+from collections import Counter
+import matplotlib.pyplot as plt
 
+N = 5000
+G = nx.fast_gnp_random_graph(N, 5./(N-1))
 
-os.chdir('/Users/paigemiller/Documents/phd/research-projects/miller-tb-assortativity/analysis/simulations-rewiring')
+# SPONTANEOUS transitions
+H = nx.DiGraph()  
+#I->R recover to R
+H.add_edge('I.f', 'R.f', rate = 1.4)  # female  
+H.add_edge('I.m', 'R.m', rate = 1.4)  # male
 
-###### Parameters for network generation
+#R->S revert to S
+H.add_edge('R.f', 'S.f', rate = 0.2)   # female
+H.add_edge('R.m', 'S.m', rate = 0.2)   # male
 
-N = [1500] #[500, 1000, 1500]
-##R = [-0.9, -0.8, -0.7, -0.6, -0.5,
-##     -0.4, -0.3, -0.2, -0.1,
-##     0,
-##      0.1,  0.2,  0.3,  0.4,  0.5,
-##      0.6,  0.7,  0.8,  0.9]
-R = [0]  # Network assortativity (Can be one of above)
+# INDUCED transitions
+J = nx.DiGraph()    
+J.add_edge(('I.f', 'S.f'), ('I.f', 'I.f'), rate = .25)  # female infects female
+J.add_edge(('I.m', 'S.m'), ('I.m', 'I.m'), rate = 1.75)  # male infects male  
+J.add_edge(('I.m', 'S.f'), ('I.m', 'I.f'), rate = .25)  # male infects female   
+J.add_edge(('I.f', 'S.m'), ('I.f', 'I.m'), rate = 1.75)  # female infects male   
 
-###### Parameters for epidemics on networks
+# make a dictionary to start with 
+IC = defaultdict(lambda: 'S.f')
+for node in range(0, N/2):
+    IC[node] = 'S.f'
 
-Tau = [1] # IS->II
-Gamma = [1.0]   # I->R
-Sigma = [0.2] # R->S
+for node in range(N/2, N):
+    IC[node] = 'S.m'
+    
+for node in range(100):
+    IC[node] = 'I.m'
 
-var_grid = list(ParameterGrid({'N' : N, 'R' : R, 'Tau': Tau, 'Sigma': Sigma,
-                               'Gamma': Gamma}))
+for node in range(200,300):
+    IC[node] = 'I.f'
 
-reps=1 #100 +1
+return_statuses = ('S.f', 'S.m', 'I.f', 'I.m', 'R.f', 'R.m')
 
-for x in range(0, len(var_grid)):
-    for y in range(1,reps+1):
+sim = EoN.Gillespie_Arbitrary(G, H, J, IC, return_statuses, tmax = 30)
 
-        n=var_grid[x]["N"]
-        r=var_grid[x]["R"]
-        tau=var_grid[x]["Tau"]
-        gamma=var_grid[x]["Gamma"]
-        sigma=var_grid[x]["Sigma"]
+###### Plot
 
-        #G = nx.read_graphml(path="networks/G_"+str(r)+"N"+str(n)+"rep"+str(y)+".graphml")
-        G = nx.fast_gnp_random_graph(n, 5./(n-1))
+t= sim[0]
+S=sim[1] + sim[2]
+I=sim[3] + sim[4]
+R=sim[5] + sim[6]
 
-        H = nx.DiGraph()  #DiGraph showing possible transitions that don't require an interaction
-        H.add_edge('I', 'R', rate = gamma)   #I->R
-        H.add_edge('R', 'S', rate = sigma)   #R->S
+plt.plot(t, I, label='Total Infecteds')
+plt.plot(t, sim[3], label = 'Females')
+plt.plot(t, sim[4], label = 'Males')
 
-        J = nx.DiGraph()    #DiGraph showing transition that does require an interaction.
-        J.add_edge(('I', 'S'), ('I', 'I'), rate = tau)  #IS->II
+plt.legend()
+plt.xlabel('$t$')
+plt.ylabel('Infecteds')
+plt.savefig('SIRS-test.png')
 
-        IC = defaultdict(lambda: 'S')
-        for node in range(20):
-            IC[node] = 'I'
-
-        return_statuses = ('S', 'I', 'R')
-
-        t, S, I, R = EoN.Gillespie_Arbitrary(G, H, J, IC, return_statuses, tmax = 50)
-
-        plt.plot(t, S, label = 'Susceptible')
-        plt.plot(t, I, label = 'Infected')
-        plt.plot(t, R, label = 'Recovered')
-        plt.legend()
-        plt.savefig('SIRS/SIRS' + str(y) + '.png')
-        plt.clf()
-
-##        tots = sim.summary()
-##        with open("SIRS/SIRS_R"+str(r)+"_N"+str(n)+"_tau"+str(tau)+"_rep"+str(y)+".csv",'wb') as out:
-##            csv_out=csv.writer(out)
-##            csv_out.writerow(['t','s','i','r'])
-##            csv_out.writerows(zip(*tots))
-##
-##        # extract data on node infection at last time step
-##        res = sim.get_statuses(time=sim.t()[-1])
-##        with open("SIRS/Final_R"+str(r)+"_N"+str(n)+"_tau"+str(tau)+"_rep"+str(y)+".csv",'wb') as csv_file:
-##           writer = csv.writer(csv_file)
-##           for key, value in res.items():
-##               writer.writerow([key, value])

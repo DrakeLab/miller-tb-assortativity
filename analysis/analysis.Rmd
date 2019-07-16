@@ -34,11 +34,10 @@ knitr::opts_chunk$set(cache=TRUE, fig.path = "analysis-figures/",
 
 ```{r dataSetup}
 
-res <- read.csv("simulations-rewiring/SIR/constant_results.csv") # has different size data
+res <- read.csv("simulations-rewiring/SIR/constant_results.csv") 
 
 # rounding r to nearest tenth (will fix in final simulations to save value instead)
 res$roundR <- round(res$r, 1)
-res <- filter(res, "roundR">=0)
 
 ```
 
@@ -273,6 +272,55 @@ outs %>%
 Total outbreak size depends on assortativity and $R_0$ but not susceptibility ratio. For lower $R_0$, increasing assortativity increases outbreak size. For higher $R_0$, increasing assortativity decreases outbreak size. 
 
 \FloatBarrier
+
+
+```{r, eval=FALSE}
+
+## Repeat analysis with 300 simulations
+
+res2 <- read.csv("simulations-rewiring/SIR/variable_results_2.csv")
+res2$roundR <- round(res2$r, 1)
+#res2$R0 <- apply(res2, 1, function(x){get_r0(x["tau"], G)})
+#write.csv(res2, "simulations-rewiring/SIR/variable_results_2.csv") # how I added R0 for now
+
+res2 %>%
+  ggplot(aes(tot_inf)) + 
+  geom_histogram(bins=20) +
+  geom_vline(xintercept=0.05, linetype="dashed", 
+                color = "red", size=.75) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  facet_grid(r~R0) + 
+  xlab("Proportion infected individuals")
+
+outs <- res2 %>%  # filter out outbreaks
+  filter(tot_inf > 0.05) 
+
+n = 300
+
+summ <- outs %>% group_by(R0, r, alph) %>%
+  summarise(mean_prev_ratio=mean(prev_ratio, na.rm=TRUE), se=(sd(prev_ratio, na.rm=TRUE)/sqrt(n)))
+
+summ %>%
+  ggplot(aes(r, mean_prev_ratio, color=factor(alph))) + 
+  geom_point(size=.75) + 
+  geom_hline(yintercept=1.9, linetype="dashed", 
+                color = "red", size=.75) + 
+    geom_hline(yintercept=1, linetype="dashed", 
+                color = "grey", size=.5) + 
+
+  geom_line() + #ylim(0.9,2.1) + 
+  geom_errorbar(aes(ymin=mean_prev_ratio-se, ymax=mean_prev_ratio+se), width=.2,
+                 position=position_dodge(0)) +
+  facet_wrap(.~R0) +
+  labs(x="Assortativity (r)", 
+       y="Prevalence ratio (mean)", color=expression(alpha)) + 
+  theme_gray()
+
+
+```
+
+
+
 
 ## Summary: 
 

@@ -11,6 +11,10 @@ G = nx.read_graphml(path="scalefree_Q0_N1000_d10_m2.graphml")
 initial_size = 100
 gamma = 1.
 tau = 0.1
+sigma=1/10
+
+
+
 t, S, I, R = EoN.fast_SIR(G, tau,
                           gamma,
                           initial_infecteds = [str(x) for x in range(initial_size)])

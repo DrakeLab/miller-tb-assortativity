@@ -3,23 +3,22 @@ library(igraph)
 library(tidyverse)
 library(magrittr)
 
-setwd("~/Documents/phd/research-projects/miller-tb-assortativity/analysis/simulations-rewiring/test-nets")
+setwd("~/Documents/phd/research-projects/miller-tb-assortativity/analysis/simulations-rewiring/networks3")
 
 # function for finding within and between edges
 get_e_type <- function(elRow, types){
   ifelse(diff(types[elRow])==0, "w", "b")
 }
 
-
 # net reps
-reps <- 1
+reps <- 300
 
 # max number of trials to make assorted graphs
 max.iter <- 2000
 
 # sizes
-ns <- 500 #c(5e2, 1e3, 1.5e3)
-rs <- seq(0, 9, by=1)/10
+ns <- 1e3
+rs <- c(0, 0.3, 0.6, 0.9)
 alph <- 0.2
 eps <- 0.035
 
@@ -34,6 +33,7 @@ for(v in 1:nrow(vars)){
     r_f <- vars[v, "assort"]  # desired assort value
     
     # random network
+    set.seed(floor(runif(1)*1000000))
     Gg <- sample_pa(n=s, # number of vertices
                     power=1, # preferential attach.; linear=1
                     m=5, 
@@ -48,81 +48,65 @@ for(v in 1:nrow(vars)){
     
     if(r_f==0) {
       write_graph(Gg,file=paste0("G_", r_f, "N", s, "rep", k, ".graphml"), 
-                                                format="graphml")
+                  format="graphml")
       next()}
-    
+    # calculate current assortativity
     rt <- assortativity_nominal(Gg, types=V(Gg)$sex) # basically 0
-    Gg0 <- Gg # copy for plotting
     
-    # algorithm params
+    # get algorithm params
     alph <- vars[v, "alph"] # re-wire % of between edges at once
     eps <- vars[v, "eps"]  # tolerance level for assortativity
     
     w <- rt     # trials to get to r_f
-
+    
     for(i in 1:max.iter){
       # Rewire edges for assortativity 
       el <- get.edgelist(Gg)
       eTypes <- apply(el, 1, get_e_type, types=V(Gg)$sex)
       
-      if(r_f >0) er <- which(eTypes=="b")
-      if(r_f < 0) er <- which(eTypes=="w")
-      
-      # edges to re-wire
+      # only working with positive assortativity now but can do negative with if(r_f < 0) er <- which(eTypes=="w")
+      er <- which(eTypes=="b")
+
+      # get edges to rewire from sample from between or within edges (depending on r_f)
       er <- sample(er, size=round(alph * length(er)))
+      
+      # get the subgraph of edges to rewire
       GgSub <- subgraph.edges(Gg, eids=er)
       
+      # rewire edges with keeping degree sequence
       GgSub <- get.edgelist(rewire(GgSub, keeping_degseq(niter=50, 
                                                          loops=FALSE)))
+      # insert new edges into graph
       el[er, ] <- GgSub
       
+      # make graph object
       Gg1 <- graph_from_edgelist(el, directed=FALSE)
       
-      # SOMETHING IS MESSED UP HERE
-      # # Check for connectivity of components
-      # if(count_components(Gg1)>1){
-      #   while(count_components(Gg1)>1){
-      #     Gg1 %>%
-      #       rewire(each_edge(p = .1, loops = FALSE))
-      #   }
-      # } 
+      # Make simple graph and replace edges that were not simple
+      m <- length(which(which_multiple(Gg1)))
+      Gg1 <- igraph::simplify(Gg1)
+      Gg1 <- Gg1 + edges(sample(V(Gg1), m*2, replace = FALSE))
       
-      # check for # components and # multiple edges 
-      elFull <- get.edgelist(Gg1)
+      # Check for multiple components and if true, reject this rewiring and try another
+      if(count_components(Gg1)>1) next()
       
-      multiples <- elFull[which(duplicated(elFull)), ]
-      
-      for(j in 1:nrow(multiples)){
-        node1 <- multiples[i, 1]
-        node2 <- multiples[i, 2]
-        
-        neighs1 <- as.numeric(neighbors(Gg1, node1))
-        neighs2 <- as.numeric(neighbors(Gg1, node2))
-        
-        Gg1 %<>% add.edges(c(node1, sample(setdiff(1:vcount(Gg1), neighs1), 1)))
-        Gg1 %<>% add.edges(c(node2, sample(setdiff(1:vcount(Gg1), neighs2), 1)))
-      }
-
-      Gg1 <- igraph::simplify(Gg1, remove.loops=TRUE, remove.multiple=TRUE)
-            
       # Calculate assortativity
       V(Gg1)$sex <- sexes$sex
       rt1 <- assortativity_nominal(Gg1, types=V(Gg1)$sex)  
       
       # If new assortativity is closer to rf, keep new graph and its stats
-      if(r_f >= 0 & rt1 > (r_f + eps)) next # if too pos. assortative -> skip
-      if(r_f < 0 & rt1 < (r_f - eps)) next  # if too neg. assortative -> skip
+      if(r_f >= 0 & rt1 > (r_f + eps)) next() # if too pos. assortative -> skip
+      if(r_f < 0 & rt1 < (r_f - eps)) next()  # if too neg. assortative -> skip
       
       Gg <- Gg1           # else new graph replaces old
       rt <- rt1           # new assortativity coef replaces old
       w <- c(w, rt)       #  document the change in assortativity
       
-      
-
-       if((abs(r_f) - abs(rt)) <= eps) write_graph(simplify(Gg), # remove self edges and mutliple edges
-                                                   file=paste0("G_", r_f, "N", s, "rep", k, ".graphml"),
-                                                   format="graphml")
+      if((abs(r_f) - abs(rt)) <= eps) write_graph(simplify(Gg), # remove self edges and mutliple edges
+                                                  file=paste0("G_", r_f, "N", s, "rep", k, ".graphml"),
+                                                  format="graphml")
     }
   }
 }
+
 
