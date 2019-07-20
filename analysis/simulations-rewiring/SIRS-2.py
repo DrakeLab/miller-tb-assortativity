@@ -7,8 +7,7 @@ from collections import defaultdict
 from collections import Counter
 import matplotlib.pyplot as plt
 
-N = 5000
-G = nx.fast_gnp_random_graph(N, 5./(N-1))
+N = 1000
 
 # SPONTANEOUS transitions
 H = nx.DiGraph()  
@@ -27,10 +26,10 @@ J.add_edge(('I.m', 'S.m'), ('I.m', 'I.m'), rate = 1.75)  # male infects male
 J.add_edge(('I.m', 'S.f'), ('I.m', 'I.f'), rate = .25)  # male infects female   
 J.add_edge(('I.f', 'S.m'), ('I.f', 'I.m'), rate = 1.75)  # female infects male   
 
+G = nx.fast_gnp_random_graph(N, 5./(N-1))
+
 # make a dictionary to start with 
 IC = defaultdict(lambda: 'S.f')
-for node in range(0, N/2):
-    IC[node] = 'S.f'
 
 for node in range(N/2, N):
     IC[node] = 'S.m'

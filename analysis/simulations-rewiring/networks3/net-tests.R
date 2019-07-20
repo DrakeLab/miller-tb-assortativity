@@ -89,8 +89,54 @@ res2$version=2
 #saveRDS(res2, file='v2nets.rds')
 
 
+##### --- 3. Networks with constant mean degree? #####
+
+# networks with correcting for components
+rs <- c(0, 0.3, 0.6, 0.9)
+ns <- 1e3
+reps <- 1:300
+
+vars <- expand.grid(r=rs, n=ns, rep=reps)
+
+res3 <- data.frame(rep=NA, degAssort=NA, clustering=NA, mdeg=NA,
+                   pathLen=NA, nComponents=NA, simple=NA, giant=NA, nodes=NA,edges=NA, 
+                   r=NA, q=NA)
+
+setwd("~/Documents/phd/research-projects/miller-tb-assortativity/analysis/simulations-rewiring")
+
+for(i in 1:nrow(vars)){
+  s=vars[i, "n"]
+  r=vars[i, "r"]
+  rep=vars[i, "rep"]
+  tau=vars[i, "tau"]
+  alph=vars[i, "alpha"]
+  
+  ## Network data ###
+  g <- read.graph(paste0("networks3/G_",
+                         r, "N",
+                         s, "rep",
+                         rep, ".graphml"),
+                  format = "graphml")
+  
+  res3[i, "rep"] <- rep
+  res3[i, "nodes"] <- vcount(g)
+  res3[i, "edges"] <- ecount(g)
+  res3[i, "mdeg"] <- mean(degree(g))
+  res3[i, "simple"] <- is_simple(g)
+  res3[i, "nComponents"] <- count_components(g)
+  res3[i, "giant"] <- max(components(g)$csize, na.rm=TRUE)
+  res3[i, "degAssort"] <- assortativity_degree(g, directed = FALSE)
+  res3[i, "clustering"] <- transitivity(g)
+  res3[i, "pathLen"] <- diameter(g, directed = FALSE)
+  res3[i, "r"] <- assortativity_nominal(g, types=V(g)$sex, directed=FALSE)
+  res3[i, "q"] <- modularity(g, membership=V(g)$sex)
+}
+res3$version=3
+#saveRDS(res3, file='v3nets.rds')
+
+
 ##### --- Comparison of algorithms 
-compareNets <- bind_rows(readRDS("v2nets.rds"), readRDS("v1nets.rds"))%>%
+compareNets <- bind_rows(readRDS("v3nets.rds"), readRDS("v2nets.rds"), readRDS("v1nets.rds"))%>%
   mutate(roundR=round(r, 1))
 
 compareNets %>%
@@ -101,7 +147,7 @@ compareNets %>%
   geom_boxplot() + facet_grid(stat~ version, scales="free_y")
 
 compareNets %>%
-  filter(version==2) %>%
+  filter(version==1, nodes==1000) %>%
   gather(stat, val, c(2:10, 13)) %>%
   ggplot(aes(factor(roundR), val)) + 
   geom_boxplot() + facet_wrap(stat~ ., scales="free_y")

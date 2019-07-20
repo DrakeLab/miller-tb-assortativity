@@ -1,4 +1,7 @@
 ###### SIR-var-sus.py simulates SIR model with variable susceptibility on assorted networks ###### 
+###### This version increases number of replicates and decreases the variability
+###### of assortativity
+###### 480 simulations takes about 5 minutes (100 sims / minute)
 
 import networkx as nx
 import EoN
@@ -14,15 +17,15 @@ os.chdir('/Users/paigemiller/Documents/phd/research-projects/miller-tb-assortati
 ###### Model parameters ######
 
 N = [1000] # Network Size
-R = [0, 0.1, 0.2, 0.3,  0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+R = [0., 0.3, 0.6, 0.9] # Assortativity coefficient (Newman)
 
-Tau = [0.08, 0.12] #[0.16, 0.2, .24, .28, .32, 0.36] # Baseline transmission rate 
+Tau = [0.02, 0.05, 0.08, 0.16, 0.24] # Baseline transmission rate 
 Gamma = 1 # Recovery rate
-Alph = [1, 1.25, 1.5, 1.75, 2] # Ratio of male:female susceptibility
+Alph = [1.0, 1.5, 2.0, 2.5] # Ratio of male:female susceptibility
 
 var_grid = list(ParameterGrid({'N' : N, 'R' : R, 'Tau': Tau, 'Alph': Alph}))
 
-reps = 100 + 1 # Number of reps
+reps = 300 + 1 # Number of reps
 
 ##### Model functions ########
 
@@ -43,14 +46,14 @@ for x in range(0, len(var_grid)):
         tau=var_grid[x]["Tau"]
         alph=var_grid[x]["Alph"]
 
-        G = nx.read_graphml(path="networks/G_"+str(r)+"N"+str(n)+"rep"+str(y)+".graphml")
+        G = nx.read_graphml(path="networks3/G_"+str(r)+"N"+str(n)+"rep"+str(y)+".graphml")
 
         for node in G:
             if G.node[node]['sex'] == 1.0:
-                G.node[node]['sus'] = (2 * alph) / (alph + 1)
+                G.node[node]['sus'] = (2.0 * alph) / (alph + 1.0)
 
             else:
-                G.node[node]['sus'] = 2 / (alph + 1)
+                G.node[node]['sus'] = 2.0 / (alph + 1.0)
 
 
         sim = EoN.fast_nonMarkov_SIR(G, transmission_rate, rec_time_function,
@@ -58,14 +61,14 @@ for x in range(0, len(var_grid)):
                                      return_full_data=True)
 
         tots = sim.summary()
-        with open("SIR/var-suscept/SIR_R"+str(r)+"_N"+str(n)+"_tau"+str(tau)+"_alph"+str(alph)+"_rep"+str(y)+".csv",'wb') as out:
+        with open("SIR/var-suscept-3/SIR_R"+str(r)+"_N"+str(n)+"_tau"+str(tau)+"_alph"+str(alph)+"_rep"+str(y)+".csv",'wb') as out:
             csv_out=csv.writer(out)
             csv_out.writerow(['t','s','i','r'])
             csv_out.writerows(zip(*tots))
 
         # extract data on node infection at last time step
         res = sim.get_statuses(time=sim.t()[-1])
-        with open("SIR/var-suscept/Final_R"+str(r)+"_N"+str(n)+"_tau"+str(tau)+"_alph"+str(alph)+"_rep"+str(y)+".csv",'wb') as csv_file:
+        with open("SIR/var-suscept-3/Final_R"+str(r)+"_N"+str(n)+"_tau"+str(tau)+"_alph"+str(alph)+"_rep"+str(y)+".csv",'wb') as csv_file:
            writer = csv.writer(csv_file)
            for key, value in res.items():
                writer.writerow([key, value])

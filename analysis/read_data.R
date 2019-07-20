@@ -1,8 +1,11 @@
 # Data from epidemics on assorted networks
 library(igraph)
-
+get_r0 <- function(tau, graph){
+  r0=tau * mean(degree(graph)^2 - degree(graph))/mean(degree(graph))
+  return(round(r0, 1))
+}
 ########## TO DO ADD COLUMN TO CALCULATE R0 BEFORE NEXT RUN ######## see line 142 of analysis for example
-
+  
 ###### ----------- SIR w/ constant susceptibility -----------  ###### 
 
 ns <- c(5, 10, 15) * 100
@@ -167,19 +170,18 @@ write.csv(res, "SIR/variable_results.csv") # has initial infected =1; other one 
 
 
 
-###### ----------- SIR2 w/ variable susceptibility (300 REPS) -----------  ###### 
-###### ----------- Also algorithm to account for single component -----------  ###### 
-# graphs from first set of simulations -- run if needed
+
+###### ----------- SIR w/ variable susceptibility (300 REPS) -----------  ###### 
 
 rs <- c(0, 0.3, 0.6, 0.9)
 ns <- 1e3
 reps <- 1:300
-tau <- c(0.08, 0.16, .24, .32)
-alpha <- c(1, 1.25, 1.5, 1.75)
+tau <- c(0.02, 0.05, 0.08, 0.16, .24)
+alpha <- c(1, 1.5, 2, 2.5)
 
 vars <- expand.grid(r=rs, n=ns, rep=reps, tau=tau, alpha=alpha)
 
-res <- data.frame(size=NA, rep=NA, tau=NA, alph=NA,
+res <- data.frame(size=NA, rep=NA, tau=NA, alph=NA, r0=NA, 
                   degAssort=NA, clustering=NA, pathLen=NA, n_components=NA,
                   r=NA, q=NA, 
                   time_steps=NA, peak_size=NA, 
@@ -197,12 +199,12 @@ for(i in 1:nrow(vars)){
   alph=vars[i, "alpha"]
   
   ## Network data ###
-  g <- read.graph(paste0("networks2/G_",
+  g <- read.graph(paste0("networks3/G_",
                          r, "N",
                          s, "rep",
                          rep, ".graphml"),
                   format = "graphml")
-  
+  res[i, "r0"] <- get_r0(tau, g)
   res[i, "r"] <- r
   res[i, "size"] <- s
   res[i, "rep"] <- rep 
@@ -215,16 +217,18 @@ for(i in 1:nrow(vars)){
   res[i, "r_actual"] <- assortativity_nominal(g, types=V(g)$sex, directed=FALSE)
   res[i, "q"] <- modularity(g, membership=V(g)$sex)
   
+  if(alph==2) alph="2.0"
+  alph=as.character(alph)
   
   ### Epidemic data ### 
   # Combined state information (all time)
-  simOut=read.csv(paste0("SIR/var-suscept-2/SIR_R", r, 
+  simOut=read.csv(paste0("SIR/var-suscept-3/SIR_R", r, 
                          "_N", s, 
                          "_tau", tau, "_alph", alph,
                          "_rep", rep, ".csv"))
   
   # Final status of nodes 
-  nodeOut=read.csv(paste0("SIR/var-suscept-2/Final_R", vars[i, "r"],
+  nodeOut=read.csv(paste0("SIR/var-suscept-3/Final_R", vars[i, "r"],
                           "_N", s,
                           "_tau", tau, "_alph", alph,
                           "_rep", rep, ".csv"),
@@ -234,7 +238,7 @@ for(i in 1:nrow(vars)){
   nodeOut$node <- as.numeric(nodeOut$node)
   
   nodeOut <- dplyr::arrange(nodeOut, node)
-  if(nrow(nodeOut) != length(V(g)$sex)) next 
+  #if(nrow(nodeOut) != length(V(g)$sex)) next 
   
   nodeOut$sex <- V(g)$sex
 
@@ -251,9 +255,4 @@ for(i in 1:nrow(vars)){
   
 }
 
-write.csv(res, "SIR/variable_results_2.csv") # has initial infected =1; reps =300
-
-
-
-
-
+write.csv(res, "SIR/variable_results_3.csv") # has initial infected =25; reps =300

@@ -120,14 +120,12 @@ get_r0 <- function(tau, graph){
   return(round(r0, 1))
 }
 
-r0=c(1.5,3,4.5,6)
+r0=c(0.5,1, 1.5,3,4.5,6)
 G <- read_graph("simulations-rewiring/networks/G_0N1500rep1.graphml", format="graphml")
 
 get_tau(r0, G)
 
 get_r0(get_tau(r0, G), G)
-
-get_tau(c(1,2,3,4,5,6), G)
 
 ```
 
@@ -278,12 +276,10 @@ Total outbreak size depends on assortativity and $R_0$ but not susceptibility ra
 
 ## Repeat analysis with 300 simulations
 
-res2 <- read.csv("simulations-rewiring/SIR/variable_results_2.csv")
-res2$roundR <- round(res2$r, 1)
-#res2$R0 <- apply(res2, 1, function(x){get_r0(x["tau"], G)})
-#write.csv(res2, "simulations-rewiring/SIR/variable_results_2.csv") # how I added R0 for now
+res3 <- read.csv("simulations-rewiring/SIR/variable_results_3.csv")
+res3$roundR <- round(res3$r, 1)
 
-res2 %>%
+res3 %>%
   ggplot(aes(tot_inf)) + 
   geom_histogram(bins=20) +
   geom_vline(xintercept=0.05, linetype="dashed", 
@@ -295,7 +291,7 @@ res2 %>%
 outs <- res2 %>%  # filter out outbreaks
   filter(tot_inf > 0.05) 
 
-n = 300
+n = 30
 
 summ <- outs %>% group_by(R0, r, alph) %>%
   summarise(mean_prev_ratio=mean(prev_ratio, na.rm=TRUE), se=(sd(prev_ratio, na.rm=TRUE)/sqrt(n)))
