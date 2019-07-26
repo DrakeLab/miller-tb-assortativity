@@ -1,6 +1,6 @@
 ###### SIR-var-sus.py simulates SIR model with variable susceptibility on assorted networks ###### 
 ###### This version increases number of replicates and decreases the variability
-###### of assortativity
+###### of assortativity (changed the alpha values to match SIRS)
 ###### 480 simulations takes about 5 minutes (100 sims / minute)
 
 import networkx as nx
@@ -21,7 +21,7 @@ R = [0., 0.3, 0.6, 0.9] # Assortativity coefficient (Newman)
 
 Tau = [0.02, 0.05, 0.08, 0.16, 0.24] # Baseline transmission rate 
 Gamma = 1 # Recovery rate
-Alph = [1.0, 1.5, 2.0, 2.5] # Ratio of male:female susceptibility
+Alph = [1.0, 2.0, 3.0, 4.0, 5.0] # Ratio of male:female susceptibility
 
 var_grid = list(ParameterGrid({'N' : N, 'R' : R, 'Tau': Tau, 'Alph': Alph}))
 
@@ -58,17 +58,17 @@ for x in range(0, len(var_grid)):
 
         sim = EoN.fast_nonMarkov_SIR(G, transmission_rate, rec_time_function,
                                      trans_time_args=(tau,), rec_time_args=(Gamma,),
-                                     return_full_data=True)
+                                     return_full_data=True, rho=0.05)
 
         tots = sim.summary()
-        with open("SIR/var-suscept-3/SIR_R"+str(r)+"_N"+str(n)+"_tau"+str(tau)+"_alph"+str(alph)+"_rep"+str(y)+".csv",'wb') as out:
+        with open("SIR/var-suscept-4/SIR_R"+str(r)+"_N"+str(n)+"_tau"+str(tau)+"_alph"+str(alph)+"_rep"+str(y)+".csv",'wb') as out:
             csv_out=csv.writer(out)
             csv_out.writerow(['t','s','i','r'])
             csv_out.writerows(zip(*tots))
 
         # extract data on node infection at last time step
         res = sim.get_statuses(time=sim.t()[-1])
-        with open("SIR/var-suscept-3/Final_R"+str(r)+"_N"+str(n)+"_tau"+str(tau)+"_alph"+str(alph)+"_rep"+str(y)+".csv",'wb') as csv_file:
+        with open("SIR/var-suscept-4/Final_R"+str(r)+"_N"+str(n)+"_tau"+str(tau)+"_alph"+str(alph)+"_rep"+str(y)+".csv",'wb') as csv_file:
            writer = csv.writer(csv_file)
            for key, value in res.items():
                writer.writerow([key, value])

@@ -1,11 +1,11 @@
 # Data from epidemics on assorted networks
 library(igraph)
+
 get_r0 <- function(tau, graph){
   r0=tau * mean(degree(graph)^2 - degree(graph))/mean(degree(graph))
   return(round(r0, 1))
 }
-########## TO DO ADD COLUMN TO CALCULATE R0 BEFORE NEXT RUN ######## see line 142 of analysis for example
-  
+
 ###### ----------- SIR w/ constant susceptibility -----------  ###### 
 
 ns <- c(5, 10, 15) * 100
@@ -176,12 +176,12 @@ write.csv(res, "SIR/variable_results.csv") # has initial infected =1; other one 
 rs <- c(0, 0.3, 0.6, 0.9)
 ns <- 1e3
 reps <- 1:300
-tau <- c(0.02, 0.05, 0.08, 0.16, .24)
-alpha <- c(1, 1.5, 2, 2.5)
+tau <- c(0.08, 0.16, .24, .32)
+alpha <- c(1, 1.25, 1.5, 1.75)
 
 vars <- expand.grid(r=rs, n=ns, rep=reps, tau=tau, alpha=alpha)
 
-res <- data.frame(size=NA, rep=NA, tau=NA, alph=NA, r0=NA, 
+res <- data.frame(size=NA, rep=NA, tau=NA, alph=NA,r0=NA,
                   degAssort=NA, clustering=NA, pathLen=NA, n_components=NA,
                   r=NA, q=NA, 
                   time_steps=NA, peak_size=NA, 
@@ -204,7 +204,8 @@ for(i in 1:nrow(vars)){
                          s, "rep",
                          rep, ".graphml"),
                   format = "graphml")
-  res[i, "r0"] <- get_r0(tau, g)
+  
+  res[i, "r"] <- get_r0(tau, g)
   res[i, "r"] <- r
   res[i, "size"] <- s
   res[i, "rep"] <- rep 
@@ -217,8 +218,6 @@ for(i in 1:nrow(vars)){
   res[i, "r_actual"] <- assortativity_nominal(g, types=V(g)$sex, directed=FALSE)
   res[i, "q"] <- modularity(g, membership=V(g)$sex)
   
-  if(alph==2) alph="2.0"
-  alph=as.character(alph)
   
   ### Epidemic data ### 
   # Combined state information (all time)
@@ -256,3 +255,75 @@ for(i in 1:nrow(vars)){
 }
 
 write.csv(res, "SIR/variable_results_3.csv") # has initial infected =25; reps =300
+
+###### ----------- SIRS w/ variable susceptibility (300 REPS) -----------  ###### 
+
+rs <- c(0, 0.3, 0.6, 0.9)
+ns <- 1e3
+reps <- 1:300
+tau <- c(0.04, 0.08, 0.12, 0.16, 0.20, .24, 0.28, .32, 0.36)
+alpha <- c("1.0", "2.0", "3.0", "4.0", "5.0", "10.0")
+
+vars <- expand.grid(r=rs, n=ns, rep=reps, tau=tau, alpha=alpha)
+
+res <- data.frame(size=NA, rep=NA, tau=NA, alph=NA,r0=NA,
+                  degAssort=NA, clustering=NA, pathLen=NA, n_components=NA,
+                  r=NA, q=NA, 
+                  time_steps=NA, peak_size=NA, 
+                  peak_time=NA, tot_inf=NA, 
+                  prev_1=NA, prev_2=NA, prev_ratio=NA)
+
+setwd("~/Documents/phd/research-projects/miller-tb-assortativity/analysis/simulations-rewiring")
+
+for(i in 1:nrow(vars)){
+  
+  s=vars[i, "n"]
+  r=vars[i, "r"]
+  rep=vars[i, "rep"] 
+  tau=vars[i, "tau"]
+  alph=as.character(vars[i, "alpha"])
+  
+  ## Network data ###
+  g <- read.graph(paste0("networks3/G_",
+                         r, "N",
+                         s, "rep",
+                         rep, ".graphml"),
+                  format = "graphml")
+  
+  res[i, "r"] <- get_r0(tau, g)
+  res[i, "r"] <- r
+  res[i, "size"] <- s
+  res[i, "rep"] <- rep 
+  res[i, "tau"] <- tau
+  res[i, "alph"] <- alph
+  res[i, "degAssort"] <- assortativity_degree(g, directed = FALSE)
+  res[i, "clustering"] <- transitivity(g)
+  res[i, "n_components"] <- count_components(g)
+  res[i, "pathLen"] <- diameter(g, directed = FALSE)
+  res[i, "r_actual"] <- assortativity_nominal(g, types=V(g)$sex, directed=FALSE)
+  res[i, "q"] <- modularity(g, membership=V(g)$sex)
+  
+  
+  ### Epidemic data ### 
+  # Combined state information (all time): SIRS1 means that it came from my SIRS model (not j miller's)
+  simOut=read.csv(paste0("SIRS/SIRS1_R", r, 
+                         "_N", s, 
+                         "_tau", tau, "_alph", alph,
+                         "_rep", rep, ".csv"))
+  
+  # Last value for state information (last time point for all ndoes)
+  # simulation variables
+  simOut[simOut==Inf] <- NA
+  res[i, "peak_size"] <- max(simOut$I.m + simOut$I.f, na.rm = TRUE) 
+  res[i, "peak_time"] <- simOut$t[which.max(simOut$I.m + simOut$I.f)]
+  res[i, "tot_inf"] <- mean(tail(simOut$I.m + simOut$I.f, 100), na.rm=TRUE)
+  
+  res[i, "prev_1"] <- mean(tail(simOut$I.m, 100)/(s/2), na.rm=TRUE)
+  res[i, "prev_2"] <- mean(tail(simOut$I.f, 100)/(s/2), na.rm=TRUE)
+  res[i, "prev_ratio"] <- res[i, "prev_1"]/res[i, "prev_2"]
+  
+}
+
+write.csv(res, "SIRS/results.csv") # 5% initially infected
+
+

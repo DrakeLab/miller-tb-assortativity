@@ -22,14 +22,15 @@ os.chdir('/Users/paigemiller/Documents/phd/research-projects/miller-tb-assortati
 
 N = [1000] # Network Size
 R = [0, 0.3, 0.6, 0.9] # Assortativity coefficient (Newman)
-Tau = [0.12, 0.16, 0.20, 0.24, 0.28, 0.32, 0.36] #[0.08, 0.16, .24, .32] # Baseline transmission rate 
-Gamma = 0.5 # Recovery rate
-Alph = [1.0, 2.0, 3.0, 4.0, 5.0, 10.0] #[1.0, 1.5, 2.0, 2.5, 5.0, 10.0] # Ratio of male:female susceptibility
-Sigma = 0.1 # Reversion to Susceptible
+Tau = [0.05, 0.15, .25] # Baseline transmission rate 
+Gamma = 1 # Recovery rate
+Alph = [1.0, 2.0, 3.0] # Ratio of male:female susceptibility
+Sigma = [0, 0.1] # Reversion to Susceptible; 0=SIR, sig>0=SIRS
 i0 = 0.05 # proportion initially infected 
-tsteps = 200 # set max time steps to fun model for
+tsteps = 200 # set max time steps to run model for
 
-var_grid = list(ParameterGrid({'N' : N, 'R' : R, 'Tau': Tau, 'Alph': Alph}))
+var_grid = list(ParameterGrid({'N' : N, 'R' : R, 'Tau': Tau, 'Alph': Alph,
+                               'Sigma' : Sigma}))
 
 reps = 300 +1 # Number of reps
 
@@ -38,6 +39,7 @@ for x in range(0, len(var_grid)):
     r=var_grid[x]["R"]
     tau=var_grid[x]["Tau"]
     alph=var_grid[x]["Alph"]
+    sig=var_grid[x]["Sigma"]
 
     ###### Model transitions ######
 
@@ -49,8 +51,8 @@ for x in range(0, len(var_grid)):
     H.add_edge('I.m', 'R.m', rate = Gamma)  # male
 
     #R->S revert to S
-    H.add_edge('R.f', 'S.f', rate = Sigma)   # female
-    H.add_edge('R.m', 'S.m', rate = Sigma)   # male
+    H.add_edge('R.f', 'S.f', rate = sig)   # female
+    H.add_edge('R.m', 'S.m', rate = sig)   # male
 
     # INDUCED transitionsJ
     J = nx.DiGraph()
@@ -64,7 +66,7 @@ for x in range(0, len(var_grid)):
     for y in range(1, reps):
         
         ###### READ GRAPH ######
-
+        
         G = nx.read_graphml(path="networks3/G_"+str(r)+"N"+str(n)+"rep"+str(y)+".graphml")
 
         ###### SET INITIAL CONDITIONS ######
@@ -92,14 +94,14 @@ for x in range(0, len(var_grid)):
         ###### SAVE SIMULATION ######
         
         tots = sim
-        with open("SIRS/SIRS1_R"+str(r)+"_N"+str(n)+"_tau"+str(tau)+"_alph"+str(alph)+"_rep"+str(y)+".csv",'wb') as out:
+        with open("SIRS/SIRS1_R"+str(r)+"_N"+str(n)+"_tau"+str(tau)+"_alph"+str(alph)+"_sig"+str(sig)+"_rep"+str(y)+".csv",'wb') as out:
             csv_out=csv.writer(out)
             csv_out.writerow(['t','S.f','S.m', 'I.f','I.m', 'R.f', 'R.m'])
             csv_out.writerows(zip(*tots))
 
 
 
-###### Test plot ######
+###### Plot
 
 ##t= sim[0]
 ##S=sim[1] + sim[2]

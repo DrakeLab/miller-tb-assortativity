@@ -11,23 +11,19 @@ editor_options:
 ## Research questions:
 
 1. Can sex-assortative mixing lead to male-bias by itself or is sex-specific susceptibility required to explain male-bias?
-2. What are the effects of sex-assortative mixing on disease spread (peak size/time, variation in outbreak size/duration)? 
+2. What are the effects of sex-assortative mixing on outbreak size and duration? 
 
 ```{r setup, include=FALSE, message=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
 
-library(dplyr)
-library(readr)
+library(tidyverse)
 library(magrittr)
-library(tidyr)
 library(igraph)
 library(ggplot2)
-library(cowplot)
-library(plotrix)
 library(knitr)
 library(moments)
 
-knitr::opts_chunk$set(cache=TRUE, fig.path = "analysis-figures/", 
+knitr::opts_chunk$set(fig.path = "analysis-figures/", 
                       warning = FALSE, message=FALSE, echo=FALSE) 
 
 ```
@@ -62,7 +58,7 @@ res %>%
 
 As expected, the relationship between assortativity  and modularity is assortativity = modularity / (1 - expected.prop.within.edges). Where expected proportion of edges within sex is equal to the 1/number of subgroups). 
 
-\FloatBarrier
+\clearpage
 
 ## Network structure:
 
@@ -98,15 +94,15 @@ We see that network structure measured by clustering, degree assortativity, and 
 
 At intermediate levels of assortativity (including level measured in Kampala, r=0.25), the network structure is less affected by rewiring. 
 
-\FloatBarrier
+\clearpage
 
-## Pathogen spread on assorted networks
+## SIR spread on assorted networks (old re-wiring method): 
 
 The male:female case ratio globally is around 1.9 (+-0.6) male cases for each female case. For research question 1, we wondered whether assortativity could generate this level of inequality in TB infection. 
 
 Simulations begin with one randomly chosen initially infected individual. 
 
-```{r, eval=FALSE}
+```{r}
 
 # R0 for SIR MODEL with homogeneous infectiousness, heterogeneous susceptibility is equivalent to discrete markov
 get_tau <- function(r0, graph){
@@ -120,12 +116,13 @@ get_r0 <- function(tau, graph){
   return(round(r0, 1))
 }
 
-r0=c(0.5,1, 1.5,3,4.5,6)
-G <- read_graph("simulations-rewiring/networks/G_0N1500rep1.graphml", format="graphml")
-
-get_tau(r0, G)
-
-get_r0(get_tau(r0, G), G)
+# taus=c(0.02, 0.05, 0.08, 0.16, 0.24)
+# r0=c(0.5,1, 1.5,3,4.5,6)
+G <- read_graph("simulations-rewiring/networks3/G_0N1000rep1.graphml", format="graphml")
+# 
+# get_tau(r0, G)
+# 
+# get_r0(taus, G)
 
 ```
 
@@ -165,7 +162,7 @@ simDf %>%
 
 Starting from one initially infected individual, many simulations die out before becoming outbreaks. Most simulations last around 10 time steps and the peak depends on R0. It seems like more simulations die out at higher levels of assortativity (probably especially if the initially infected is a female and alpha > 1). 
 
-\FloatBarrier
+\clearpage
 
 _Distribution of outbreak sizes across simulations:_
 
@@ -191,7 +188,7 @@ outs <- res %>%  # filter out outbreaks
 
 ```
 
-\FloatBarrier
+\clearpage
 
 _How assortativity and susceptibility affect sex-bias:_
 
@@ -242,7 +239,7 @@ outs %>%
 
 At realistic levels of assortativity (0.1 < r < 3), the amount of sex-bias generated depends on susceptibility differences and transmission rates. Less transmissible pathogens with high male-susceptibility lead to epidemics with significant sex-bias. 
 
-\FloatBarrier
+\clearpage
 
 _How network assortativity affects outbreak size:_
 
@@ -269,15 +266,54 @@ outs %>%
 
 Total outbreak size depends on assortativity and $R_0$ but not susceptibility ratio. For lower $R_0$, increasing assortativity increases outbreak size. For higher $R_0$, increasing assortativity decreases outbreak size. 
 
-\FloatBarrier
+\clearpage
 
+## SIR spread on assorted networks with narrowed parameter range and increased replicates (new re-wiring method):
 
-```{r, eval=FALSE}
+```{r sirTrajectories2, fig.height=6, fig.width=6, fig.cap="Simulated outbreak trajectories (50 replicates shown for each parameter combination) for SIR model. Columns faceted by R0 and rows faceted both by alpha (i.e., ratio of male:female susceptibility) and assortativity (r)."}
 
 ## Repeat analysis with 300 simulations
-
 res3 <- read.csv("simulations-rewiring/SIR/variable_results_3.csv")
 res3$roundR <- round(res3$r, 1)
+
+pvars <- expand.grid(reps=1:50, tau=c(0.05, 0.08, 0.16), alph=c(1,"2.0"), rs=c(0, .3, .6, .9))
+
+simList <- list()
+
+for(i in 1:nrow(pvars)){
+  
+  foo <- pvars[i, ]
+  
+  sim <- read.csv(paste0("simulations-rewiring/SIR/var-suscept-3/SIR_R", foo$rs, 
+                         "_N", 1000, 
+                         "_tau", foo$tau, "_alph", foo$alph,
+                         "_rep", foo$reps, ".csv"))
+  sim$r0 <- get_r0(foo$tau, read_graph("simulations-rewiring/networks3/G_0N1000rep1.graphml", format="graphml"))
+  sim$alph <- foo$alph
+  sim$rep <- foo$reps
+  sim$rs <- foo$rs
+  
+  simList[[i]] <- sim
+}
+
+simDf <- bind_rows(simList)
+  
+simDf %>%
+  ggplot(aes(t, i, color=factor(rep))) + 
+  geom_line() + 
+  facet_grid(factor(rs) ~ alph ~ r0) + 
+  labs(color="Replicate", x="Time", y="Infecteds") + 
+  guides(color=FALSE)
+
+```
+
+
+```{r sirHist, fig.height=6, fig.width=6, fig.cap="Distribution of outbreak sizes (i.e., number of nodes that were infected at the end of 200 time steps) across assortativity (rows) and R0 (columns) values. R0 estimated for SIR model (TBD for SIRS model). Simulations with disease fadeout were excluded for the rest of analysis (fadeout defined as less than 5 % of nodes becoming infected, red dashed line). "}
+
+
+G <- read_graph("simulations-rewiring/networks3/G_0N1000rep1.graphml", format="graphml")
+
+res3$r0 <- get_r0(res3$tau, G)
 
 res3 %>%
   ggplot(aes(tot_inf)) + 
@@ -285,29 +321,33 @@ res3 %>%
   geom_vline(xintercept=0.05, linetype="dashed", 
                 color = "red", size=.75) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  facet_grid(r~R0) + 
+  facet_grid(r~r0) + 
   xlab("Proportion infected individuals")
 
-outs <- res2 %>%  # filter out outbreaks
+```
+
+```{r lineSus2, fig.cap="Male-bias across narrowed parameter range with 300 simulations. Plots faceted by R0. Points and colors show susceptibility ratio between men and women. Networks have 1,000 nodes (fadeout simulations excluded). ", fig.height=6, fig.width=6}
+
+outs <- res3 %>%  # filter out outbreaks
   filter(tot_inf > 0.05) 
 
-n = 30
+n = 300
 
-summ <- outs %>% group_by(R0, r, alph) %>%
+summ <- outs %>% group_by(r0, r, alph) %>%
   summarise(mean_prev_ratio=mean(prev_ratio, na.rm=TRUE), se=(sd(prev_ratio, na.rm=TRUE)/sqrt(n)))
 
 summ %>%
+  filter(r0>1) %>%
   ggplot(aes(r, mean_prev_ratio, color=factor(alph))) + 
   geom_point(size=.75) + 
   geom_hline(yintercept=1.9, linetype="dashed", 
                 color = "red", size=.75) + 
     geom_hline(yintercept=1, linetype="dashed", 
                 color = "grey", size=.5) + 
-
   geom_line() + #ylim(0.9,2.1) + 
   geom_errorbar(aes(ymin=mean_prev_ratio-se, ymax=mean_prev_ratio+se), width=.2,
                  position=position_dodge(0)) +
-  facet_wrap(.~R0) +
+  facet_wrap(.~r0) +
   labs(x="Assortativity (r)", 
        y="Prevalence ratio (mean)", color=expression(alpha)) + 
   theme_gray()
@@ -315,24 +355,148 @@ summ %>%
 
 ```
 
+```{r size2, fig.height=6, fig.width=6, fig.cap="Total proportion of infected nodes across assortativity and susceptibility ratio values. Columns faceted by susceptibility. Rows faceted by estimated R0 (300 replicates, fadeouts excluded)."}
+
+outs %>%
+  filter(r0>1) %>%
+  ggplot(aes(factor(r), tot_inf, color=factor(alph))) + 
+  geom_boxplot() + 
+  facet_grid(r0 ~ alph, scales="free") +
+  labs(color="Susceptibility", x="Assortativity (r)", y= "Outbreak size") +
+    theme_gray() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1), 
+        legend.position = "none")  
+
+# outs %>%
+#   group_by(r, R0) %>% 
+#   summarise(mean_tot_inf=mean(tot_inf, na.rm=TRUE)) %>%
+#   ggplot(aes(factor(r), factor(R0))) + geom_tile(aes(fill=mean_tot_inf)) + 
+#   scale_fill_distiller(palette = "Spectral") +
+#   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+#   labs(fill="Total infected", x="Assortativity (r)", y= expression(R[0]))
+
+```
+
+\clearpage
+
+## SIRS pathogen spread on assorted networks
+
+Simulations start with 5% infected (equal for both male and female nodes). SIRS simulations run for 200 steps. 
+
+```{r sirsTrajectories, fig.height=6, fig.width=6, fig.cap="Simulated SIRS trajectories (5 replicates shown for each parameter combination) for SIRS model. Columns faceted by tau (R0 TBD) and rows faceted both by alpha (i.e., ratio of male:female susceptibility) and assortativity (r)."}
+
+res4 <- read.csv("simulations-rewiring/SIRS/results.csv")
+res4$roundR <- round(res4$r, 1)
+
+res4$r0 <- get_r0(res4$tau, G)
+
+pvars <- expand.grid(reps=1:5, tau=c(0.12, 0.24, 0.36), alph=c("1.0","2.0"), rs=c(0, .3, .6, .9))
+
+simList <- list()
+
+for(i in 1:nrow(pvars)){
+  
+  foo <- pvars[i, ]
+  
+  sim <- read.csv(paste0("simulations-rewiring/SIRS/SIRS1_R", foo$rs, 
+                         "_N", 1000, 
+                         "_tau", foo$tau, "_alph", foo$alph,
+                         "_rep", foo$reps, ".csv"))
+  sim$tau <- foo$tau
+  sim$alph <- foo$alph
+  sim$rep <- foo$reps
+  sim$rs <- foo$rs
+  
+  simList[[i]] <- sim
+}
+
+simDf <- bind_rows(simList) 
+
+simDf$I.tot <- simDf$I.f + simDf$I.m
+
+simDf %>%
+  filter(t >175) %>%
+  ggplot(aes(t, I.tot, color=factor(rep))) + 
+  geom_line() + 
+  facet_grid(factor(rs) ~ alph ~ tau) + 
+  labs(x="Time", y="Infecteds") + 
+  guides(color=FALSE)
+
+```
+
+```{r sirsSex, fig.height=6, fig.width=6, fig.cap="Simulated SIRS model (1 replicate shown). Columns faceted by tau (R0 TBD) and rows faceted both by alpha (i.e., ratio of male:female susceptibility) and assortativity (r). Only final 100 steps shown. "}
+
+simDf %>%
+  select(t, I.f, I.m, tau, alph, rep, rs) %>%
+  filter(t >100, rep==1) %>%
+  gather("sex", "i", 2:3) %>%
+  mutate(sex=gsub("I.", "", sex)) %>%
+  ggplot(aes(t, i, color=factor(sex))) + 
+  geom_line() + 
+  facet_grid(factor(rs) ~ alph ~ tau) + 
+  labs(x="Time", y="Infecteds", color="Sex")
+
+```
+
+```{r sirsHist, fig.height=6, fig.width=6, fig.cap="Distribution of outbreak sizes (i.e., number of nodes that were infected at the end of 200 time steps) across assortativity (rows) and R0 (columns) values. R0 estimated for SIR model (TBD for SIRS model). Simulations with disease fadeout were excluded for the rest of analysis (fadeout defined as less than 5 % of nodes becoming infected, red dashed line). "}
+
+res4 %>%
+  ggplot(aes(tot_inf)) + 
+  geom_histogram(bins=20) +
+  geom_vline(xintercept=0.05, linetype="dashed", 
+                color = "red", size=.75) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  facet_grid(r~tau) + 
+  xlab("Proportion infected individuals")
+
+```
 
 
+```{r lineSusSIRS, fig.cap="Male-bias for SIRS model with 300 simulations. Plots faceted by tau. Points and colors show susceptibility ratio between men and women. Networks have 1,000 nodes (fadeout simulations excluded). ", fig.height=6, fig.width=6}
+
+res4 %>%
+  filter(tau %in% c(0.12, 0.24, 0.36), alph < 4) %>%
+  group_by(tau, r, alph) %>%
+  summarise(mean_prev_ratio=mean(prev_ratio, na.rm=TRUE), se=(sd(prev_ratio, na.rm=TRUE)/sqrt(n))) %>%
+  ggplot(aes(r, mean_prev_ratio, color=factor(alph))) + 
+  geom_point(size=.75) + 
+  geom_hline(yintercept=1.9, linetype="dashed", 
+                color = "red", size=.75) + 
+    geom_hline(yintercept=1, linetype="dashed", 
+                color = "grey", size=.5) + 
+  geom_line() + #ylim(0.9,2.1) + 
+  geom_errorbar(aes(ymin=mean_prev_ratio-se, ymax=mean_prev_ratio+se), width=.2,
+                 position=position_dodge(0)) +
+  facet_wrap(.~tau) +
+  labs(x="Assortativity (r)", 
+       y="Prevalence ratio (mean)", color=expression(alpha)) + 
+  theme_gray()
+
+
+```
+
+\clearpage
 
 ## Summary: 
 
-Realistic levels of sex-assortativity, where same-sex social contacts are more common than within-sex social contact, by itself does not lead to reported levels of male-bias (1.9 +- 0.6). Without increased male-susceptibility, only very high levels of assortativity (r > 0.8) and low transmissibility ($R_0=1.5$) results in a mean prevalence ratio exceeding 1.9. At realistic levels of assortativity (observed in Uganda), $0.1 < r < 0.3$ and low transmissibility, resulting sex-bias varied widely but rarely exceeded 1.5. There are many caveats to these results but at face value, it seems like sex-assortativity by itself cannot explain sex-bias in TB. 
+For the SIR model, realistic levels of sex-assortativity, where same-sex social contacts are more common than within-sex social contact, are insufficient to explain observed levels of male-bias (1.9 +- 0.6). Only very high levels of assortativity (r > 0.8) and low transmissibility ($R_0=1.5$) results in a mean prevalence ratio exceeding 1.9. At realistic levels of assortativity (observed in Uganda), $0.1 < r < 0.3$ and low transmissibility, resulting sex-bias varied widely but rarely exceeded 1.5. There are many caveats to these results but at face value, it seems like sex-assortativity by itself cannot explain sex-bias using SIR models for TB. 
 
-Male-susceptibility was incorporated by increasing the probability that male nodes would become infected given they have an infected neighbor by a specified ratio (but holding overall susceptibility of the network constant). As expected incorporating male-susceptibility increased male-bias. For less transmissible pathogens, the increase in sex-bias was more pronounced. Adding in male-susceptibility led to realistic levels of male-bias for some parameter combinations. For example, sex-bias approached realistic levels when $R_0=1.5$, male:female susceptibility exceeded 1.5, and networks had realistic levels of assortativity. However, for more transmissible pathogens, assortativity and male-susceptibility had a smaller impact on sex-bias. 
 
-Sex-assortative mixing and pathogen transmissibility affected how many nodes became infected. For less transmissible pathogens, increasing assortativity increased the total number of nodes infected from around 15% to around 30% (e.g., for $R_0=1.5, \alpha=1)$. In contrast, for more transmissible pathogens, more assortativity decreased the total number of nodes infected from around 85% to around 70% (e.g., for $R_0=6.7, \alpha=1)$. 
+
+Male-susceptibility was incorporated by increasing the probability that male nodes would become infected given they have an infected neighbor by a specified ratio (but holding overall susceptibility of the network constant). As expected, male-susceptibility increased male-bias. For less transmissible pathogens, the increase in sex-bias was more pronounced than for more transmissible pathogens. Adding in male-susceptibility led to realistic levels of male-bias for some parameter combinations. For example, sex-bias approached realistic levels when $R_0=1.5$, male:female susceptibility exceeded 2, and networks had realistic levels of assortativity. However, for more transmissible pathogens, assortativity and male-susceptibility had a smaller impact on sex-bias. 
+
+Sex-assortative mixing and pathogen transmissibility affected how many nodes became infected. For less transmissible pathogens, increasing assortativity increased the total number of nodes infected from around 15% to around 25% (e.g., for $R_0=1.5, \alpha=1)$. In contrast, for more transmissible pathogens, more assortativity decreased the total number of nodes infected from around 75% to around 65% (e.g., for $R_0=4.5, \alpha=1)$. 
 
 _Next steps:_
 
-* Develop a network model with "demographics" (SIRS or something more advanced)
-* Repeat analysis with small-world networks
+* Figure out R0 for SIRS (re-run with new tau values, look at outbreak histogram)
+* Use same $\alpha$ range for SIR model as SIRS model
+* SIRS model can be modified to SIR model so that all simulations generated w/ 1 script 
+* Repeat analysis with small-world networks or another type of network? 
 
 _Limitations:_ 
 
 * Lots of fade-outs for low R0 simulations (perhaps don't save fadout simulations)
 * Potential bias (clustering, path length, degree assortativity) introduced by the rewiring algorithm at high levels of assortativity
+* R0 unclear for 
 
