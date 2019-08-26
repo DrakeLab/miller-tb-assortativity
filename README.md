@@ -6,9 +6,9 @@ output: pdf_document
 ---
 
 # PROTOCOL FOR: 
-# Isolating the sources of sex disparities in TB prevalence among men: A modeling study
+# Sex-assortative contact patterns and male-bias of Tuberculosis
 
-_Last updated: July 26, 2018_
+_Last updated: August 26, 2019_
 
 ## Authors: 
 
@@ -23,7 +23,7 @@ Male-bias in TB case reports is thought to be due to sex-specific differences in
 
 The effects of assortativity (i.e., modularity) epidemic dynamics (e.g., total outbreak size or equilibrium prevalence) have been studied with math models. Results indicate that the effect of assortativity depends on assumptions about recovery and supply of susceptible individuals (SIR, SIS) as well as the distribution of subgroup size. In SIR systems, the total outbreak size of diseases with SIR dynamics decrease with increasing assortativity, perhaps due to a build-up of recovered nodes within-subgroups and transmission bottlenecks between subgroups (Nadini 2018). However, very high assortativity may be required to produce this "protective" effect of assortativity (Salathe & Jones 2015, Sah et al. 2017). In contrast, for SIS processes, infected nodes return to susceptible nodes and a build-up of recovered nodes does not occur, resulting in intensely connected subgroups which increase the equilibrium prevalence of infection (Nandini 2018). Subgroup size also affects disease spread: networks with larger subgroups increase epidemic size when compared with networks with constant subgroup size (Sah et al. 2017). The number of subgroups also affects how assortativity relates to outbreak size: outbreak size on less fragmented (fewer subgroups) networks are not affected by assortativity but outbreak size on more fragmented networks increases with assortativity (Sah et al. 2017). Most prior studies have focused on networks with multiple (in the range of 10 to 1000, Sah et al. 2017), highly connected subgroups. For our purposes, an open question remains about how disease spreads within lightly assorted networks with two subgroups (i.e., men and women) which potentially vary in their susceptibility to infection (i.e., are men "supersusceptibles", Kraft 2015). 
 
-We wondered whether sex-assortativity in social networks could contribute to male-bias or if previously described differences in susceptibility between the sexes are necessary to explain male-bias. In addition, we compare how assortativity changes infection processes in SIR and SIRS models. SIRS models have the ability to capture the persistance of TB in endemic areas. 
+In this project, we will investigate whether sex-assortativity in social networks can contribute to male-bias or sex-specific differences in susceptibility to infection are necessary to explain male-bias. In addition, we will compare how assortativity changes epidemic trajectories in SIR and SIRS models. SIRS models have the ability to capture the persistance of TB in endemic areas. 
 
 ### Research questions:
 
@@ -32,11 +32,11 @@ We wondered whether sex-assortativity in social networks could contribute to mal
 
 ### Study design: 
 
-We will examine the effects of sex-assortativity and sex-specific susceptibility on the ratio of male to female cases using SIR and SIRS models of disease spread on simulated networks. In the simulated networks, each node will represent an individual and each link is a connection between individuals that infection can spread. 
+We will examine the effects of sex-assortativity and sex-specific susceptibility on the ratio of male to female cases using SIR and SIRS models of disease spread on synthetic contact networks. In the synthetic contact networks, each node will represent an individual and each link is an interaction between individuals that infection can spread. 
 
 _Network generation:_
 
-Simulated networks will vary in level of sex-assortativity, r, calculated according to Newman's discrete assortativity coefficient (Newman 2003) as  
+To understand how increasing assortativity could change patterns of sex-bias in TB, we will will vary assortativity, r. Assortativity will be calculated according to Newman's discrete assortativity coefficient (Newman 2003) as  
 
 \[ r = \frac{\sum_i{e_{ii}} - \sum_i{(a(i)^2)}}{1-\sum_i{(1-a(i)^2)}}  = \frac{Tr \textbf{E} - ||E^2||}{1 - ||E^2||}\]
 
@@ -71,20 +71,20 @@ Table: Network parameters. Parameter range will be extended for publication.
 
 _Models of disease transmission:_ 
 
-An infection spreads along an edge at probability depending on the baseline transmission rate, $\tau$, the susceptibility of the target node, and the duration of infection, T: $p(T)=1-e^{- \tau \sigma T}$. Infecteds recover at exponentially distributed recovery rate $\gamma$ and revert to susceptible at exponentially distributed recovery rate $\delta$ (set to 0 for SIR model). Parameter values for models are given in Table 2. 
+An infection spreads along an edge at probability depending on the baseline transmission rate, $\tau$, the susceptibility of the target node, and the duration of infection, T: $p(T)=1-e^{- \tau \sigma T}$. Infected individuals recover at an exponentially distributed recovery rate $\gamma$ and revert to susceptible at exponentially distributed reversion rate $\delta$ (set to 0 for SIR model). Parameter values for models are given in Table 2. 
 
 | Variable  | Value  | 
 |:-:|:-:|
 | Initial susceptible, $S_0$  |  $N - 0.05 \cdot N$ |
 | Initial infected, $I_0$  |  $0.05 \cdot N$ |
-| Infection rate, $\tau$  |  0.08, 0.12, 0.16, 0.2, .24, .28, .32, 0.36 |
+| Infection rate, $\tau$  |  0.025, 0.045, 0.08, 0.12 |
 | Recovery rate, $\gamma$  |  1 |
 | Reversion rate, $\delta$  |  0, 0.1 |
 | M:F susceptibility ratio, $\alpha$  |  1, 2, 3 |
 
 Table: Disease parameters for models. Parameter range will be extended for publication. 
 
-Models will assume a non-Markovian process at first because the transmission rate will vary depending on susceptibility of each node. Once susceptibility is assigned, the process can be treated as Markovian (see Kiss, Miller, and Simon, page 224) and will be implemented with a Gillespie algorithm. Node susceptibility $\sigma$ will alter the transmission rate towards the target node as follows: 
+Models will assume a non-Markovian process at first because the transmission rate will vary depending on susceptibility of each node. Once susceptibility is assigned, the process can be treated as Markovian (see Kiss, Miller, and Simon, page 224) and will be implemented with an event-based algorithm. Node susceptibility $\sigma$ will alter the transmission rate towards the target node as follows: 
 
 \[ \sigma_f = \frac{2}{\alpha + 1} \]
 \[ \sigma_m = \frac{2 \alpha}{\alpha + 1} \]
@@ -96,7 +96,7 @@ where f and m represent female and male nodes and $\alpha$ represents the suscep
 
 so that the average susceptibility modifier is 1 and is independent of $R_0$ (Kiss, Miller, & Simon 2017). 
 
-Parameters for $\tau$ were identified with the following analytical expression for $R_0$ in a continuous-time Markov  model (see Kiss, Miller, and Simon, page 221): 
+Parameters for $\tau$ were identified with the following analytical expression for $R_0$ in a continuous-time Markov model for SIR diseases (see Kiss, Miller, and Simon, page 221): 
 
 \[ \frac{\tau}{\tau + \gamma} \frac{<K^2 - K>}{<K>} > 1  \]
 
@@ -132,9 +132,9 @@ _Disease spread:_
 * X Write script for SIRS model with variable susceptibility 
 * X Run pilot of SIRS model with variable susceptibility (n=100)
 * X Run analysis of SIR model with limited parameter range and more reps (n=300)
-* Write script for SIR and SIRS models for more comparative analysis (n=300)
-* Analyze results for SIR and SIRS comparative analysis
-* Write up analysis with variable susceptibility
+* X Write script for SIR and SIRS models for more comparative analysis (n=300)
+* X Analyze results for SIR and SIRS comparative analysis
+* X Write up analysis with variable susceptibility
 * Understand and relate results to Salathe and Sah research 
 
 ### Important background papers: 

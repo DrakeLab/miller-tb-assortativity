@@ -1,6 +1,7 @@
 ###### SIRS-1.py simulates SIRS model with variable susceptibility on assorted networks ###### 
 ###### Version 1 uses SEPARATE compartments for females and males ###### 
 ###### Version 2 uses Joel Miller's approach ###### 
+###### Current version takes roughly 17 hours ######
 
 import networkx as nx
 import EoN
@@ -22,10 +23,10 @@ os.chdir('/Users/paigemiller/Documents/phd/research-projects/miller-tb-assortati
 
 N = [1000] # Network Size
 R = [0, 0.3, 0.6, 0.9] # Assortativity coefficient (Newman)
-Tau = [0.05, 0.15, .25] # Baseline transmission rate 
-Gamma = 1 # Recovery rate
+Tau = [0.025, 0.045, 0.08, 0.12] # Baseline transmission rate 
+Gamma = 0.5 # Recovery rate
 Alph = [1.0, 2.0, 3.0] # Ratio of male:female susceptibility
-Sigma = [0, 0.1] # Reversion to Susceptible; 0=SIR, sig>0=SIRS
+Sigma = [0, 0.1, 0.2] # Reversion to Susceptible; 0=SIR, sig>0=SIRS
 i0 = 0.05 # proportion initially infected 
 tsteps = 200 # set max time steps to run model for
 
@@ -94,7 +95,7 @@ for x in range(0, len(var_grid)):
         ###### SAVE SIMULATION ######
         
         tots = sim
-        with open("SIRS/SIRS1_R"+str(r)+"_N"+str(n)+"_tau"+str(tau)+"_alph"+str(alph)+"_sig"+str(sig)+"_rep"+str(y)+".csv",'wb') as out:
+        with open("SIRS/SIRS2_R"+str(r)+"_N"+str(n)+"_tau"+str(tau)+"_alph"+str(alph)+"_sig"+str(sig)+"_rep"+str(y)+".csv",'wb') as out:
             csv_out=csv.writer(out)
             csv_out.writerow(['t','S.f','S.m', 'I.f','I.m', 'R.f', 'R.m'])
             csv_out.writerows(zip(*tots))
