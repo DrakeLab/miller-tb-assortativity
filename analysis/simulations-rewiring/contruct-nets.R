@@ -102,7 +102,7 @@ for(v in 1:nrow(vars)){
       rt <- rt1           # new assortativity coef replaces old
       w <- c(w, rt)       #  document the change in assortativity
       
-      if((abs(r_f) - abs(rt)) <= eps) write_graph(simplify(Gg), # remove self edges and mutliple edges
+      if((abs(r_f) - abs(rt)) <= eps) write_graph(igraph::simplify(Gg), # remove self edges and mutliple edges
                                                   file=paste0("G_", r_f, "N", s, "rep", k, ".graphml"),
                                                   format="graphml")
     }

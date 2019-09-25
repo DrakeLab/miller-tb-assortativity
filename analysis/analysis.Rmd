@@ -1,7 +1,7 @@
 ---
 title: "Analysis: Network structure and TB transmission"
 author: "Paige Miller"
-date: "Summer 2019"
+date: "Fall 2019"
 output: pdf_document
 header-includes: \usepackage[section]{placeins}
 editor_options: 
@@ -36,19 +36,15 @@ Because modularity (Q) is a common network statistic when measuring community st
 
 ```{r dataSetup1}
 
-res <- read.csv("simulations-rewiring/SIR/constant_results.csv") 
-
-# rounding r to nearest tenth (will fix in final simulations to save value instead)
-res$roundR <- round(res$r, 1)
+res <- read.csv("simulations-rewiring/SIRS/results-combined2.csv") 
 
 ```
 
 ```{r commMeasures, fig.height=2.5, fig.width=6, fig.cap="The relationship between common measures of community structure estimated for synthetic networks of varying sizes. Columns faceted by network size. "}
 
 res %>%
-  ggplot(aes(r, q, color=factor(size))) + 
+  ggplot(aes(r_actual, q, color=factor(r))) + 
   geom_point() + 
-  facet_wrap(.~size) + 
   xlab("Assortativity (r)") + ylab("Modularity (Q)") +
   theme_gray() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1),
@@ -56,7 +52,7 @@ res %>%
 
 ```
 
-As expected, the relationship between assortativity  and modularity is assortativity = modularity / (1 - expected.prop.within.edges). Where expected proportion of edges within sex is equal to the 1/number of subgroups). 
+As expected, the relationship between assortativity  and modularity is assortativity = modularity / (1 - expected.prop.within.edges). Where expected proportion of edges within sex is equal to the 1/number of subgroups). At higher levels of assortativity, this relationship with modularity seems to break down slightly. 
 
 \clearpage
 
@@ -79,9 +75,9 @@ _How rewiring algorithm changes network structure:_
 ```{r structure, fig.height=2.5, fig.width=6, fig.cap="Measures of network structure relevant to disease spread are affected by the re-wiring process used to vary sex-assortativity. Columns faceted by network statistic. Colors show network size. Boxplots show median and IQR of 100 replicates at each size and assortativity level.  "}
 
 res %>%
-  select(roundR, size, degAssort, clustering, pathLen) %>%
+  select(r, size, degAssort, clustering, pathLen) %>%
   gather("stat", "val", 3:5) %>%
-  ggplot(aes(factor(roundR), val, color=factor(size))) + 
+  ggplot(aes(factor(r), val, color=factor(r))) + 
   geom_boxplot() + 
   facet_wrap(stat ~., scales="free_y") + 
   labs(color="Network size", x="Assortativity (r)", y= " ") +
@@ -104,43 +100,33 @@ get_r0 <- function(tau, graph, gam=0.5){
 }
 
 # Example graph used in simulations
-G <- read_graph("simulations-rewiring/networks3/G_0N1000rep1.graphml", format="graphml")
-
-res4 <- read.csv("simulations-rewiring/SIRS/results-combined2.csv")
-res4$roundR <- round(res4$r, 1)
-
-res4$roundR0 <- get_r0(res4$tau, G)
-
-res4 %<>% filter(!is.infinite(prev_ratio))
-
-
+G <- read_graph("simulations-rewiring/networks3/G_0.3N1000rep1.graphml", format="graphml")
+res$roundR0 <- get_r0(res$tau, G)
 ```
-
 
 \clearpage
 
 ## SIR model: 
 
-
 ```{r sirHist, fig.height=6, fig.width=6, fig.cap="Distribution of outbreak sizes for SIR model (i.e., number of nodes that were infected before infection died out) across assortativity (rows) and tau (columns) values. Simulations begin with 5% (red line) infected individuals.  "}
 
-res4 %>%
+res %>%
   filter(sigma==0) %>%
   ggplot(aes((tot_inf/1000))) + 
   geom_histogram(bins=20) +
   geom_vline(xintercept=0.05, linetype="dashed", 
                 color = "red", size=.75) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  facet_grid(r~tau) + 
+  facet_grid(r~roundR0) + 
   labs(x= "Proportion infected individuals", title="SIR")
 
 ```
 
 
-```{r sirTrajectories, fig.height=6, fig.width=6, fig.cap="Simulated SIR trajectories (5 replicates shown for each parameter combination) for SIRS model. Columns faceted by tau and rows faceted both by male:female susceptibility (1 and 2) and assortativity (r, range 0 to 1)."}
+```{r sirTrajectories, fig.height=6, fig.width=6, fig.cap="Simulated trajectories (5 replicates shown for each parameter combination) for SIRS model. Columns faceted by tau and rows faceted both by male:female susceptibility (1 and 2) and assortativity (r, range 0 to 1)."}
 
-pvars <- expand.grid(reps=1:5, tau=unique(res4$tau), sigma=c(0, 0.1),
-                     alph=c("1.0","2.0"), rs=c(0, .3, .6, .9))
+pvars <- expand.grid(reps=1, tau=unique(res4$tau), sigma=c(0, 0.1),
+                     alph=c("1.0","2.0", "3.0"), rs=c(0, .3, .6, .9))
 
 simList <- list()
 
@@ -175,6 +161,15 @@ simDf %>%
   labs(x="Time", y="Infecteds", title="SIR") + 
   guides(color=FALSE)
 
+# SIR present plot
+# simDf %>%
+#   filter(sigma==0, alph=="1.0") %>%
+#   ggplot(aes(t, I.tot, color=factor(rep))) + 
+#   geom_line() + 
+#   facet_grid(factor(rs) ~ tau) + 
+#   labs(x="Time", y="Infecteds", title="SIR") + 
+#   guides(color=FALSE)
+
 ```
 
 ```{r sirSex, fig.height=6, fig.width=6, fig.cap="Number of infected individuals by sex for SIR model. Columns faceted by tau and rows faceted both by alpha (i.e., ratio of male:female susceptibility) and assortativity (r). "}
@@ -195,10 +190,11 @@ simDf %>%
 ```{r lineSusSIR, fig.cap="Male-bias for SIR model with 300 simulations. Plots faceted by estimated R0. Points and colors show susceptibility ratio between men and women. Networks have 1,000 nodes (fadeout simulations excluded). ", fig.height=6, fig.width=6}
 
 n=300
-res4 %>%
+res %>%
   filter(sigma==0) %>%
   group_by(roundR0, r, alph) %>%
-  summarise(mean_prev_ratio=mean(prev_ratio, na.rm=TRUE), se=(sd(prev_ratio, na.rm=TRUE)/sqrt(n))) %>%
+  summarise(mean_prev_ratio=mean(prev_ratio, na.rm=TRUE), 
+            se=(sd(prev_ratio, na.rm=TRUE)/sqrt(n))) %>%
   ggplot(aes(r, mean_prev_ratio, color=factor(alph))) + 
   geom_point(size=.75) + 
   geom_hline(yintercept=1.9, linetype="dashed", 
@@ -224,14 +220,14 @@ SIRS simulations run for 200 steps.
 
 ```{r sirsHist, fig.height=6, fig.width=6, fig.cap="Distribution of outbreak sizes for SIRS model (i.e., mean size of infected class in last 100 steps of simulation) across assortativity (rows) and tau (columns) values. Simulations begin with 5% (red line) infected individuals.  "}
 
-res4 %>%
+res %>%
   filter(sigma==0.1) %>%
   ggplot(aes((tot_inf/1000))) + 
   geom_histogram(bins=20) +
   geom_vline(xintercept=0.05, linetype="dashed", 
                 color = "red", size=.75) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  facet_grid(r~tau) + 
+  facet_grid(r~roundR0) + 
   labs(x= "Proportion infected individuals", title="SIRS")
 
 ```
@@ -269,7 +265,7 @@ simDf %>%
 ```{r lineSusSIRS, fig.cap="Male-bias for SIRS model with 300 simulations. Plots faceted by estimated R0. Points and colors show susceptibility ratio between men and women. Networks have 1,000 nodes (fadeout simulations excluded). Prevalence ratio was calculated as the mean prevalence for each sex from 100 to 200. Only simulations that lasted until 200 steps included. ", fig.height=6, fig.width=6}
 
 n=300
-res4 %>%
+res %>%
   filter(sigma==0.1, prev_ratio<25, roundR0>1) %>%
   group_by(roundR0, r, alph) %>%
   summarise(mean_prev_ratio=mean(prev_ratio, na.rm=TRUE), se=(sd(prev_ratio, na.rm=TRUE)/sqrt(n))) %>%

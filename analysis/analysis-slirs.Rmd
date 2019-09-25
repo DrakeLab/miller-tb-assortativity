@@ -1,0 +1,347 @@
+---
+title: "Aex-assortativity, heterogeneity in infection and transmission by sex, and male-bias in TB cases: A simulation study"
+output: pdf_document
+editor_options: 
+  chunk_output_type: console
+header-includes: \usepackage[section]{placeins}
+---
+
+```{r setup, include=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+
+library(dplyr)
+library(readr)
+library(magrittr)
+library(tidyr)
+library(igraph)
+library(ggplot2)
+library(cowplot)
+library(plotrix)
+library(knitr)
+library(colorspace)
+
+knitr::opts_chunk$set(cache=FALSE, fig.path = "assort-nets/", 
+                      warning = FALSE, message=FALSE, echo=FALSE, fig.height =6, fig.width = 8) 
+
+```
+
+Can assortativity drive male bias or is heterogeneity in infection and transmission by sex required to explain male-bias?
+
+Preliminary results for simulations of pathogen spreading on contact networks with varying levels of assortativity ($r=0, 0.3, 0.6, 0.9$) and intensities of heterogeneities by sex ($\alpha$). Heterogeneities by sex were susceptibility, infectious period, transmissibility. 
+
+Sensitivity parameters tested: 
+
+1. transmission rate ($\tau=0.04, 0.075, 0.1$, $R_0=1.5, 2.5, 3.5$)
+2. model type (SIR, SLIR, SIRS, SLIRS). SIRS and SLIRS models ran for 200 time units. 
+
+Response variables: 
+
+1. Male-bias: calculated differently for SIR/SLIR and SIRS/SLIRS. For models without recovery: number of male recovered nodes at end of simulation divided by number of female recovered nodes at end of simulation. For models with recovery: average ratio of male cases to female cases in last 100 time units for each simulation. 
+2. Epidemic duration: calculated for SIR/SLIR models as the number of time units before infectious population reached 0.
+3. Total number infected: calculated for SIR/SLIR models as the total number of individuals that became infected before infectious population reached 0. 
+4. Endemic equilibrium: calculated for SIRS/SLIRS models as the average size of the infected population in the last 100 time units. 
+5. Prevalence of latent infection: calculated for SLIRS model as the average size of the latent population in the last 100 time units. 
+
+# Notes
+
+* Pilot study shows results for 50 network replicates
+* One epidemic simulated per network
+
+```{r}
+# load SIMULATION data
+rs <- c(0, 0.3, 0.6, .9) 
+ns <- 1e3
+reps <- 1 #:300
+tau <-c(0.04, 0.075, 0.1)
+delt <- c("100000", "0.25")
+alph <- c("1.0", "1.5", "2.0") 
+psi <- c(0, 0.1) 
+
+pvars <- expand.grid(r=rs, n=ns, rep=reps, tau=tau, psi=psi, delt=delt,
+                    alph=alph, mod=c("s","t","i"))
+
+simList <- list()
+
+for(i in 1:nrow(pvars)){
+  
+  foo <- pvars[i, ]
+  
+  if(foo$alph=="2.0"&foo$mod=="i") foo$alph <- "2"
+  
+  sim <- read.csv(paste0("simulations-rewiring/SLIRS/SLIRS_R", foo$r, 
+                         "_tau", foo$tau, "_del", foo$del,
+                         "_alph_", as.character(foo$mod), as.character(foo$alph),
+                         "_psi", foo$psi,
+                         "_rep", foo$rep, ".csv"))
+  
+  sim <- sim[seq(1, nrow(sim), 20),]
+  sim$I.tot <- sim$I.f + sim$I.m
+  sim$tau <- foo$tau
+  sim$alph <- as.numeric(as.character(foo$alph))
+  sim$mod <- as.character(foo$mod)
+
+  sim$rep <- foo$rep
+  sim$rs <- foo$r
+  sim$del <- foo$del
+  sim$psi <- foo$psi
+  
+  simList[[i]] <- sim
+}
+
+simDf <- bind_rows(simList) 
+
+simDf$modNameLatent <- ifelse(simDf$del==0.25, T, F)
+simDf$modNameRecover <- ifelse(simDf$psi==0.1, T, F)
+simDf$modName <- NA
+simDf$modName[!simDf$modNameLatent&!simDf$modNameRecover] <- "SIR"
+simDf$modName[simDf$modNameLatent&!simDf$modNameRecover] <- "SLIR"
+simDf$modName[!simDf$modNameLatent&simDf$modNameRecover] <- "SIRS"
+simDf$modName[simDf$modNameLatent&simDf$modNameRecover] <- "SLIRS"
+
+# laod simulation ANALYSIS
+res <- read.csv("simulations-rewiring/SLIRS/slirs-prelim.csv")
+
+# model comparison 
+res$modNameLatent <- ifelse(res$delt==0.25, T, F)
+res$modNameRecover <- ifelse(res$psi==0.1, T, F)
+res$modName <- NA
+res$modName[!res$modNameLatent&!res$modNameRecover] <- "SIR"
+res$modName[res$modNameLatent&!res$modNameRecover] <- "SLIR"
+res$modName[!res$modNameLatent&res$modNameRecover] <- "SIRS"
+res$modName[res$modNameLatent&res$modNameRecover] <- "SLIRS"
+
+```
+
+
+```{r SIR-traj, fig.cap="Example SIR trajectories. Vertical panels show baseline transmission rates ($\\tau$) and horizontal panels show network assortativity. Homogeneous infection and transmission rates by sex.  "}
+
+simDf %>%
+  filter(modName=="SIR", alph==1, mod=="i") %>%
+  ggplot(aes(t, I.tot)) + 
+  geom_line() +
+  facet_grid(rs ~ tau) + 
+  labs(x="Time", y="Infecteds", title="SIR") 
+
+```
+
+```{r SLIR-traj, fig.cap="Example SLIR trajectories. Vertical panels show baseline transmission rates ($\\tau$) and horizontal panels show network assortativity. Simulations with no differences in infection between male and female nodes are shown.  Homogeneous infection and transmission rates by sex.  "}
+
+simDf %>%
+  filter(modName=="SLIR", alph==1, mod=="i") %>%
+  ggplot(aes(t, I.tot)) + 
+  geom_line() +
+  facet_grid(rs ~ tau) + 
+  labs(x="Time", y="Infecteds", title="SLIR") 
+
+```
+
+```{r SIRS-traj, fig.cap="Example SIRS trajectories. Vertical panels show baseline transmission rates ($\\tau$) and horizontal panels show network assortativity. Simulations with no differences in infection between male and female nodes are shown.  Homogeneous infection and transmission rates by sex.  "}
+
+simDf %>%
+  filter(modName=="SIRS", alph==1, mod=="i") %>%
+  ggplot(aes(t, I.tot)) + 
+  geom_line() +
+  facet_grid(rs ~ tau) + 
+  labs(x="Time", y="Infecteds", title="SIRS") 
+
+```
+
+```{r SLIRS-traj, fig.cap="Example SLIRS trajectories. Vertical panels show baseline transmission rates ($\\tau$) and horizontal panels show network assortativity. Simulations with no differences in infection between male and female nodes are shown. Homogeneous infection and transmission rates by sex.   "}
+
+simDf %>%
+  filter(modName=="SLIRS", alph==1, mod=="i") %>%
+  ggplot(aes(t, I.tot)) + 
+  geom_line() +
+  facet_grid(rs ~ tau) + 
+  labs(x="Time", y="Infecteds", title="SLIRS") 
+
+```
+
+```{r eval=FALSE}
+
+res %>% 
+  ggplot(aes(x=r0, y=tot_inf, color=factor(psi))) + 
+  geom_point() + geom_smooth(method="lm") +
+  facet_grid(psi ~ delt)
+
+```
+
+
+```{r prev-rat-assort, fig.cap="The effects of assortativity on male-bias across different model types. Vertical panels show ratio $\\tau$. Hortizontal panels show different model types. The red dashed line shows the observed ratio of male:female cases globally and the grey dashed line represents even distribution of cases between men and women. This figure shows how no amount of assortativity will lead to male-bias alone."}
+
+res %>%
+  filter(alph=="1") %>%
+  ggplot(aes(x=as.factor(r), y=prev_ratio, fill=factor(r))) +
+  geom_boxplot() + facet_grid(modName ~ tau) +
+  geom_hline(yintercept=1.9, linetype="dashed", 
+                color = "red", size=.75) +    
+  geom_hline(yintercept=1, linetype="dashed", 
+                color = "grey", size=.5)   +
+
+  scale_fill_discrete_sequential(palette="Sunset") +
+  labs(x="Assortativity", y="Prevalence ratio", fill="Assortativity") +
+  theme_light() +
+  theme(axis.text=element_text(size=18),
+        axis.text.x = element_text(hjust=1, angle=45),
+        axis.title=element_text(size=18,face="bold"),
+        legend.title = element_text(size=18),
+        legend.text = element_text(size=18), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        strip.text = element_text(size = 18, color="Black"))
+
+
+```
+
+
+```{r prev-rat-compare, fig.cap="The effects of assortativity and individual-level variation on male-bias across different model types. Vertical panels show ratio ($\\alpha$) of male:female infectious period (IP), susceptibility (SUS), and transmissibility (TRA). Hortizontal panels show different model types. The red dashed line shows the observed ratio of male:female cases globally and the grey dashed line represents even distribution of cases between men and women. This figure shows how high levels of heterogeneity in infection can lead to high male:female prevalence ratios alone and in conjunction with moderate to high levels of assortativity. Of the three tested heterogeneities (susceptibility SUS, infection period IP, and transmissibility TRA), higher male infectious periods (IP) seems to cause higher ratios of male-bias than the other types of variation (SUS and TRA). In general, assortativity magnifies the effect of individual level variation on male-bias but more so for high levels hetergeneity in infection $\\alpha>1.5$.   "}
+
+res$mod <- factor(res$mod, levels= c("i","s", "t"), labels = c("IP", "SUS", "TRA")) 
+
+res %>%
+  ggplot(aes(x=as.factor(mod), y=prev_ratio, fill=factor(r))) +
+  geom_boxplot() + facet_grid(modName ~ alph, scales="free_y") +
+  scale_fill_discrete_sequential(palette="Sunset") +
+  labs(x="Model assumption", y="Prevalence ratio", fill="Assortativity") +
+  geom_hline(yintercept=1.9, linetype="dashed", 
+                color = "red", size=.75) +    
+  geom_hline(yintercept=1, linetype="dashed", 
+                color = "grey", size=.5)   +
+  theme_light() +
+  theme(axis.text=element_text(size=18),
+        axis.text.x = element_text(hjust=1, angle=45),
+        axis.title=element_text(size=18,face="bold"),
+        legend.title = element_text(size=18),
+        legend.text = element_text(size=18), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        strip.text = element_text(size = 18, color="Black"))
+```
+
+```{r prev-rat-var, eval=FALSE, fig.cap="Standard deviation (SD) of the prevalence ratio across simulations. Vertical panels show ratio ($\\alpha$) of male:female infectious period (IP), susceptibility (SUS), and transmissibility (TRA). Hortizontal panels show different model types. Figure shows that there is more variation in male-bias in SIR and SLIR models than in SIRS and SLIRS models. Also, assortativity and variation in prevalence ratio are positively related. "}
+
+res %>%
+  filter(!is.infinite(prev_ratio)) %>%
+  group_by(modName, mod, alph, r) %>%
+  summarise(varPrevRat=var(prev_ratio, na.rm=TRUE)) %>%
+  ggplot(aes(x=as.factor(mod), y=varPrevRat, fill=factor(r))) +
+  geom_bar(stat = "identity", position=position_dodge()) + facet_grid(modName ~ alph) +
+  scale_fill_discrete_sequential(palette="Sunset") +
+  labs(x="Model assumption", y="SD(Prevalence ratio)", fill="Assortativity") +
+  theme_light() +
+  theme(axis.text=element_text(size=18),
+        axis.text.x = element_text(hjust=1, angle=45),
+        axis.title=element_text(size=18,face="bold"),
+        legend.title = element_text(size=18),
+        legend.text = element_text(size=18), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        strip.text = element_text(size = 18, color="Black"))
+
+```
+
+
+
+```{r duration-compare, fig.cap="Effects of assortativity on epidemic duration. Vertical panels show $\\tau$ and horizontal panels show model type. Figure shows that epidemic duration is only slightly affected by assortativity and in different directions for slow vs. fast spreading pathogens. For fast spreading pathogens, assortativity decreases epidemic duration whereas for slow spreading pathogens, assortativity increases or has no effect on epidemic duration. Only simulations where $\\alpha=1$ are shown (i.e., there are no differences in susceptibility, transmissibility, or infectious period between male and female nodes). "}
+
+res %>%
+  filter(psi==0, alph=="1") %>%
+  ggplot(aes(x=as.factor(r), y=time_steps, fill=factor(r))) +
+  geom_boxplot() + facet_grid(modName ~ tau, scales="free_y") +
+  scale_fill_discrete_sequential(palette="Sunset") +
+  labs(x="Assortativity", y="Epidemic duration", fill="Assortativity") +
+  theme_light() +
+  theme(axis.text=element_text(size=18),
+        axis.text.x = element_text(hjust=1, angle=45),
+        axis.title=element_text(size=18,face="bold"),
+        legend.title = element_text(size=18),
+        legend.text = element_text(size=18), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        strip.text = element_text(size = 18, color="Black"))
+```
+
+```{r infected-compare, fig.cap="Effects of assortativity on equilibrium number of infecteds for SIRS and SLIRS models. Vertical panels show $\\tau$ and horizontal panels show model type. Figure shows that assortativity has different effects on equilibrium infected for fast and slow pathogens. For fast pathogens, assortativity decreases equilibrium infected whereas for slow pathogens assortativity has little effect on equilibrium infected. Only simulations where $\\alpha=1$ are shown (i.e., there are no differences in susceptibility, transmissibility, or infectious period between male and female nodes). "}
+
+res %>%
+  filter(psi==0.1, alph=="1") %>%
+  ggplot(aes(x=as.factor(r), y=tot_inf, fill=factor(r))) +
+  geom_boxplot() + facet_grid(modName ~ tau, scales="free_y") +
+  scale_fill_discrete_sequential(palette="Sunset") +
+  labs(x="Assortativity", y="Equilibrium infected", fill="Assortativity") +
+  theme_light() +
+  theme(axis.text=element_text(size=18),
+        axis.text.x = element_text(hjust=1, angle=45),
+        axis.title=element_text(size=18,face="bold"),
+        legend.title = element_text(size=18),
+        legend.text = element_text(size=18), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        strip.text = element_text(size = 18, color="Black"))
+
+```
+
+```{r infected-compare-alpha, fig.cap="Effects of assortativity and individual-variation on equilibrium number of infecteds for SIRS and SLIRS models. Vertical panels show $\\tau$ and horizontal panels show model type. Figure shows that individual-variation generally decreases equilibrium prevalence faster spreading pathogens but has little effect on slower spreading pathogens. Results are shown for networks with no assortativity ($r=0$). "}
+
+res %>%
+  filter(psi==0.1, r==0) %>%
+  ggplot(aes(x=as.factor(mod), y=tot_inf, fill=factor(alph))) +
+  geom_boxplot() + facet_grid(modName ~ tau, scales = "free_y") +
+  scale_fill_discrete_sequential(palette = "TealGrn") +
+  labs(x="Model assumption", y="Equilibrium prevalence", fill=expression(alpha)) +
+  theme_light() +
+  theme(axis.text=element_text(size=18),
+        axis.text.x = element_text(hjust=1, angle=45),
+        axis.title=element_text(size=18,face="bold"),
+        legend.title = element_text(size=18),
+        legend.text = element_text(size=18), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        strip.text = element_text(size = 18, color="Black"))
+
+
+```
+
+```{r latent-compare, fig.cap="Effects of assortativity and individual-level variation on prevalence ratio and equilibrium latent nodes. Vertical panels show assortativity level, horizontal panels show type of individual-level variation. Points are colored by transmission rate and shapes show ratio of male:female infection heterogeneity. Figure shows that observed levels of male-bias are often met in simulations with heterogeneity in male:female infectious periods  but rarely met with other parameter combinations. Assortativity slightly increases male-bias but male-bias is more associated with heterogeneity in individual-level infection dynamics. Only results from SLIRS model shown. "}
+
+res %>% 
+  filter(delt<1, psi>0, !is.infinite(prev_l)) %>%
+  ggplot(aes(x=prev_l/1000, y=prev_ratio, color=as.factor(tau))) +
+  geom_hline(yintercept=1.9, linetype="dashed", 
+                color = "red", size=.75) +    
+  geom_point(aes(shape=as.factor(alph))) + facet_grid(mod ~ r) + 
+  scale_color_discrete_sequential(palette = "Burg") +
+  labs(x="Equilibrium latent", y="Prevalence ratio", color=expression(tau), shape=expression(alpha)) +
+  theme_light() +
+  theme(axis.text=element_text(size=18),
+        axis.text.x = element_text(hjust=1, angle=45),
+        axis.title=element_text(size=18,face="bold"),
+        legend.title = element_text(size=18),
+        legend.text = element_text(size=18), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        strip.text = element_text(size = 18, color="Black"))
+
+```
+
+
+\FloatBarrier
+
+#### Conclusions so far
+
+For the assortativity project, I've compared the effects of assortativity on prevalence ratio across four models (SIR, SLIR, SIRS, and SLIRS) with and without heterogeneity in infection and transmission by sex. I analyzed the effects of three different heterogeneties by sex (susceptibility, transmissibility, and infectious periods) and at different levels of these heterogeneities. 
+
+Main take-aways at this point: 
+
+* Assortativity doesn't matter as much as heterogeneties in infection and transmission by sex 
+* Assortativity matters a little bit when individual-level differences in infection and transmission are considered
+* Infectious period causes more male-bias than other heterogeneities across model types and transmission levels
+* Different combinations of tested parameters can lead to globally observed level of male-bias but so far, no combinations can lead to realistic level of latent infection which is around 25-30%
+* Epidemic dynamics seem to be only slightly disrupted by network assortativity and heterogeneity in infection by sex. Assortativity has small (negative) effects on epidemic duration for more transmissible pathogens but not for less transmissible pathogens. Similarly, equilibrium prevalence of infection decreases with assortativity for more transmissible pathogens but not for less tranmissible pathogens. Without assortativity, heterogeneity in infection and tranmission can decrease equilibrium prevalence slighlty for more transmissible pathogens, but to a smaller degree for less transmissible pathogens. 
+
+Next steps: 
+
+* Focus on parameterization of the models since parameterization is arbitrary at the moment, focusing on fitting prevalence of latent infection in a population (25-30%)
+* Decide on model structure: should we consider "relapse cases" rather than recovereds "reverting to susceptible" or saying these individuals are new entries into the population
+
+

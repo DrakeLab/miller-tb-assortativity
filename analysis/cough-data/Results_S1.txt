@@ -1,0 +1,59 @@
+#	used	result	pfu/ml	pfu/ml	copy #	copy #	copy #	copy #	Age	Gender	(deg C)	symptoms	vaccine	vaccine	chills	Headache	Fatigue	Cough	throat	aches	volume	volume	volume	PEF	PEF	PEF
+FC01	NIOSH	neg			17.27	25	0	0	18	F	37.2	3	y	n	x		x		x	x	1.93	2.01	1.78	261	233	247
+FC02	NIOSH	neg			0	0	0	0	23	F	37.7	4	n	n	x	x	x	x			0.85	0.75	n/a	208	185	n/a
+FC03	NIOSH	pos A	2.63E+04	none		28	0	0	18	M	38.3	2	n	n	x	x		x	x		1.01	1.36	1.63	211	203	147
+FC04	NIOSH	neg			0	0	7	0	21	M	37.3	1	n	n	x	x		x		x	4.5	4.52	4.57	559	475	492
+FC05	NIOSH	pos A	6.00E+04	none		0	0	0	20	F	37	2	n	n	x	x	x	x	x	x	1	0.84	0.83	163	162	191
+FC06	NIOSH	neg			0	0	0	0	19	F	37.1	3	n	n	x	x	x	x		x	0.96	0.65	1	209	143	232
+FC07	NIOSH	neg			1.3	1	0	0	18	M	36.7	3	n	n			x	x	x		2.84	3.22	3.36	264	323	319
+FC08	NIOSH	neg			224.39	48	21	15	18	F	36.8	2	n	n	x	x		x	x	x	2.38	2.27	2.08	296	410	346
+FC09	NIOSH	neg			79.04	38	25	64	18	M	36.8	2	n	n	x	x	x		x	x	3.39	2.85	3	621	604	585
+FC10	NIOSH	neg			72	46	11	36	19	M	37.8	0	n	n	x	x		x	x	x	2.99	2.47	2.26	426	370	354
+FC11	NIOSH	pos A	8.88E+04	none	3727	134	45	89	20	M	37.7	2	y	n	x	x		x	x		3.83	3.11	3.22	590	666	633
+FC12	NIOSH	neg			153	40	24	17	32	F	36.7	7	y	n	x	x	x		x	x	1.88	2.28	2.25	542	472	496
+FC13	NIOSH	pos A	9.13E+04	2.5	174	62	87	100	19	M	39.2	2	n	n	x	x	x	x	x	x	3.12	2.07	1.85	490	468	506
+FC14	NIOSH	neg			96	50	26	17	22	F	37.2	1	n	n	x	x	x	x	x	x	1.9	2.1	1.81	464	469	407
+FC15	NIOSH	neg			68	15	6	51	20	M	37.2	1	n	n	x	x		x	x	x	3.67	3.42	3.08	577	545	528
+FC16	NIOSH	neg			134	29	0	17	18	F	36.7	2	n	n	x	x	x	x	x	x	2.45	1.84	1.77	350	261	315
+FC17	NIOSH	neg			104	52	19	0	21	M	37.5	6	n	n		x		x	x		1.71	2.13	2.43	273	293	357
+FC18	NIOSH	neg			64	43	39	35	22	M	36.8	3	n	n	x	x	x	x	x	x	4.05	5.48	3.86	574	562	542
+FC19	NIOSH	neg			133	37	43	12	19	M	37.2	2	n	n	x	x	x	x	x		5.19	5.06	5.19	563	651	664
+FC20	NIOSH	neg			227	12	0	395	21	M	37.3	1	n	n	x	x	x	x	x	x	2.49	2.25	2.85	506	516	547
+FC21	NIOSH	pos A	4.38E+03	none	46	40	74	33	18	F	37.3	14	n	n	x	x	x	x	x	x	1.62	1.57	1.02	303	243	193
+FC22	NIOSH	neg			67	17	10	7	24	M	37.8	1	n	n	x	x	x	x		x	3.02	3.5	3.5	482	629	593
+FC23	NIOSH	neg			54	5	10	11	23	M	37.1	1	y	n	x	x	x	x		x	4.19	3.67	4.33	381	334	422
+FC24	NIOSH	neg			57	6	8	11	24	M	38.9	1	n	n	x	x	x	x	x	x	4.24	n/a	4.13	401	n/a	534
+FC25	NIOSH	neg			1	36	18	7	20	M	37.1	1	y	n	x	x	x	x	x	x	2.93	3.48	3.5	543	589	622
+FC26	NIOSH	neg			67	13	16	11	25	F	37.4	1	n	n	x	x	x	x	x	x	1.57	2.44	2.41	328	427	423
+FC27	NIOSH	neg			36	6	5	9	25	M	38.1	0	n	n	x	x	x	x	x	x	1.57	2.35	1.67	384	407	306
+FC28	NIOSH	neg			47	21	9	27	22	M	39.3	2			x	x	x	x	x	x	4.57	4.49	4.2	574	689	708
+FC29	NIOSH	neg			37	17	7	25	20	M	36.7	4	n	n	x		x	x	x	x	3.39	2.69	2.57	474	442	419
+FC30	SKC	neg	none	none	undet	0	n/a	n/a	18	M	37.8	1	n	n	x	x	x	x	x	x	2.72	2.85	3.08	457	483	858
+FC31	NIOSH	neg			9.68	0	0	0	33	F	37.4	4	n	n		x	x	x	x	x	3.16	3.22	3.53	337	412	474
+FC32	SKC	neg	none	none	19.06	0	n/a	n/a	20	M	37.1	2	n	n	x		x	x	x	x	0.53	3.92	3.73	65	496	452
+FC33	NIOSH	neg			24.47	0	0	0	26	M	37	3	y	n	x	x	x			x	3.77	3.81	3.4	684	615	566
+FC34	SKC	neg	none	none	6.12	0	n/a	n/a	18	F	37.1	0	n	n	x	x	x		x	x	0.83	1.68	1.72	128	230	196
+FC35	SKC	neg	93800	none	18.5	1065.82	n/a	n/a	18	F	36.9	1	n	n				x	x	x	1.81	1.83	1.01	310	287	204
+FC36	SKC	neg	none	none	12.99	0	n/a	n/a	21	F	37.3	14	n	n	x	x	x	x	x	x	1.87	1.42	1.52	310	261	242
+FC37	NIOSH	neg			9.82	6	0	1	18	M	36.7	10	n	n		x		x	x	x	2.59	2.99	2.68	568	652	636
+FC38	SKC	neg	none	none	100.05	29.04	n/a	n/a	19	F	37	4	n	n	x	x	x	x	x	x	1	0.96	1.3	196	127	264
+FC39	SKC	neg	23400	none	977.4	185.8	n/a	n/a	18	M	37.5	2	n	n	x	x	x	x		x	2.16	2.89	2.31	469	571	493
+FC40	SKC	neg	none	none	7.8	72.5	n/a	n/a	22	F	37.4	3	n	n	x	x	x	x	x	x	0.65	1.28	1.19	171	284	295
+FC41	SKC	pos A	938000	none	396.2	17.3	n/a	n/a	25	F	37.5	1	n	n	x	x	x	x	x	x	0.88	1.49	n/a	59	105	n/a
+FC42	NIOSH	neg	none	none	2.3	3	10	3	18	M	36.9	1	n	n		x	x		x		3.25	3.3	3.19	539	494	519
+FC43	NIOSH	neg	none	none	4.4	0	0	0	19	M	36.8	14	n	n	x	x	x	x	x		2.5	3.12	3.31	354	596	600
+FC44	NIOSH	neg	none	none	22.3	0	0	0	21	F	37.7	3	n	n	x	x		x	x	x	3.33	4.03	3.92	337	407	376
+FC45	NIOSH	neg	5.88E+02	none	4	0	0	0	22	M	37.7	1	n	n	x	x	x	x	x		2.79	2.32	2.97	381	395	418
+FC46	NIOSH	neg	2.38E+04	none	65.3	8	2	0	21	F	39.3	2	n	n	x		x	x	x	x	1.72	1.69	1.92	194	304	330
+FC47	SKC	pos	438000	15	175.1	29.6	n/a	n/a	19	M	37.4	7	n	n			x	x	x		2.29	2.73	2.89	258	388	463
+FC48	NIOSH	neg			9.4	2	2	0	19	M	37.1	30	n	n		x		x	x		4.16	4.17	4.26	666	913	696
+FC49	NIOSH	neg	none	none	0	0	0	0	25	M	37.6	14	n	n			x	x		x	3.52	3.4	3.43	662	679	687
+FC50	NIOSH	neg	none	none	22.9	0	17	0	21	M	37.3	7	n	n	x			x	x		2.25	3.51	3.38	372	570	593
+FC51	NIOSH	neg	none	none	0	0	0	0	20	M	37	7	n	n				x			2.3	2.76	2.67	208	519	475
+FC52	NIOSH	neg	none	none	0	0	0	0	21	M	36.6	1	n	n		x					4.39	4.67	5.05	463	524	553
+FC53	NIOSH	neg	none	none	0	0	0	0	20	F	36.9	7	y	n				x			2.28	1.9	1.9	345	311	325
+FC54	NIOSH	neg	none	none	0	0	0	0	20	M	36.9	7	n	n		x					5.36	5.02	4.88	563	565	594
+FC55	NIOSH	neg	none	none	0	0	0	0	21	M	36.5	0	n	n							4.21	3.5	3.69	468	538	3.69
+FC56	NIOSH	neg	none	none	0	0	0	0	23	M	37	5	n	n					x		4.03	4.02	4.19	571	682	702
+FC57	NIOSH	neg	none	none	0	0	16	4	19	M	36.9	3	n	n			x			x	3.67	3.92	4.07	614	663	661
+FC58	NIOSH	neg	none	none	0	0	0	0	20	M	36.9	3	n	n			x			x	2.67	2.66	2.73	397	460	462
