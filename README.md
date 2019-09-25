@@ -93,8 +93,8 @@ Other transitions are independent of node sex.  Once infected, latent individual
 | Latent period, $1/\delta$  |  4 |
 | Infectious period, $1/\gamma$  |  2 |
 | Reversion rate, $\psi$  |  0, 0.1 |
-| M:F susceptibility ratio, $\alpha_s$  |  1, 2, 3 |
-| M:F transmissibility ratio, $\alpha_t$  |  1, 2, 3 |
+| M:F susceptibility ratio, $\alpha_s$  |  1, 1.5, 2 |
+| M:F transmissibility ratio, $\alpha_t$  |  1, 1.5, 2 |
 | M:F infectious period ratio, $\alpha_i$  |  1, 1.5, 2 |
 
 Table: Disease parameters for models. Parameter range will be extended for publication. 
@@ -104,7 +104,7 @@ Models will assume a non-Markovian process at first because the transmission rat
 \[ x_f = \frac{2}{\alpha + 1}\]
 \[ x_m = \frac{2 \alpha}{\alpha + 1}\]
 
-where x is either $\tau, \omega, \frac{1}{\gamma}$ and f and m represent female and male nodes and $\alpha$ represents the parameter ratio between males and females. These equations satisfy 
+where x is either $\tau$, or  $\omega$,and f and m represent female and male nodes and $\alpha$ represents the parameter ratio between males and females. These equations satisfy 
 
 \[ 0.5 x_m + 0.5 x_f = 1 \]
 \[ x_m = \alpha x_f \]
@@ -113,12 +113,19 @@ so that the average x is 1.
 
 | Source -> Target  | Overall transmission rate, $\beta$  | 
 |:-:|:-:|
-| M->M  | $\frac{\tau \cdot 4 \cdot \alpha_t \cdot \alpha_s}{(\alpha_t + 1)(\alpha_s + 1)}$ |
-| M->F  | $\frac{\tau \cdot 4 \cdot \alpha_t}               {(\alpha_t + 1)(\alpha_s + 1)}$ |
-| F->M  | $\frac{\tau \cdot 4 \cdot \alpha_s}               {(\alpha_t + 1)(\alpha_s + 1)}$ |
-| F->F  | $\frac{\tau \cdot 4}                              {(\alpha_t + 1)(\alpha_s + 1)}$ |
+| F->F  | $\frac{\tau \cdot 2}                              {(\alpha + 1)}$ |
+| M->M  | $\frac{\tau \cdot 2 \cdot \alpha}                 {(\alpha + 1)}$ |
+| M->F  | $\frac{\tau \cdot 2}                              {(\alpha + 1)}$ |
+| F->M  | $\frac{\tau \cdot 2 \cdot \alpha}               {(\alpha + 1)}$ |
 
-Table: Overall transmission rates by sex for an infected source to a susceptible target.
+Table: Example transmission rates by sex for male susceptibility and transmissibility scenarios. Given these formulas, when men are the targets, rates are higher. The same rate changes will be performed for male transmissibility except when men are the "sources", the rate will be higher. 
+
+Longer male infectious periods will be incorporated in largely the same way, but solving for $\frac{1}{\gamma}$ is slightly different. Instead of solving the above equations, I will use 
+
+\[x=\frac{c(d+1)}{2} \]
+\[y=\frac{c(d+1)}{2\cdot d} \]
+
+where $x=\gamma_f, y=\gamma_m, c=\gamma, d=\alpha$. 
 
 Kiss, Miller, & Simon (2017) suggest $\alpha_s$ is independent of $R_0$ while $\alpha_t$ is not. They don't discuss the relationship between $R_0$ and $\alpha_i$.  
 
@@ -149,15 +156,23 @@ _Disease spread:_
 
 * Effect of assortativity and alternative explanations on probability of an outbreak, outbreak size, duration
 * Variation of results by model type and transmission rate
+* Prevalence of LTBI across simulations
+
+_Model fit:_
+
+* TBD: Prevalence of LTBI and male-bias across parameter combinations
 
 ### Checklist: 
 
 * X Figure out how to code differing infectious periods
 * X Figure out overall transmission rates when transmissibility AND susceptibility vary
-* Modify model script to handle latent class
-* Modify model script to handle male transmissibility and infectious period
-* Write additional analysis code to test for the effects of alternative hypotheses on male-bias
-* Interpret new results
+* X Modify model script to handle latent class
+* X Modify model script to handle male transmissibility and infectious period
+* X Write additional analysis code to test for the effects of alternative hypotheses on male-bias
+* X Interpret new results
+* Repeat analysis with small-world networks? 
+* Focus on parameterization of the models since parameterization is arbitrary at the moment, focusing on fitting prevalence of latent infection in a population (25-30%)
+* Analyze the dual effects of individual heterogeneity on infection? 
 
 ### Important background papers: 
 
@@ -190,3 +205,4 @@ Salathé, Marcel, and James H Jones. 2010. “Dynamics and Control of Diseases i
 * Found little variation in disease spread on networks of different sizes so next stage will focus on networks with 1000 nodes (July 6)
 * Found results to be sensitive to transmission rates, next stages will focus on epidemics with varying transmission rates (July 24)
 * Following committee meeting, no one really pushed for including births and deaths in network. Instead, wanted to include additional hypotheses for male-bias in analysis. Edited protocol to include new parameterization and checklist (Sep 9)
+* Changed protocol to assess simulated prevalence of LTBI in addition to male-bias to identify "best models". 

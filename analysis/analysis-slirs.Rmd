@@ -112,6 +112,49 @@ res$modName[res$modNameLatent&res$modNameRecover] <- "SLIRS"
 
 ```
 
+```{r commMeasures, fig.height=3, fig.width=5, fig.cap="The relationship between common measures of community structure estimated for synthetic networks of varying sizes. Figure shows that assortativity and modularity are correlated when there are only 2 modules."}
+
+res %>%
+  ggplot(aes(r_actual, q, color=factor(r))) + 
+  geom_point() + 
+  theme_gray() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = "none")  +
+  scale_fill_discrete_sequential(palette="Sunset") +
+  labs(x="Assortativity", y="Modularity", color="Assortativity") +
+  theme_light() +
+  theme(axis.text=element_text(size=18),
+        axis.text.x = element_text(hjust=1, angle=45),
+        axis.title=element_text(size=18,face="bold"),
+        legend.title = element_text(size=18),
+        legend.text = element_text(size=18), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        strip.text = element_text(size = 18, color="Black"))
+
+```
+
+```{r net-structure, fig.height=3, fig.width=5, fig.cap="Measures of network structure relevant to disease spread.  Columns faceted by network statistic. Colors show assortativity. Boxplots show median and IQR of 100 replicates at each size and assortativity level. Figure shows how these statistics are changed by the re-wiring process. "}
+
+res %>%
+  select(r, size, degAssort, clustering, pathLen) %>%
+  gather("stat", "val", 3:5) %>%
+  ggplot(aes(factor(r), val, fill=factor(r))) + 
+  geom_boxplot() + 
+  facet_wrap(stat ~., scales="free_y") + 
+  scale_fill_discrete_sequential(palette="Sunset") +
+  labs(x="", y="") +
+  theme_light() +
+  theme(axis.text=element_text(size=18),
+        axis.text.x = element_text(hjust=1, angle=45),
+        axis.title=element_text(size=18,face="bold"),
+        legend.position = "none", 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        strip.text = element_text(size = 18, color="Black"))
+
+```
+
 
 ```{r SIR-traj, fig.cap="Example SIR trajectories. Vertical panels show baseline transmission rates ($\\tau$) and horizontal panels show network assortativity. Homogeneous infection and transmission rates by sex.  "}
 
@@ -339,9 +382,5 @@ Main take-aways at this point:
 * Different combinations of tested parameters can lead to globally observed level of male-bias but so far, no combinations can lead to realistic level of latent infection which is around 25-30%
 * Epidemic dynamics seem to be only slightly disrupted by network assortativity and heterogeneity in infection by sex. Assortativity has small (negative) effects on epidemic duration for more transmissible pathogens but not for less transmissible pathogens. Similarly, equilibrium prevalence of infection decreases with assortativity for more transmissible pathogens but not for less tranmissible pathogens. Without assortativity, heterogeneity in infection and tranmission can decrease equilibrium prevalence slighlty for more transmissible pathogens, but to a smaller degree for less transmissible pathogens. 
 
-Next steps: 
-
-* Focus on parameterization of the models since parameterization is arbitrary at the moment, focusing on fitting prevalence of latent infection in a population (25-30%)
-* Decide on model structure: should we consider "relapse cases" rather than recovereds "reverting to susceptible" or saying these individuals are new entries into the population
 
 
