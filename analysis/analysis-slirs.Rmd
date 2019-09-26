@@ -1,5 +1,5 @@
 ---
-title: "Aex-assortativity, heterogeneity in infection and transmission by sex, and male-bias in TB cases: A simulation study"
+title: "Sex-assortativity, heterogeneity in infection and transmission by sex, and male-bias in TB cases: A simulation study"
 output: pdf_document
 editor_options: 
   chunk_output_type: console
