@@ -171,6 +171,7 @@ _Model fit:_
 * X Write additional analysis code to test for the effects of alternative hypotheses on male-bias
 * X Interpret new results
 * Repeat analysis with small-world networks? 
+* Find analytical predictions for these cases? 
 * Focus on parameterization of the models since parameterization is arbitrary at the moment, focusing on fitting prevalence of latent infection in a population (25-30%)
 * Analyze the dual effects of individual heterogeneity on infection? 
 

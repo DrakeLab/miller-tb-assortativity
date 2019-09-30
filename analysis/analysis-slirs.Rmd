@@ -20,7 +20,7 @@ library(plotrix)
 library(knitr)
 library(colorspace)
 
-knitr::opts_chunk$set(cache=FALSE, fig.path = "assort-nets/", 
+knitr::opts_chunk$set(cache=TRUE, fig.path = "slirs-figs/", 
                       warning = FALSE, message=FALSE, echo=FALSE, fig.height =6, fig.width = 8) 
 
 ```
@@ -200,12 +200,47 @@ simDf %>%
 
 ```
 
-```{r eval=FALSE}
+```{r tauPlot, fig.cap="Total outbreak size as baseline transmission increases in models without reversion to susceptible. Horizontal grey line shows $I(t=0)$ and vertical grey line shows $R_0 >1$ around $\\tau=0.06$ for both SIR and SLIR models with and without assortativity in networks. No individual-level heterogeneity in transmission rates plotted here. ", fig.height=4}
 
-res %>% 
-  ggplot(aes(x=r0, y=tot_inf, color=factor(psi))) + 
-  geom_point() + geom_smooth(method="lm") +
-  facet_grid(psi ~ delt)
+# res %>% 
+#   ggplot(aes(x=r0, y=tot_inf, color=factor(psi))) + 
+#   geom_point() + geom_smooth(method="lm") +
+#   facet_grid(psi ~ delt)
+
+
+resTau <- read.csv("simulations-rewiring/SLIRS/slirs-tau-prelim.csv")
+
+# model comparison 
+resTau$modNameLatent <- ifelse(resTau$delt==0.25, T, F)
+resTau$modNameRecover <- ifelse(resTau$psi==0.1, T, F)
+resTau$modName <- NA
+resTau$modName[!resTau$modNameLatent&!resTau$modNameRecover] <- "SIR"
+resTau$modName[resTau$modNameLatent&!resTau$modNameRecover] <- "SLIR"
+resTau$modName[!resTau$modNameLatent&resTau$modNameRecover] <- "SIRS"
+resTau$modName[resTau$modNameLatent&resTau$modNameRecover] <- "SLIRS"
+
+resTau$modName <- factor(resTau$modName, levels= c("SIR", "SLIR", "SIRS", "SLIRS")) 
+
+resTau %>%
+  filter(psi==0) %>%
+  ggplot(aes(x=tau, y=tot_inf, color=factor(r))) + 
+  geom_hline(yintercept=10, linetype="dashed", 
+                color = "grey", size=.75) +   
+  geom_vline(xintercept=.06, linetype="dashed", 
+                color = "grey", size=.75) + 
+  geom_point() + #geom_smooth() +
+  scale_x_continuous(trans="log10") + 
+  facet_wrap(.~ modName) +
+  labs(x=expression(tau), y="I", color="Assortativity") +
+  theme_light() +
+  theme(axis.text=element_text(size=18),
+        axis.text.x = element_text(hjust=1, angle=45),
+        axis.title=element_text(size=18,face="bold"),
+        legend.title = element_text(size=18),
+        legend.text = element_text(size=18), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        strip.text = element_text(size = 18, color="Black"))
 
 ```
 
