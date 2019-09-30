@@ -120,7 +120,7 @@ res %>%
   theme_gray() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1),
         legend.position = "none")  +
-  scale_fill_discrete_sequential(palette="Sunset") +
+  scale_color_discrete_sequential(palette="Sunset") +
   labs(x="Assortativity", y="Modularity", color="Assortativity") +
   theme_light() +
   theme(axis.text=element_text(size=18),
@@ -130,11 +130,11 @@ res %>%
         legend.text = element_text(size=18), 
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(), 
-        strip.text = element_text(size = 18, color="Black"))
+        strip.text = element_text(size = 18, color="Black")) 
 
 ```
 
-```{r net-structure, fig.height=3, fig.width=5, fig.cap="Measures of network structure relevant to disease spread.  Columns faceted by network statistic. Colors show assortativity. Boxplots show median and IQR of 100 replicates at each size and assortativity level. Figure shows how these statistics are changed by the re-wiring process. "}
+```{r net-structure, fig.height=3, fig.width=5, fig.cap="Measures of network structure relevant to disease spread (Clustering, degree assortativity, and maximum shortest path length between any two nodes).  Columns faceted by network statistic. Colors show assortativity. Boxplots show median and IQR of 100 replicates at each size and assortativity level. Figure shows how these statistics are changed by the re-wiring process. ", fig.width=6}
 
 res %>%
   select(r, size, degAssort, clustering, pathLen) %>%
@@ -229,6 +229,7 @@ resTau %>%
   geom_vline(xintercept=.06, linetype="dashed", 
                 color = "grey", size=.75) + 
   geom_point() + #geom_smooth() +
+  scale_color_manual(values=c("#F3E79AFF",  "#CF63A6FF")) +
   scale_x_continuous(trans="log10") + 
   facet_wrap(.~ modName) +
   labs(x=expression(tau), y="I", color="Assortativity") +
@@ -251,7 +252,7 @@ res %>%
   filter(alph=="1") %>%
   ggplot(aes(x=as.factor(r), y=prev_ratio, fill=factor(r))) +
   geom_boxplot() + facet_grid(modName ~ tau) +
-  geom_hline(yintercept=1.9, linetype="dashed", 
+  geom_hline(yintercept=1.8, linetype="dashed", 
                 color = "red", size=.75) +    
   geom_hline(yintercept=1, linetype="dashed", 
                 color = "grey", size=.5)   +
@@ -272,7 +273,7 @@ res %>%
 ```
 
 
-```{r prev-rat-compare, fig.cap="The effects of assortativity and individual-level variation on male-bias across different model types. Vertical panels show ratio ($\\alpha$) of male:female infectious period (IP), susceptibility (SUS), and transmissibility (TRA). Hortizontal panels show different model types. The red dashed line shows the observed ratio of male:female cases globally and the grey dashed line represents even distribution of cases between men and women. This figure shows how high levels of heterogeneity in infection can lead to high male:female prevalence ratios alone and in conjunction with moderate to high levels of assortativity. Of the three tested heterogeneities (susceptibility SUS, infection period IP, and transmissibility TRA), higher male infectious periods (IP) seems to cause higher ratios of male-bias than the other types of variation (SUS and TRA). In general, assortativity magnifies the effect of individual level variation on male-bias but more so for high levels hetergeneity in infection $\\alpha>1.5$.   "}
+```{r prev-rat-compare, fig.cap="The effects of assortativity and individual-level variation on male-bias across different model types. Vertical panels show ratio ($\\alpha$) of male:female infectious period (IP), susceptibility (SUS), and transmissibility (TRA). Hortizontal panels show different model types. The red dashed line shows the observed ratio of male:female cases globally and the grey dashed line represents even distribution of cases between men and women. This figure shows how high levels of heterogeneity in infection can lead to high male:female prevalence ratios alone and in conjunction with moderate to high levels of assortativity. Of the three tested heterogeneities (susceptibility SUS, infection period IP, and transmissibility TRA), higher male infectious periods (IP) seems to cause higher ratios of male-bias than the other types of variation (SUS and TRA). In general, assortativity magnifies the effect of individual level variation on male-bias but more so for high levels hetergeneity in infection $\\alpha>1.5$. Figure shows aggregated results across tested transmission rates.  "}
 
 res$mod <- factor(res$mod, levels= c("i","s", "t"), labels = c("IP", "SUS", "TRA")) 
 
@@ -281,7 +282,7 @@ res %>%
   geom_boxplot() + facet_grid(modName ~ alph, scales="free_y") +
   scale_fill_discrete_sequential(palette="Sunset") +
   labs(x="Model assumption", y="Prevalence ratio", fill="Assortativity") +
-  geom_hline(yintercept=1.9, linetype="dashed", 
+  geom_hline(yintercept=1.8, linetype="dashed", 
                 color = "red", size=.75) +    
   geom_hline(yintercept=1, linetype="dashed", 
                 color = "grey", size=.5)   +
@@ -339,7 +340,8 @@ res %>%
         strip.text = element_text(size = 18, color="Black"))
 ```
 
-```{r infected-compare, fig.cap="Effects of assortativity on equilibrium number of infecteds for SIRS and SLIRS models. Vertical panels show $\\tau$ and horizontal panels show model type. Figure shows that assortativity has different effects on equilibrium infected for fast and slow pathogens. For fast pathogens, assortativity decreases equilibrium infected whereas for slow pathogens assortativity has little effect on equilibrium infected. Only simulations where $\\alpha=1$ are shown (i.e., there are no differences in susceptibility, transmissibility, or infectious period between male and female nodes). "}
+
+```{r equilibrium-compare, fig.cap="Effects of assortativity on equilibrium number of infecteds for SIRS and SLIRS models. Vertical panels show $\\tau$ and horizontal panels show model type. Figure shows that assortativity has different effects on equilibrium infected for fast and slow pathogens. For fast pathogens, assortativity decreases equilibrium infected whereas for slow pathogens assortativity has little effect on equilibrium infected. Only simulations where $\\alpha=1$ are shown (i.e., there are no differences in susceptibility, transmissibility, or infectious period between male and female nodes). "}
 
 res %>%
   filter(psi==0.1, alph=="1") %>%
@@ -347,6 +349,26 @@ res %>%
   geom_boxplot() + facet_grid(modName ~ tau, scales="free_y") +
   scale_fill_discrete_sequential(palette="Sunset") +
   labs(x="Assortativity", y="Equilibrium infected", fill="Assortativity") +
+  theme_light() +
+  theme(axis.text=element_text(size=18),
+        axis.text.x = element_text(hjust=1, angle=45),
+        axis.title=element_text(size=18,face="bold"),
+        legend.title = element_text(size=18),
+        legend.text = element_text(size=18), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        strip.text = element_text(size = 18, color="Black"))
+
+```
+
+```{r infected-compare, fig.cap="Effects of assortativity on total outbreak size for SIR and SLIR models. Vertical panels show $\\tau$ and horizontal panels show model type. Figure shows that assortativity has different effects on outbreak size for fast and slow pathogens. For fast pathogens, assortativity decreases outbreak size whereas for slow pathogens assortativity has little effect on outbreak size or decreases outbreak size. Only simulations where $\\alpha=1$ are shown (i.e., there are no differences in susceptibility, transmissibility, or infectious period between male and female nodes). "}
+
+res %>%
+  filter(psi==0, alph=="1") %>%
+  ggplot(aes(x=as.factor(r), y=tot_inf, fill=factor(r))) +
+  geom_boxplot() + facet_grid(modName ~ tau, scales="free_y") +
+  scale_fill_discrete_sequential(palette="Sunset") +
+  labs(x="Assortativity", y="Total outbreak size", fill="Assortativity") +
   theme_light() +
   theme(axis.text=element_text(size=18),
         axis.text.x = element_text(hjust=1, angle=45),
@@ -385,7 +407,7 @@ res %>%
 res %>% 
   filter(delt<1, psi>0, !is.infinite(prev_l)) %>%
   ggplot(aes(x=prev_l/1000, y=prev_ratio, color=as.factor(tau))) +
-  geom_hline(yintercept=1.9, linetype="dashed", 
+  geom_hline(yintercept=1.8, linetype="dashed", 
                 color = "red", size=.75) +    
   geom_point(aes(shape=as.factor(alph))) + facet_grid(mod ~ r) + 
   scale_color_discrete_sequential(palette = "Burg") +
