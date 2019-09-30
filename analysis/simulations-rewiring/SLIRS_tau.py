@@ -1,4 +1,4 @@
-###### SLIRS_infper.py simulates SLIRS model with differences btwn M&F infectious period on assorted networks ###### 
+###### SLIRS_tau.py simulates SLIRS model with varying baseline transmission rates to determine R0 across models ###### 
 ###### Current version takes roughly X hours ######
 
 import networkx as nx
@@ -20,22 +20,22 @@ from collections import Counter
 ###### Model parameters ######
 
 N = [1000]           # Network Size
-R = [0, 0.3, 0.6, 0.9]         #, 0.6, 0.9 Assortativity coefficient (Newman)
-Tau = [0.04, 0.075, 0.1]         #  S->L Baseline transmission rate 
+R = [0, 0.6]         #Assortativity coefficient (Newman)
+Tau = [0.0001, 0.001, 0.005, 0.01, 0.015, 0.03, 0.06, 0.12, .24, 0.36]    #  S->L Baseline transmission rate 
 Del = [100000, 1./4.]     # L->I Reactivation rate; 10000=>SIR, del~0=SLIR
 Gam = 1./2.          # I->R Recovery rate
 Psi = [0, 0.1]       # R->S Reversion rate; 0=SIR, sig>0=SIRS
-i0 = 0.05            # proportion initially infected 
+i0 = 0.01            # proportion initially infected 
 tsteps = 200         # set max time steps to run model for
 
 # Male:female differences to explain male bias
-Alph_i = [1.0, 1.5, 2.0]   # Ratio of male:female susceptibility
+Alph_i = [1.0]   # Ratio of male:female susceptibility
 
 var_grid = list(ParameterGrid({'N' : N, 'R' : R, 'Tau': Tau,
                                'Psi' : Psi, 'Del' : Del,
                                'Alph_i': Alph_i}))
 
-reps = 1 + 50 # Number of reps
+reps = 1 + 5 # Number of reps
 
 for x in range(0, len(var_grid)):
     n=var_grid[x]["N"]
@@ -60,8 +60,8 @@ for x in range(0, len(var_grid)):
     H.add_edge('I.m', 'R.m', rate = (Gam * (alph_i + 1))/(2*alph_i))  # male
 
     #R->S revert to S
-    H.add_edge('R.f', 'S.f', rate = psi)   # female
-    H.add_edge('R.m', 'S.m', rate = psi)   # male
+    #H.add_edge('R.f', 'S.f', rate = psi)   # female
+    #H.add_edge('R.m', 'S.m', rate = psi)   # male
 
     #S->I spontaneous infection
     H.add_edge('S.f', 'I.f', rate = psi/10)   # female
@@ -109,7 +109,7 @@ for x in range(0, len(var_grid)):
         ###### SAVE SIMULATION ######
         
         tots = sim
-        with open("SLIRS/SLIRS_R"+str(r)+"_tau"+str(tau)+"_del"+str(delt)+
+        with open("SLIRS/SLIRS_TAU_R"+str(r)+"_tau"+str(tau)+"_del"+str(delt)+
                   "_alph_i"+str(alph_i)+
                   "_psi"+str(psi)+"_rep"+str(y)+".csv",'wb') as out:
             csv_out=csv.writer(out)
@@ -117,21 +117,4 @@ for x in range(0, len(var_grid)):
                               'L.f', 'L.m','I.f',
                               'I.m', 'R.f', 'R.m'])
             csv_out.writerows(zip(*tots))
-
-###### Plot
-
-##t= sim[0]
-##S=sim[1] + sim[2]
-##I=sim[3] + sim[4]
-##R=sim[5] + sim[6]
-##
-##plt.plot(t, I, label='Total Infecteds')
-##plt.plot(t, sim[3], label = 'Females')
-##plt.plot(t, sim[4], label = 'Males')
-##
-##plt.legend()
-##plt.xlabel('$t$')
-##plt.ylabel('Infecteds')
-##plt.savefig('SIRS-test2.png')
-
 
