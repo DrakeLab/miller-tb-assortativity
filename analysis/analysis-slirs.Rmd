@@ -47,6 +47,32 @@ Response variables:
 * Pilot study shows results for 50 network replicates
 * One epidemic simulated per network
 
+```{r nets, fig.cap="A re-wiring algorithm was developed to simulate networks with different levels of assortativity. Figure shows small networks (N=100) with r=0, 0.3, 0.6, and 0.9 from top left to bottom right. Male nodes are shown in blue and female nodes in orange. As assortativity increases, between-sex edges become less common. "}
+
+# colors for assortativity
+assortCols <- c("#F3E79AFF", "#F7A086FF", "#CF63A6FF", "#704D9EFF")
+
+# network plots
+n0 <- read_graph("simulations-rewiring/networks3/G_0N100rep1.graphml", format="graphml")
+n3 <- read_graph("simulations-rewiring/networks3/G_0.3N100rep1.graphml", format="graphml")
+n6 <- read_graph("simulations-rewiring/networks3/G_0.6N100rep1.graphml", format="graphml")
+n9 <- read_graph("simulations-rewiring/networks3/G_0.9N100rep1.graphml", format="graphml")
+
+par(mfrow=c(2,2), mar=c(0,0,0,0), bg="transparent", xpd=TRUE)
+#par(bg = assortCols[1])
+plot(n0, vertex.size=4, vertex.label="", vertex.color=ifelse(V(n0)$sex==1, "black", "white"),  vertex.frame.color=NA, edge.color="grey50")
+#mtext(side=1, line=-2.5, "r=0", col=assortCols[1], at=0.9)
+plot(n3, vertex.size=4, vertex.label="", vertex.color=ifelse(V(n3)$sex==1, "black", "white"), vertex.frame.color=NA, edge.color="grey50")
+#mtext(side=1, line=-1, "r=0.3", col=assortCols[2], at=0.9)
+plot(n6, vertex.size=4, vertex.label="", vertex.color=ifelse(V(n6)$sex==1, "black", "white"), vertex.frame.color=NA, edge.color="grey50")
+#mtext(side=1, line=-1, "r=0.6", col=assortCols[3], at=0.9)
+plot(n9, vertex.size=4, vertex.label="", vertex.color=ifelse(V(n9)$sex==1, "black", "white"), vertex.frame.color=NA, edge.color="grey50")
+#mtext(side=1, line=-1, "r=0.9", col=assortCols[4], at=0.9)
+
+
+```
+
+
 ```{r}
 # load SIMULATION data
 rs <- c(0, 0.3, 0.6, .9) 
@@ -130,7 +156,7 @@ res %>%
         legend.text = element_text(size=18), 
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(), 
-        strip.text = element_text(size = 18, color="Black")) 
+        strip.text = element_text(size = 18, color="Black"))  
 
 ```
 

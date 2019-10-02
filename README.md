@@ -173,7 +173,8 @@ _Model fit:_
 * Repeat analysis with small-world networks? 
 * Find analytical predictions for these cases? 
 * Focus on parameterization of the models since parameterization is arbitrary at the moment, focusing on fitting prevalence of latent infection in a population (25-30%)
-* Analyze the dual effects of individual heterogeneity on infection? 
+* Analyze the combined effects of individual heterogeneity on infection? 
+* Nadini calculated I(infinity) as the "Lifespan" of disease (average time to die out) for SIS. Could do this with SIRS/SLIRS? But they also were more focused on analytical solutions than this paper. 
 
 ### Important background papers: 
 
