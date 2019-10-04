@@ -226,12 +226,8 @@ simDf %>%
 
 ```
 
-```{r tauPlot, fig.cap="Total outbreak size as baseline transmission increases in models without reversion to susceptible. Horizontal grey line shows $I(t=0)$ and vertical grey line shows $R_0 >1$ around $\\tau=0.06$ for both SIR and SLIR models with and without assortativity in networks. No individual-level heterogeneity in transmission rates plotted here. ", fig.height=4}
+```{r tauPlot, fig.cap="Agreement between analytical and numerical solutions. Horizontal grey line shows $I=1$ and vertical grey line shows approximately where $R_0=1$. Results are consistent for SIR and SLIR models. High assortativity increases $R_0$ for larger values of $\\tau$. No individual-level heterogeneity in transmission rates plotted here. ", fig.height=5.5}
 
-# res %>% 
-#   ggplot(aes(x=r0, y=tot_inf, color=factor(psi))) + 
-#   geom_point() + geom_smooth(method="lm") +
-#   facet_grid(psi ~ delt)
 
 
 resTau <- read.csv("simulations-rewiring/SLIRS/slirs-tau-prelim.csv")
@@ -247,18 +243,24 @@ resTau$modName[resTau$modNameLatent&resTau$modNameRecover] <- "SLIRS"
 
 resTau$modName <- factor(resTau$modName, levels= c("SIR", "SLIR", "SIRS", "SLIRS")) 
 
-resTau %>%
-  filter(psi==0) %>%
-  ggplot(aes(x=tau, y=tot_inf, color=factor(r))) + 
-  geom_hline(yintercept=10, linetype="dashed", 
-                color = "grey", size=.75) +   
-  geom_vline(xintercept=.06, linetype="dashed", 
-                color = "grey", size=.75) + 
-  geom_point() + #geom_smooth() +
+resTau %>% 
+  filter(psi==0) %>% 
+  select(tot_inf, r0, tau, modName, r) %>%
+  gather("stat", "val", 1:2) ->foo
+
+foo$stat <- factor(foo$stat, labels= c("R0", "Outbreak size"))
+
+foo %>%
+  ggplot(aes(x=tau, y=val, color=factor(r))) + 
+  geom_vline(xintercept=.03, linetype="dashed", 
+               color = "grey", size=.75) + 
+  geom_hline(yintercept=1, linetype="dashed", 
+               color = "grey", size=.75) + 
+  geom_point () +  
+  facet_grid(stat ~ modName, scales="free_y", labeller=label_value) +
   scale_color_manual(values=c("#F3E79AFF",  "#CF63A6FF")) +
   scale_x_continuous(trans="log10") + 
-  facet_wrap(.~ modName) +
-  labs(x=expression(tau), y="I", color="Assortativity") +
+  labs(x=expression(tau), y="", color="Assortativity") +
   theme_light() +
   theme(axis.text=element_text(size=18),
         axis.text.x = element_text(hjust=1, angle=45),
@@ -268,6 +270,7 @@ resTau %>%
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(), 
         strip.text = element_text(size = 18, color="Black"))
+
 
 ```
 

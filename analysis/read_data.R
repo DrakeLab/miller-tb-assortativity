@@ -4,7 +4,7 @@ library(igraph)
 get_r0 <- function(tau, graph, gam=0.5){
   # function for continous time markov sir model with gamma=1/2
   r0=tau/(tau+gam) * mean(degree(graph)^2 - degree(graph))/mean(degree(graph))
-  return(round(r0, 1))
+  return(r0)
 }
 
 ###### ----------- SIR w/ constant susceptibility -----------  ###### 
@@ -510,7 +510,7 @@ for(i in 1:nrow(vars)){
                          "_alph_", mod, alph,
                          "_psi", psi, 
                          "_rep", rep, ".csv"))
-  res[i, "r0"] <- get_r0(as.numeric(tau), g)
+  res[i, "r0"] <- get_r0(as.numeric(as.character(tau)), g)
   
   # Last value for state information (last time point for all ndoes)
   # simulation variables
