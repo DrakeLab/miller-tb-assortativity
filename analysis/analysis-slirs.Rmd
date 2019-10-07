@@ -142,7 +142,7 @@ res$modName[res$modNameLatent&res$modNameRecover] <- "SLIRS"
 
 res %>%
   ggplot(aes(r_actual, q, color=factor(r))) + 
-  geom_point() + 
+  geom_point (size=3, alpha=.5) +  
   theme_gray() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1),
         legend.position = "none")  +
@@ -181,6 +181,93 @@ res %>%
 
 ```
 
+```{r tauPlot, fig.cap="Agreement between analytical and numerical solutions. Horizontal grey line shows $I=1$ and vertical grey line shows approximately where $R_0=1$. Results are consistent for SIR and SLIR models. High assortativity increases $R_0$ for larger values of $\\tau$ but the opposite is true for final outbreak size. No individual-level heterogeneity in transmission rates plotted here. Other parameters: $$\\gamma=0.5; I_0=.01; \\psi=0, 0.1; \\delta=0.25, 1\\cdot6$ ", fig.height=5.5}
+
+resTau <- read.csv("simulations-rewiring/SLIRS-sensitivity/slirs-tau-prelim.csv")
+
+# model comparison 
+resTau$modNameLatent <- ifelse(resTau$delt==0.25, T, F)
+resTau$modNameRecover <- ifelse(resTau$psi==0.1, T, F)
+resTau$modName <- NA
+resTau$modName[!resTau$modNameLatent&!resTau$modNameRecover] <- "SIR"
+resTau$modName[resTau$modNameLatent&!resTau$modNameRecover] <- "SLIR"
+resTau$modName[!resTau$modNameLatent&resTau$modNameRecover] <- "SIRS"
+resTau$modName[resTau$modNameLatent&resTau$modNameRecover] <- "SLIRS"
+
+resTau$modName <- factor(resTau$modName, levels= c("SIR", "SLIR", "SIRS", "SLIRS")) 
+
+resTau %>% 
+  filter(psi==0) %>% 
+  select(tot_inf, r0, tau, modName, r) %>%
+  gather("stat", "val", 1:2) ->foo
+
+foo$stat <- factor(foo$stat, labels= c("R0", "Outbreak size"))
+
+foo %>%
+  ggplot(aes(x=tau, y=val, color=factor(r))) + 
+  geom_vline(xintercept=.03, linetype="dashed", 
+               color = "grey", size=.75) + 
+  geom_hline(yintercept=1, linetype="dashed", 
+               color = "grey", size=.75) + 
+  geom_point (size=3, alpha=.5) +  
+  facet_grid(stat ~ modName, scales="free_y", labeller=label_value) +
+  scale_color_manual(values=c("#F3E79AFF",  "#CF63A6FF")) +
+  scale_x_continuous(trans="log10") + 
+  labs(x=expression(tau), y="", color="Assortativity") +
+  theme_light() +
+  theme(axis.text=element_text(size=18),
+        axis.text.x = element_text(hjust=1, angle=45),
+        axis.title=element_text(size=18,face="bold"),
+        legend.title = element_text(size=18),
+        legend.text = element_text(size=18), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        strip.text = element_text(size = 18, color="Black"))
+
+
+```
+
+
+```{r delPlot, fig.cap="Prevalence of LTBI and equilibrium infected with varying rate of progression to active disease from latent disease $\\delta$. SLIRS simulations shown. No heterogeneity in individual-level infection or transmission rates. Other parameters: $\\tau=0.1; \\gamma=0.5; I_0=.01$", fig.height=5.5}
+
+resDel <- read.csv("simulations-rewiring/SLIRS-sensitivity/slirs-del-prelim.csv")
+
+# model comparison 
+resDel$modNameLatent <- ifelse(resDel$delt<100, T, F)
+resDel$modNameRecover <- ifelse(resDel$psi>0, T, F)
+resDel$modName <- NA
+resDel$modName[!resDel$modNameLatent&!resDel$modNameRecover] <- "SIR"
+resDel$modName[resDel$modNameLatent&!resDel$modNameRecover] <- "SLIR"
+resDel$modName[!resDel$modNameLatent&resDel$modNameRecover] <- "SIRS"
+resDel$modName[resDel$modNameLatent&resDel$modNameRecover] <- "SLIRS"
+
+
+resDel %>% 
+  filter(delt<100, psi>0, !is.na(prev_l)) %>% 
+  select(tot_inf, prev_l, delt, modName, r, psi) %>%
+  gather("stat", "val", 1:2) -> foo
+
+foo$stat <- factor(foo$stat, labels= c("Prevalence LTBI", "Equilibrium infected"))
+
+foo %>%
+  ggplot(aes(x=delt, y=val, color=factor(psi), shape=factor(r))) + 
+  geom_point (size=3, alpha=.5) +  
+  facet_grid(. ~ stat, scales="free_y", labeller=label_value) +
+  scale_color_discrete_qualitative(palette = "Dark2") +
+  #scale_x_continuous(trans="log10") + 
+  labs(x=expression(delta), y="", color="Psi", shape="Assortativity") +
+  theme_light() +
+  theme(axis.text=element_text(size=18),
+        axis.text.x = element_text(hjust=1, angle=45),
+        axis.title=element_text(size=18,face="bold"),
+        legend.title = element_text(size=18),
+        legend.text = element_text(size=18), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        strip.text = element_text(size = 18, color="Black"))
+
+
+```
 
 ```{r SIR-traj, fig.cap="Example SIR trajectories. Vertical panels show baseline transmission rates ($\\tau$) and horizontal panels show network assortativity. Homogeneous infection and transmission rates by sex.  "}
 
@@ -223,54 +310,6 @@ simDf %>%
   geom_line() +
   facet_grid(rs ~ tau) + 
   labs(x="Time", y="Infecteds", title="SLIRS") 
-
-```
-
-```{r tauPlot, fig.cap="Agreement between analytical and numerical solutions. Horizontal grey line shows $I=1$ and vertical grey line shows approximately where $R_0=1$. Results are consistent for SIR and SLIR models. High assortativity increases $R_0$ for larger values of $\\tau$. No individual-level heterogeneity in transmission rates plotted here. ", fig.height=5.5}
-
-
-
-resTau <- read.csv("simulations-rewiring/SLIRS/slirs-tau-prelim.csv")
-
-# model comparison 
-resTau$modNameLatent <- ifelse(resTau$delt==0.25, T, F)
-resTau$modNameRecover <- ifelse(resTau$psi==0.1, T, F)
-resTau$modName <- NA
-resTau$modName[!resTau$modNameLatent&!resTau$modNameRecover] <- "SIR"
-resTau$modName[resTau$modNameLatent&!resTau$modNameRecover] <- "SLIR"
-resTau$modName[!resTau$modNameLatent&resTau$modNameRecover] <- "SIRS"
-resTau$modName[resTau$modNameLatent&resTau$modNameRecover] <- "SLIRS"
-
-resTau$modName <- factor(resTau$modName, levels= c("SIR", "SLIR", "SIRS", "SLIRS")) 
-
-resTau %>% 
-  filter(psi==0) %>% 
-  select(tot_inf, r0, tau, modName, r) %>%
-  gather("stat", "val", 1:2) ->foo
-
-foo$stat <- factor(foo$stat, labels= c("R0", "Outbreak size"))
-
-foo %>%
-  ggplot(aes(x=tau, y=val, color=factor(r))) + 
-  geom_vline(xintercept=.03, linetype="dashed", 
-               color = "grey", size=.75) + 
-  geom_hline(yintercept=1, linetype="dashed", 
-               color = "grey", size=.75) + 
-  geom_point () +  
-  facet_grid(stat ~ modName, scales="free_y", labeller=label_value) +
-  scale_color_manual(values=c("#F3E79AFF",  "#CF63A6FF")) +
-  scale_x_continuous(trans="log10") + 
-  labs(x=expression(tau), y="", color="Assortativity") +
-  theme_light() +
-  theme(axis.text=element_text(size=18),
-        axis.text.x = element_text(hjust=1, angle=45),
-        axis.title=element_text(size=18,face="bold"),
-        legend.title = element_text(size=18),
-        legend.text = element_text(size=18), 
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(), 
-        strip.text = element_text(size = 18, color="Black"))
-
 
 ```
 

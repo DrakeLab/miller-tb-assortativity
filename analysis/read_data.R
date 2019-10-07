@@ -446,7 +446,7 @@ write.csv(res, "simulations-rewiring/SLIRS/slirs-prelim.csv")
 
 rs <- c(0, 0.6) #, 0.6, 0.9
 ns <- 1e3
-reps <- 1:5 
+reps <- 1:10
 tau <-c("0.0001", 0.001, 0.005, 0.01, 0.015, 0.03, 0.06, 0.12, .24, 0.36)
 delt <- c("100000", "0.25")
 alph <- c("1.0") 
@@ -505,7 +505,7 @@ for(i in 1:nrow(vars)){
   
   ### Epidemic data ### 
   # Combined state information (all time)
-  simOut=read.csv(paste0("simulations-rewiring/SLIRS/SLIRS_TAU_R", r, 
+  simOut=read.csv(paste0("simulations-rewiring/SLIRS-sensitivity/SLIRS_TAU_R", r, 
                          "_tau", tau, "_del", delt,
                          "_alph_", mod, alph,
                          "_psi", psi, 
@@ -517,7 +517,7 @@ for(i in 1:nrow(vars)){
   res[i, "time_steps"] <- tail(simOut$t, 1) # SIR will die out
   res[i, "peak_size"] <- max(simOut$I.f + simOut$I.m)
   res[i, "peak_time"] <- simOut$t[which.max(simOut$I.f + simOut$I.m)]
-  res[i, "tot_inf"] <- ifelse(psi==0, tail(simOut$R.f + simOut$R.m, 1), mean(simOut$I.f[simOut$t>100] + simOut$I.m[simOut$t>100]))
+  res[i, "tot_inf"] <- ifelse(psi==0, tail(simOut$R.f + simOut$R.m, 1), mean(simOut$I.f[simOut$t>10] + simOut$I.m[simOut$t>10]))
   #tmp[i] <- ifelse(psi==0, tail(simOut$R.f + simOut$R.m, 1), mean(simOut$I.f[simOut$t>100] + simOut$I.m[simOut$t>100]))
   
   # calculate prevalence ratio
@@ -541,9 +541,110 @@ for(i in 1:nrow(vars)){
 }
 
 
-write.csv(res, "simulations-rewiring/SLIRS/slirs-tau-prelim.csv") 
+write.csv(res, "simulations-rewiring/SLIRS-sensitivity/slirs-tau-prelim.csv") 
 
 
+###### ----------- Testing delta values for SLIRS models -----------  ###### 
 
+# SLIRS_del.py
+
+rs <- c(0, 0.6) #, 0.6, 0.9
+ns <- 1e3
+reps <- 1:10 
+tau <-c(0.1)
+delt <- c(0.01, 0.025, 0.05, 0.1, 0.3, 0.5, "100000")
+alph <- c("1.0") 
+psi <- c(0, 0.1, 0.3) 
+
+vars <- expand.grid(r=rs, n=ns, rep=reps, tau=tau, psi=psi, delt=delt,
+                    alph=alph, mod=c("i"))
+
+res <- data.frame(size=rep(NA, nrow(vars)), rep=rep(NA, nrow(vars)), 
+                  tau=rep(NA, nrow(vars)), delt=rep(NA, nrow(vars)), 
+                  alph=rep(NA, nrow(vars)), mod=rep(NA, nrow(vars)),
+                  psi=rep(NA, nrow(vars)), r0=rep(NA, nrow(vars)), 
+                  degAssort=rep(NA, nrow(vars)), clustering=rep(NA, nrow(vars)), 
+                  pathLen=rep(NA, nrow(vars)), n_components=rep(NA, nrow(vars)),
+                  r=rep(NA, nrow(vars)), q=rep(NA, nrow(vars)), 
+                  time_steps=rep(NA, nrow(vars)), peak_size=rep(NA, nrow(vars)), 
+                  peak_time=rep(NA, nrow(vars)), tot_inf=rep(NA, nrow(vars)), 
+                  prev_m=rep(NA, nrow(vars)), prev_f=rep(NA, nrow(vars)), 
+                  prev_ratio=rep(NA, nrow(vars)), 
+                  prev_l=rep(NA, nrow(vars)))
+
+for(i in 1:nrow(vars)){
+  if (i%%1000==0) print(i)
+  s=vars[i, "n"]
+  r=vars[i, "r"]
+  rep=vars[i, "rep"] 
+  tau=vars[i, "tau"]
+  delt=vars[i, "delt"]
+  alph=vars[i, "alph"]
+  mod=vars[i, "mod"]
+  
+  psi=vars[i, "psi"]
+  if(mod=="i"&alph=="2.0")alph<-"2"
+  
+  ## Network data ###
+  g <- read.graph(paste0("simulations-rewiring/networks3/G_",
+                         r, "N",
+                         s, "rep",
+                         rep, ".graphml"),
+                  format = "graphml")
+  res[i, "r"] <- r
+  res[i, "size"] <- s
+  res[i, "rep"] <- rep
+  res[i, "tau"] <- as.numeric(as.character(tau))
+  res[i, "delt"] <- (as.character(delt))
+  res[i, "alph"] <- as.numeric(as.character(alph))
+  res[i, "mod"] <- as.character(mod)
+  
+  res[i, "psi"] <- psi
+  res[i, "degAssort"] <- assortativity_degree(g, directed = FALSE)
+  res[i, "clustering"] <- transitivity(g)
+  res[i, "n_components"] <- count_components(g)
+  res[i, "pathLen"] <- diameter(g, directed = FALSE)
+  res[i, "r_actual"] <- assortativity_nominal(g, types=V(g)$sex, directed=FALSE)
+  res[i, "q"] <- modularity(g, membership=V(g)$sex)
+  
+  ### Epidemic data ### 
+  # Combined state information (all time)
+  simOut=read.csv(paste0("simulations-rewiring/SLIRS-sensitivity/SLIRS_DEL_R", r, 
+                         "_tau", tau, "_del", delt,
+                         "_alph_", mod, alph,
+                         "_psi", psi, 
+                         "_rep", rep, ".csv"))
+  res[i, "r0"] <- get_r0(as.numeric(as.character(tau)), g)
+  
+  # Last value for state information (last time point for all ndoes)
+  # simulation variables
+  res[i, "time_steps"] <- tail(simOut$t, 1) # SIR will die out
+  res[i, "peak_size"] <- max(simOut$I.f + simOut$I.m)
+  res[i, "peak_time"] <- simOut$t[which.max(simOut$I.f + simOut$I.m)]
+  res[i, "tot_inf"] <- ifelse(psi==0, tail(simOut$R.f + simOut$R.m, 1), mean(simOut$I.f[simOut$t>10] + simOut$I.m[simOut$t>10]))
+  #tmp[i] <- ifelse(psi==0, tail(simOut$R.f + simOut$R.m, 1), mean(simOut$I.f[simOut$t>100] + simOut$I.m[simOut$t>100]))
+  
+  # calculate prevalence ratio
+  # which t >50 for psi>0
+  t.st=1
+  if(psi>0){t.st=min(which(simOut$t>100))}
+  
+  if(psi==0){
+    I.m <- tail(simOut$R.m, 1)
+    I.f <- tail(simOut$R.f, 1)
+  }
+  
+  I.m <- simOut$I.m[seq(t.st, nrow(simOut), by=20) ]
+  I.f <- simOut$I.f[seq(t.st, nrow(simOut), by=20) ]
+  
+  res[i, "prev_ratio"] <- mean(I.m/I.f, na.rm=TRUE)
+  
+  if(as.numeric(as.character(delt))<1){
+    res[i, "prev_l"] <-  mean(simOut$L.f[simOut$t>100] + simOut$L.m[simOut$t>100])
+  }
+}
+
+
+write.csv(res, "simulations-rewiring/SLIRS-sensitivity/slirs-del-prelim.csv") 
 
 

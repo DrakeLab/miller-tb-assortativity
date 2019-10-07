@@ -35,7 +35,7 @@ var_grid = list(ParameterGrid({'N' : N, 'R' : R, 'Tau': Tau,
                                'Psi' : Psi, 'Del' : Del,
                                'Alph_i': Alph_i}))
 
-reps = 1 + 5 # Number of reps
+reps = 1 + 10 # Number of reps
 
 for x in range(0, len(var_grid)):
     n=var_grid[x]["N"]
@@ -60,8 +60,8 @@ for x in range(0, len(var_grid)):
     H.add_edge('I.m', 'R.m', rate = (Gam * (alph_i + 1))/(2*alph_i))  # male
 
     #R->S revert to S
-    #H.add_edge('R.f', 'S.f', rate = psi)   # female
-    #H.add_edge('R.m', 'S.m', rate = psi)   # male
+    H.add_edge('R.f', 'S.f', rate = psi)   # female
+    H.add_edge('R.m', 'S.m', rate = psi)   # male
 
     #S->I spontaneous infection
     H.add_edge('S.f', 'I.f', rate = psi/10)   # female
@@ -109,7 +109,7 @@ for x in range(0, len(var_grid)):
         ###### SAVE SIMULATION ######
         
         tots = sim
-        with open("SLIRS/SLIRS_TAU_R"+str(r)+"_tau"+str(tau)+"_del"+str(delt)+
+        with open("SLIRS-sensitivity/SLIRS_TAU_R"+str(r)+"_tau"+str(tau)+"_del"+str(delt)+
                   "_alph_i"+str(alph_i)+
                   "_psi"+str(psi)+"_rep"+str(y)+".csv",'wb') as out:
             csv_out=csv.writer(out)

@@ -1,4 +1,4 @@
-###### SLIRS_tra.py simulates SLIRS model with differences btwn M&F transmission on assorted networks ###### 
+###### SLIRS_tau.py simulates SLIRS model with varying progression to infection to determine which gives levels around 1/3 ###### 
 ###### Current version takes roughly X hours ######
 
 import networkx as nx
@@ -20,28 +20,28 @@ from collections import Counter
 ###### Model parameters ######
 
 N = [1000]           # Network Size
-R = [0, 0.3, 0.6, 0.9]         #, 0.6, 0.9 Assortativity coefficient (Newman)
-Tau = [0.04, 0.075, 0.1]         #  S->L Baseline transmission rate 
-Del = [100000, 1./10.]     # L->I Reactivation rate; 10000=>SIR, del~0=SLIR
+R = [0, 0.6]         #Assortativity coefficient (Newman)
+Tau = [0.1]    #  S->L Baseline transmission rate 
+Del = [0.01, 0.025, 0.05, 0.1, 0.3, 0.5, 100000]     # L->I Reactivation rate; 10000=>SIR, del~0=SLIR
 Gam = 1./2.          # I->R Recovery rate
-Psi = [0, 0.33]       # R->S Reversion rate; 0=SIR, sig>0=SIRS
-i0 = 0.05            # proportion initially infected 
+Psi = [0, 0.1, 0.3]       # R->S Reversion rate; 0=SIR, sig>0=SIRS
+i0 = 0.01            # proportion initially infected 
 tsteps = 200         # set max time steps to run model for
 
 # Male:female differences to explain male bias
-Alph_t = [1.0, 1.5, 2.0]   # Ratio of male:female susceptibility
+Alph_i = [1.0]   # Ratio of male:female susceptibility
 
 var_grid = list(ParameterGrid({'N' : N, 'R' : R, 'Tau': Tau,
                                'Psi' : Psi, 'Del' : Del,
-                               'Alph_t': Alph_t}))
+                               'Alph_i': Alph_i}))
 
-reps = 1 + 50 # Number of reps
+reps = 1 + 10 # Number of reps
 
 for x in range(0, len(var_grid)):
     n=var_grid[x]["N"]
     r=var_grid[x]["R"]
     tau=var_grid[x]["Tau"]
-    alph_t=var_grid[x]["Alph_t"]
+    alph_i=var_grid[x]["Alph_i"]
 
     delt=var_grid[x]["Del"]
     psi=var_grid[x]["Psi"]
@@ -56,26 +56,25 @@ for x in range(0, len(var_grid)):
     H.add_edge('L.m', 'I.m', rate = delt)  # male
 
     #I->R recover to R
-    H.add_edge('I.f', 'R.f', rate = Gam)  # female  
-    H.add_edge('I.m', 'R.m', rate = Gam)  # male
+    H.add_edge('I.f', 'R.f', rate = (Gam * (alph_i + 1))/2)  # female  
+    H.add_edge('I.m', 'R.m', rate = (Gam * (alph_i + 1))/(2*alph_i))  # male
 
     #R->S revert to S
     H.add_edge('R.f', 'S.f', rate = psi)   # female
     H.add_edge('R.m', 'S.m', rate = psi)   # male
 
     #S->I spontaneous infection
-    H.add_edge('S.f', 'I.f', rate = psi/50)   # female
-    H.add_edge('S.m', 'I.m', rate = psi/50)   # male
-
+    H.add_edge('S.f', 'I.f', rate = psi/10)   # female
+    H.add_edge('S.m', 'I.m', rate = psi/10)   # male
 
     # INDUCED transitions
     J = nx.DiGraph()
 
     #S->L I infects S
-    J.add_edge(('I.f', 'S.f'), ('I.f', 'L.f'), rate = (tau * 2.0) / (alph_t + 1.0))  # female infects female
-    J.add_edge(('I.m', 'S.m'), ('I.m', 'L.m'), rate = (tau * 2.0 * alph_t) / (alph_t + 1.0))  # male infects male  
-    J.add_edge(('I.m', 'S.f'), ('I.m', 'L.f'), rate = (tau * 2.0 * alph_t) / (alph_t + 1.0))  # male infects female   
-    J.add_edge(('I.f', 'S.m'), ('I.f', 'L.m'), rate = (tau * 2.0) / (alph_t + 1.0))  # female infects male      
+    J.add_edge(('I.f', 'S.f'), ('I.f', 'L.f'), rate = tau)  # female infects female
+    J.add_edge(('I.m', 'S.m'), ('I.m', 'L.m'), rate = tau)  # male infects male  
+    J.add_edge(('I.m', 'S.f'), ('I.m', 'L.f'), rate = tau)  # male infects female   
+    J.add_edge(('I.f', 'S.m'), ('I.f', 'L.m'), rate = tau)  # female infects male      
                
 
     for y in range(1, reps):
@@ -110,29 +109,12 @@ for x in range(0, len(var_grid)):
         ###### SAVE SIMULATION ######
         
         tots = sim
-        with open("SLIRS2/SLIRS_R"+str(r)+"_tau"+str(tau)+"_del"+str(delt)+
-                  "_alph_t"+str(alph_t)+
+        with open("SLIRS-sensitivity/SLIRS_DEL_R"+str(r)+"_tau"+str(tau)+"_del"+str(delt)+
+                  "_alph_i"+str(alph_i)+
                   "_psi"+str(psi)+"_rep"+str(y)+".csv",'wb') as out:
             csv_out=csv.writer(out)
             csv_out.writerow(['t','S.f','S.m',
                               'L.f', 'L.m','I.f',
                               'I.m', 'R.f', 'R.m'])
             csv_out.writerows(zip(*tots))
-
-###### Plot
-
-##t= sim[0]
-##S=sim[1] + sim[2]
-##I=sim[3] + sim[4]
-##R=sim[5] + sim[6]
-##
-##plt.plot(t, I, label='Total Infecteds')
-##plt.plot(t, sim[3], label = 'Females')
-##plt.plot(t, sim[4], label = 'Males')
-##
-##plt.legend()
-##plt.xlabel('$t$')
-##plt.ylabel('Infecteds')
-##plt.savefig('SIRS-test2.png')
-
 

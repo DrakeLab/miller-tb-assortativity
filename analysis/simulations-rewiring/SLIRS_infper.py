@@ -22,9 +22,9 @@ from collections import Counter
 N = [1000]           # Network Size
 R = [0, 0.3, 0.6, 0.9]         #, 0.6, 0.9 Assortativity coefficient (Newman)
 Tau = [0.04, 0.075, 0.1]         #  S->L Baseline transmission rate 
-Del = [100000, 1./4.]     # L->I Reactivation rate; 10000=>SIR, del~0=SLIR
+Del = [100000, 1./10.]     # L->I Reactivation rate; 10000=>SIR, del~0=SLIR
 Gam = 1./2.          # I->R Recovery rate
-Psi = [0, 0.1]       # R->S Reversion rate; 0=SIR, sig>0=SIRS
+Psi = [0, 0.33]       # R->S Reversion rate; 0=SIR, sig>0=SIRS
 i0 = 0.05            # proportion initially infected 
 tsteps = 200         # set max time steps to run model for
 
@@ -64,8 +64,8 @@ for x in range(0, len(var_grid)):
     H.add_edge('R.m', 'S.m', rate = psi)   # male
 
     #S->I spontaneous infection
-    H.add_edge('S.f', 'I.f', rate = psi/10)   # female
-    H.add_edge('S.m', 'I.m', rate = psi/10)   # male
+    H.add_edge('S.f', 'I.f', rate = psi/50)   # female
+    H.add_edge('S.m', 'I.m', rate = psi/50)   # male
 
     # INDUCED transitions
     J = nx.DiGraph()
@@ -109,7 +109,7 @@ for x in range(0, len(var_grid)):
         ###### SAVE SIMULATION ######
         
         tots = sim
-        with open("SLIRS/SLIRS_R"+str(r)+"_tau"+str(tau)+"_del"+str(delt)+
+        with open("SLIRS2/SLIRS_R"+str(r)+"_tau"+str(tau)+"_del"+str(delt)+
                   "_alph_i"+str(alph_i)+
                   "_psi"+str(psi)+"_rep"+str(y)+".csv",'wb') as out:
             csv_out=csv.writer(out)
