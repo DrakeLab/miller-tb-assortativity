@@ -1,4 +1,4 @@
-###### SLIRS.py simulates SLIRS model with differences btwn M&F nodes on assorted networks ###### 
+###### SLIRS.py simulates SLIRS model with differences btwn M&F nodes on SW & SF assorted networks ###### 
 ###### Current version takes roughly X hours ######
 
 import networkx as nx
@@ -14,9 +14,6 @@ from sklearn.model_selection import ParameterGrid
 from collections import defaultdict
 from collections import Counter
 
-#os.chdir('/Users/paigemiller/Documents/phd/research-projects/miller-tb-assortativity/analysis/simulations-rewiring')
-
-
 ###### Model parameters ######
 
 N = [1000]           # Network Size
@@ -31,17 +28,21 @@ tsteps = 200         # set max time steps to run model for
 # Male:female differences to explain male bias
 Alph_s = [1.0, 1.5, 2.0]   # Ratio of male:female susceptibility
 
+# Network types
+nt = ["G", "SW"]
+
 var_grid = list(ParameterGrid({'N' : N, 'R' : R, 'Tau': Tau,
                                'Psi' : Psi, 'Del' : Del,
-                               'Alph_s': Alph_s}))
+                               'Alph_s': Alph_s, 'net_type' : nt}))
 
-reps = 1 + 50 # Number of reps
+reps = 1 + 25 # Number of reps
 
 for x in range(0, len(var_grid)):
     n=var_grid[x]["N"]
     r=var_grid[x]["R"]
     tau=var_grid[x]["Tau"]
     alph_s=var_grid[x]["Alph_s"]
+    type_net = var_grid[x]["net_type"]
 
     delt=var_grid[x]["Del"]
     psi=var_grid[x]["Psi"]
@@ -81,7 +82,7 @@ for x in range(0, len(var_grid)):
         
         ###### READ GRAPH ######
         
-        G = nx.read_graphml(path="networks3/G_"+str(r)+"N"+str(n)+"rep"+str(y)+".graphml")
+        G = nx.read_graphml(path="networks3/"+str(type_net)+"_"+str(r)+"N"+str(n)+"rep"+str(y)+".graphml")
 
         ###### SET INITIAL CONDITIONS ######
         # note: len(IC) needs to be = # of nodes
@@ -109,7 +110,8 @@ for x in range(0, len(var_grid)):
         ###### SAVE SIMULATION ######
         
         tots = sim
-        with open("SLIRS2/SLIRS_R"+str(r)+"_tau"+str(tau)+"_del"+str(delt)+
+        with open("SLIRS2/"+str(type_net)+"_R"+str(r)+
+                  "_tau"+str(tau)+"_del"+str(delt)+
                   "_alph_s"+str(alph_s)+
                   "_psi"+str(psi)+"_rep"+str(y)+".csv",'wb') as out:
             csv_out=csv.writer(out)
@@ -117,21 +119,5 @@ for x in range(0, len(var_grid)):
                               'L.f', 'L.m','I.f',
                               'I.m', 'R.f', 'R.m'])
             csv_out.writerows(zip(*tots))
-
-###### Plot
-
-##t= sim[0]
-##S=sim[1] + sim[2]
-##I=sim[3] + sim[4]
-##R=sim[5] + sim[6]
-##
-##plt.plot(t, I, label='Total Infecteds')
-##plt.plot(t, sim[3], label = 'Females')
-##plt.plot(t, sim[4], label = 'Males')
-##
-##plt.legend()
-##plt.xlabel('$t$')
-##plt.ylabel('Infecteds')
-##plt.savefig('SIRS-test2.png')
 
 
