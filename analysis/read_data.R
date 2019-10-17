@@ -337,22 +337,23 @@ for(i in 1:nrow(vars)){
 
 write.csv(res, "SIRS/results-combined2.csv") # combined SIR and SIRS model results
 
-###### ----------- SLIRS -----------  ###### 
+###### ----------- SLIRS (100 REPS)-----------  ###### 
 
 # SLIRS_sus, SLIRS_tra, SLIRS_infper
 
 rs <- c(0, 0.3, 0.6, 0.9) #, 0.6, 0.9
 ns <- 1e3
-reps <- 1:50 
+reps <- 1:100
 tau <-c(0.04, 0.075, 0.1)
-delt <- c("100000", "0.25")
+delt <- c("100000", "0.1")
 alph <- c("1.0", "1.5", "2.0") 
-psi <- c(0, 0.1) 
+psi <- c(0, 0.33) 
+nt <- c("G", "SW") 
 
 vars <- expand.grid(r=rs, n=ns, rep=reps, tau=tau, psi=psi, delt=delt,
-                    alph=alph, mod=c("s","t","i"))
+                    alph=alph, mod=c("s","t","i"), net_type=nt)
 
-res <- data.frame(size=rep(NA, nrow(vars)), rep=rep(NA, nrow(vars)), 
+res <- data.frame(net_type=rep(NA, nrow(vars)), size=rep(NA, nrow(vars)), rep=rep(NA, nrow(vars)), 
                   tau=rep(NA, nrow(vars)), delt=rep(NA, nrow(vars)), 
                   alph=rep(NA, nrow(vars)), mod=rep(NA, nrow(vars)),
                   psi=rep(NA, nrow(vars)), r0=rep(NA, nrow(vars)), 
@@ -367,6 +368,7 @@ res <- data.frame(size=rep(NA, nrow(vars)), rep=rep(NA, nrow(vars)),
 
 for(i in 1:nrow(vars)){
   if (i%%1000==0) print(i)
+  netType=vars[i, "net_type"]
   s=vars[i, "n"]
   r=vars[i, "r"]
   rep=vars[i, "rep"] 
@@ -376,14 +378,15 @@ for(i in 1:nrow(vars)){
   mod=vars[i, "mod"]
   
   psi=vars[i, "psi"]
-  if(mod=="i"&alph=="2.0")alph<-"2"
+  #if(mod=="i"&alph=="2.0") alph<-"2"
   
   ## Network data ###
-  g <- read.graph(paste0("simulations-rewiring/networks3/G_",
+  g <- read.graph(paste0("simulations-rewiring/networks3/", netType, "_",
                          r, "N",
                          s, "rep",
                          rep, ".graphml"),
                   format = "graphml")
+  res[i, "net_type"] <- netType
   res[i, "r0"] <- get_r0(tau, g)
   res[i, "r"] <- r
   res[i, "size"] <- s
@@ -403,9 +406,9 @@ for(i in 1:nrow(vars)){
   
   ### Epidemic data ### 
   # Combined state information (all time)
-  simOut=read.csv(paste0("simulations-rewiring/SLIRS/SLIRS_R", r, 
+  simOut=read.csv(paste0("simulations-rewiring/SLIRS/", netType, "_R", r, 
                          "_tau", tau, "_del", delt,
-                         "_alph_", mod, alph,
+                         "_alph_", mod, as.character(alph),
                          "_psi", psi, 
                          "_rep", rep, ".csv"))
   
@@ -438,7 +441,7 @@ for(i in 1:nrow(vars)){
 }
 
 
-write.csv(res, "simulations-rewiring/SLIRS/slirs-prelim.csv") 
+write.csv(res, "simulations-rewiring/results/slirs-prelim3.csv") 
 
 ###### ----------- Testing tau values for SLIRS models -----------  ###### 
 

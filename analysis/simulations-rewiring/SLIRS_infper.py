@@ -35,7 +35,7 @@ var_grid = list(ParameterGrid({'N' : N, 'R' : R, 'Tau': Tau,
                                'Psi' : Psi, 'Del' : Del,
                                'Alph_i': Alph_i, 'net_type' : nt}))
 
-reps = 1 + 25 # Number of reps
+reps = 1 + 100 # Number of reps
 
 for x in range(0, len(var_grid)):
     n=var_grid[x]["N"]
@@ -110,7 +110,7 @@ for x in range(0, len(var_grid)):
         ###### SAVE SIMULATION ######
         
         tots = sim
-        with open("SLIRS2/"+str(type_net)+"_R"+str(r)+"_tau"+str(tau)+"_del"+str(delt)+
+        with open("SLIRS/"+str(type_net)+"_R"+str(r)+"_tau"+str(tau)+"_del"+str(delt)+
                   "_alph_i"+str(alph_i)+
                   "_psi"+str(psi)+"_rep"+str(y)+".csv",'wb') as out:
             csv_out=csv.writer(out)
