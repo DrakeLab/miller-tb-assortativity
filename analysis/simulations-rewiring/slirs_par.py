@@ -82,7 +82,7 @@ def process_file(f):
 
     ###### RUN SIMULATION ######
     
-    sim = EoN.Gillespie_Arbitrary(G, H, J, IC, return_statuses, tmax = tsteps)
+    sim = EoN.Gillespie_simple_contagion(G, H, J, IC, return_statuses, tmax = tsteps)
 
     ###### GET SIMULATION RESULTS ######
     tots = zip(*sim)
@@ -127,20 +127,20 @@ Alph_s = [1.0, 1.5, 2.0]   # Ratio of male:female susceptibility
 # Network parameters
 nt = ["G", "SW"]
 
-reps = range(1, 3) # Number of reps +1
+reps = range(1, 100) # Number of reps 
 
 var_grid = list(ParameterGrid({'N' : N, 'R' : R, 'Tau': Tau,
                                'Psi' : Psi, 'Del' : Del,
                                'Alph_s': Alph_s, 'net_type' : nt,
                                'rep': reps}))
 
-p = multiprocessing.Pool(3) # create a pool of 2 workers
+p = multiprocessing.Pool(24) # create a pool of 2 workers
 
 sim_results = p.map(process_file, var_grid) # perform the calculations
 
 #print(sim_results)
 
-with open("SLIRS-res/"+"test.csv",'wb') as out:
+with open("SLIRS-res/"+"test2.csv",'wb') as out:
     csv_out=csv.writer(out)
     csv_out.writerow(["n", "r", "tau", "alph_s", "type_net", "reactivation_rate", "reversion_rate", "rep",
                       "peak", "duration", "mf_r_ratio", "mf_i_ratio", "latent_prev", "recovered_prev", "infected_prev"])
