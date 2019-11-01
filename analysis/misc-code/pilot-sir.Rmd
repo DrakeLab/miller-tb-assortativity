@@ -1,0 +1,168 @@
+---
+title: "Pilot study: Network structure and TB transmission"
+output: pdf_document
+editor_options: 
+  chunk_output_type: console
+header-includes: \usepackage[section]{placeins}
+---
+
+```{r setup, include=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+
+library(dplyr)
+library(readr)
+library(magrittr)
+library(tidyr)
+library(igraph)
+library(ggplot2)
+library(cowplot)
+library(plotrix)
+library(knitr)
+
+knitr::opts_chunk$set(cache=FALSE, fig.path = "assort-nets-op2/", 
+                      warning = FALSE, message=FALSE, echo=FALSE) 
+
+```
+
+We will generate scale-free networks according to the parameters listed in Table 1 using the Sah et al. (2014) algorithm: 
+
+| Variable  | Value  | 
+|:-:|:-:|
+| Modularity, $Q$  |  - 0.2, -0.1, 0, 0.1, 0.2, 0.4 |
+| Degree distribution, $p(k)$ | $\frac{k^{-\alpha}}{\zeta (\alpha)}$  |
+| Mean degree, $<k>$ | 10  |
+| Network size, $N$ | $2\cdot 10 ^ 3$  |
+
+Table: Design of pilot study I for generating networks.   
+
+```{r}
+
+# graphs from first set of simulations -- run if needed
+qs <- c("Q-0.2", "Q-0.1", "Q0", "Q0.1", "Q0.2", "Q0.4")
+ns <- c(2000)
+rs <- 0:9
+
+vars <- expand.grid(q=qs, n=ns, rep=rs)
+
+```
+
+\FloatBarrier
+
+## Network structure
+
+```{r loadNets}
+
+setwd("~/Documents/phd/research-projects/miller-tb-assortativity/analysis/modular_graph_generator-master/simulations-5-29/")
+
+
+algDat <- data.frame(size=NA, q=NA, rep=NA, degAssort=NA, clustering=NA, pathLen=NA,r=NA)
+
+for(i in 1:nrow(vars)){
+  g <- read.graph(paste0("G_", 
+                        vars[i, "q"], "_N", 
+                        vars[i, 'n'], "_rep", 
+                        vars[i, 'rep'], ".graphml"),
+                  format = "graphml")
+  
+    s=vars[i, "n"]
+    q=vars[i, "q"]
+    rep=vars[i, "rep"]
+    r=assortativity.nominal(g, (V(g)$module +1), directed = FALSE) # Newman2003 measurement
+    
+    foo <- c(s, as.numeric(gsub("Q", "", as.character(q))), rep, assortativity_degree(g, directed = FALSE),
+           transitivity(g), diameter(g, directed = FALSE), r)
+    algDat[i, ] <- foo
+}
+
+
+```
+
+```{r assortCompare, fig.cap="Comparison between measures of community structure from Newman 2003 and Sah 2014. "}
+
+plot(algDat$q, algDat$r, xlab="Modularity (Q)", ylab="Assortativity (r)")
+
+```
+
+```{r algCompare, fig.cap="Values of clustering, degree assortativity, and path length with varying modularity for networks generated using rewiring algorithm. "}
+
+algDat %>%
+  select(-rep) %>%
+  gather(stat, value, 3:5) %>%
+  ggplot(aes(x=r, y=value)) + 
+  geom_smooth() +
+  geom_point() + 
+  facet_grid(stat ~ ., scales="free") + 
+  ylab("") + xlab("Modularity (Q)")
+  
+```
+
+\FloatBarrier
+
+## Disease spread
+
+```{r}
+
+setwd("~/Documents/phd/research-projects/miller-tb-assortativity/analysis/modular_graph_generator-master/simulations-5-29/")
+
+sir.out <- data.frame(q=NA, net_size=NA, rep=NA,
+                      time_steps=NA, peak_size=NA, 
+                      peak_time=NA, tot_inf=NA, 
+                      prev_1=NA, prev_2=NA, prev_ratio=NA)
+
+for (i in 1:nrow(vars)){
+    simOut=read.csv(paste0("SIR_", 
+                        vars[i, "q"], "_N", 
+                        vars[i, 'n'], "_rep", 
+                        vars[i, 'rep'], ".csv"))
+    
+    nodeOut=read.csv(paste0("Final_", 
+                        vars[i, "q"], "_N", 
+                        vars[i, 'n'], "_rep", 
+                        vars[i, 'rep'], ".csv"))
+    
+    # simulation variables
+    net_size <- as.numeric(vars[i, "n"])
+    sir.out[i, "q"] <- as.numeric(gsub("Q", "", as.character(vars[i, "q"])))
+    sir.out[i, "net_size"] <- net_size
+    sir.out[i, "rep"] <- vars[i, "rep"]
+    sir.out[i, "time_steps"] <- tail(simOut$t, 1)
+    sir.out[i, "peak_size"] <- max(simOut$i)
+    sir.out[i, "peak_time"] <- simOut$t[which.max(simOut$i)]
+    sir.out[i, "tot_inf"] <- table(nodeOut[,2])[["R"]]/net_size
+    sir.out[i, "prev_1"] <- table(nodeOut[1:(net_size/2), 2])[["R"]]/(net_size/2)
+    sir.out[i, "prev_2"] <- table(nodeOut[1+(net_size/2):net_size, 2])[["R"]]/(net_size/2)
+    sir.out[i, "prev_ratio"] <- sir.out[i, "prev_1"]/sir.out[i, "prev_2"]
+}
+```
+
+```{r epiDyn, fig.cap="Epidemic parameters across modularity values. "}
+
+sir.out %>%
+  gather("stat", "value", 4:10) %>%
+  filter(stat != "prev_1", stat!="prev_2", stat!="prev_ratio") %>%
+  ggplot(aes(x=as.factor(q), y=value)) + 
+  geom_boxplot() +
+  xlab("Modularity (Q)") + ylab("") +
+  facet_grid(stat ~ ., scales = "free")
+
+```
+
+
+```{r prevRat, fig.cap="Ratio of cases in module 1 to module 2 across modularity values. "}
+
+sir.out %>%
+  gather("stat", "value", 4:10) %>%
+  filter(stat=="prev_ratio") %>%
+  ggplot(aes(x=as.factor(q), y=value)) + 
+  geom_boxplot() + xlab("Modularity (Q)") + ylab("Prevalence ratio")
+
+```
+
+\FloatBarrier
+
+# Notes
+
+* Generated using Sah algorithm
+* Pilot study shows results for 10 network replicates
+* One epidemic simulated per network
+

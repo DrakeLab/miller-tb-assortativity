@@ -1,0 +1,109 @@
+---
+title: "Pilot study: SIR with susceptibility"
+output: pdf_document
+editor_options: 
+  chunk_output_type: console
+header-includes: \usepackage[section]{placeins}
+---
+
+```{r setup, include=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+
+library(dplyr)
+library(readr)
+library(magrittr)
+library(tidyr)
+library(igraph)
+library(ggplot2)
+library(cowplot)
+library(plotrix)
+library(knitr)
+
+knitr::opts_chunk$set(cache=FALSE, fig.path = "assort-nets-op2/", 
+                      warning = FALSE, message=FALSE, echo=FALSE) 
+
+```
+
+## Research questions:
+
+1. Can sex-assortative mixing lead to male-bias by itself or is sex-specific susceptibility required to explain male-bias?
+2. What are the effects of sex-assortative mixing on disease spread (peak size/time, variation in outbreak size/duration)? 
+
+## Pilot set-up
+
+| Variable  | Value  | 
+|:-:|:-:|
+| Sex-assortativity, $r$  | 0, 0.2, 0.4, 0.6, 0.8, 0.9 |
+| Degree distribution, $p(K)$ | $\frac{k^{-\alpha}}{\zeta (\alpha)}$  |
+| Mean degree, $<K>$ | 10  |
+| Network size, $N$ | 500, $1\cdot 10 ^ 3, 1.5\cdot 10 ^ 3$  |
+| Tolerance, $\epsilon$ | 0.035  |
+| Rewiring proportion, $\alpha$ | 0.2  |
+| Replicates | 10  |
+
+Table: Network parameters.   
+
+| Variable  | Value  | 
+|:-:|:-:|
+| Initial susceptible, $S_0$  |  $N - 0.05 \cdot N$ |
+| Initial infected, $I_0$  |  $0.05 \cdot N$ |
+| Infection rate, $\tau$  |  0.05, 0.1, 0.2 |
+| Recovery rate, $\gamma$  |  1 |
+| M:F susceptibility ratio, $\alpha$  |  1, 1.5, 2 |
+| Estimated $R_0$  |  $[\tau \frac{<K^2-K>}{<K>}]$ |
+
+Table: Disease parameters for SIR model.
+
+```{r}
+res <- read_csv("simulations-rewiring/SIR/variable_results.csv")[, -1]
+
+```
+
+\FloatBarrier
+
+\FloatBarrier
+
+_How network assortativity and susceptibility affect male-bias:_
+
+```{r heatRatio, fig.height=4.5, fig.width=6, fig.cap="Prevalence ratio across assortativity values. Columns faceted by network size. Rows faceted by transmission rate (R0=1, 2, 3). Each block shows the mean of 10 simulations. Brighter colors show more male-bias." }
+
+res %>%
+  group_by(alph, tau, r, size) %>%
+  summarise(mean_prev_ratio=mean(prev_ratio)) %>%
+  ggplot(aes(factor(r), factor(alph))) + 
+  geom_tile(aes(fill=mean_prev_ratio)) + 
+  scale_fill_continuous(type = "viridis") +
+  facet_grid(tau~size) + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.title.y.left = element_text(angle = 0)) + 
+  labs(fill="Prevalence \n ratio (mean)", x="Assortativity (r)", 
+       y=expression(alpha))
+
+```
+
+_How network assortativity and susceptibility affect epidemic dynamics:_
+
+```{r ratio, fig.height=4.5, fig.width=6, fig.cap="Outbreak size across assortativity values. Columns faceted by network size. Results shown for R0=3. Brighter colors show higher proportions of infected.  "}
+
+res %>%
+  filter(tau>.1) %>%
+  group_by(alph, tau, r, size) %>%
+  summarise(mean_tot_inf=mean(tot_inf)) %>%
+  ggplot(aes(factor(r), factor(alph))) + 
+  geom_tile(aes(fill=mean_tot_inf)) + 
+  scale_fill_continuous(type = "viridis") +
+  facet_grid(.~size) + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.title.y.left = element_text(angle = 0)) + 
+  labs(fill="Prop. infected (mean)", x="Assortativity (r)", 
+       y=expression(alpha))
+```
+
+\FloatBarrier
+
+# Notes
+
+* Generated using rewiring algorithm
+* Pilot study shows results for 10 network replicates
+* One epidemic simulated per network
+
