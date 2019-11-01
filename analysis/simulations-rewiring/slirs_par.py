@@ -86,7 +86,7 @@ def process_file(f):
 
     clus = nx.clustering(G)
     path_len = nx.average_shortest_path_length(G)
-    deg_mean = mean(nx.degree(G).values())
+    #deg_mean = mean(nx.degree(G).values())
     deg_assort = nx.degree_assortativity_coefficient(G)
 
     ###### SET INITIAL CONDITIONS ######
@@ -134,7 +134,7 @@ def process_file(f):
     inf_size = end[5] + end[6] # for SIRS/SLIRS models
 
     results = [n, r, tau, alph, alph_type, delt, psi, y,
-               type_net, clus, path_len, deg_mean, deg_assort, 
+               type_net, clus, path_len, deg_assort, 
                peak, sim_dur, mf_rec_rat, mf_inf_rat, lat, rec_size, inf_size]
     return results
 
@@ -174,7 +174,7 @@ sim_results = p.map(process_file, var_grid) # perform the calculations
 with open("SLIRS-res/"+"test3.csv",'wb') as out:
     csv_out=csv.writer(out)
     csv_out.writerow(["n", "r", "tau", "alph_val", "alph_type", "reactivation_rate", "reversion_rate", "rep",
-                      "type_net", "net_clustering", "net_path_len", "net_deg_mean", "net_deg_assort", 
+                      "type_net", "net_clustering", "net_path_len", "net_deg_assort", 
                       "peak", "duration", "mf_r_ratio", "mf_i_ratio", "latent_prev", "recovered_prev", "infected_prev"])
     csv_out.writerows(sim_results)
 
