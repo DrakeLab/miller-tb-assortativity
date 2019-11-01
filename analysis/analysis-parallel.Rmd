@@ -1,0 +1,160 @@
+---
+title: "Sex-assortativity, heterogeneity in infection and transmission by sex, and male-bias in TB cases: A simulation study"
+output: pdf_document
+editor_options: 
+  chunk_output_type: console
+header-includes: \usepackage[section]{placeins}
+---
+
+```{r setup, include=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+
+library(dplyr)
+library(readr)
+library(magrittr)
+library(tidyr)
+library(igraph)
+library(ggplot2)
+library(cowplot)
+library(plotrix)
+library(knitr)
+library(colorspace)
+
+knitr::opts_chunk$set(cache=TRUE, fig.path = "slirs-figs/", 
+                      warning = FALSE, message=FALSE, echo=FALSE, fig.height =6, fig.width = 8) 
+
+# colors for assortativity
+assortCols <- c("#F3E79AFF", "#F7A086FF", "#CF63A6FF", "#704D9EFF")
+
+```
+
+
+```{r}
+
+res <- read.csv("simulations-rewiring/SLIRS-res/test2.csv")
+
+# model comparison 
+res$modNameLatent <- ifelse(res$reactivation_rate==0.1, T, F)
+res$modNameRecover <- ifelse(res$reversion_rate==0.33, T, F)
+res$modName <- NA
+res$modName[!res$modNameLatent&!res$modNameRecover] <- "SIR"
+res$modName[res$modNameLatent&!res$modNameRecover] <- "SLIR"
+res$modName[!res$modNameLatent&res$modNameRecover] <- "SIRS"
+res$modName[res$modNameLatent&res$modNameRecover] <- "SLIRS"
+
+# network types
+res$type_net <- factor(res$type_net, labels = c("Scale-free", "Small-world"))
+
+
+```
+
+```{r}
+
+
+res %>%
+  filter(modName == "SLIR") %>%
+  ggplot(aes(x=as.factor(r), y=mf_r_ratio, fill=factor(alph_s))) +
+  geom_boxplot() + facet_grid(type_net ~ tau) +
+  geom_hline(yintercept=1/1.8, linetype="dashed", 
+                color = "red", size=.75) +    
+  geom_hline(yintercept=1, linetype="dashed", 
+                color = "grey", size=.5)   +
+  scale_y_continuous(trans="log10") + 
+  scale_fill_discrete_sequential(palette="Sunset") +
+  labs(x="Assortativity", y="M:F case bias", fill="Sex-trait bias", title = "SLIR") +
+  theme_light() +
+  theme(axis.text=element_text(size=14),
+        axis.text.x = element_text(hjust=1, angle=45),
+        axis.title=element_text(size=18,face="bold"),
+        legend.title = element_text(size=18),
+        legend.text = element_text(size=18), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        strip.text = element_text(size = 18, color="Black"))
+
+# res %>%
+#   filter(modName == "SLIRS") %>%
+#   ggplot(aes(x=as.factor(r), y=mf_i_ratio, fill=factor(alph_s))) +
+#   geom_boxplot() + facet_grid(type_net ~ tau) +
+#   geom_hline(yintercept=1/1.8, linetype="dashed", 
+#                 color = "red", size=.75) +    
+#   geom_hline(yintercept=1, linetype="dashed", 
+#                 color = "grey", size=.5)   +
+#   scale_y_continuous(trans="log10") + 
+#   scale_fill_discrete_sequential(palette="Sunset") +
+#   labs(x="Assortativity", y="M:F case bias", fill="Sex-trait bias", title = "SLIRS") +
+#   theme_light() +
+#   theme(axis.text=element_text(size=14),
+#         axis.text.x = element_text(hjust=1, angle=45),
+#         axis.title=element_text(size=18,face="bold"),
+#         legend.title = element_text(size=18),
+#         legend.text = element_text(size=18), 
+#         panel.grid.major = element_blank(),
+#         panel.grid.minor = element_blank(), 
+#         strip.text = element_text(size = 18, color="Black"))
+
+
+```
+
+
+```{r}
+
+res %>%
+  filter(modName == "SLIR") %>%
+  ggplot(aes(x=as.factor(r), y=peak, fill=factor(alph_s))) +
+  geom_boxplot() + facet_grid(type_net ~ tau) +
+  scale_fill_discrete_sequential(palette="Sunset") +
+  labs(x="Assortativity", y="Peak", fill="Sex-trait bias", title = "SLIR") +
+  theme_light() +
+  theme(axis.text=element_text(size=14),
+        axis.text.x = element_text(hjust=1, angle=45),
+        axis.title=element_text(size=18,face="bold"),
+        legend.title = element_text(size=18),
+        legend.text = element_text(size=18), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        strip.text = element_text(size = 18, color="Black"))
+
+
+
+```
+
+
+```{r}
+res %>%
+  filter(modName == "SLIR") %>%
+  ggplot(aes(x=as.factor(r), y=duration)) +
+  geom_boxplot() + facet_grid(type_net ~ tau) +
+  scale_fill_discrete_sequential(palette="Sunset") +
+  labs(x="Assortativity", y="Duration", fill="Sex-trait bias", title = "SLIR") +
+  theme_light() +
+  theme(axis.text=element_text(size=14),
+        axis.text.x = element_text(hjust=1, angle=45),
+        axis.title=element_text(size=18,face="bold"),
+        legend.title = element_text(size=18),
+        legend.text = element_text(size=18), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        strip.text = element_text(size = 18, color="Black"))
+
+```
+
+```{r}
+res %>%
+  filter(modName == "SLIR") %>%
+  ggplot(aes(x=as.factor(r), y=recovered_prev)) +
+  geom_boxplot() + facet_grid(type_net ~ tau) +
+  scale_fill_discrete_sequential(palette="Sunset") +
+  labs(x="Assortativity", y="Outbreak size", fill="Sex-trait bias", title = "SLIR") +
+  theme_light() +
+  theme(axis.text=element_text(size=14),
+        axis.text.x = element_text(hjust=1, angle=45),
+        axis.title=element_text(size=18,face="bold"),
+        legend.title = element_text(size=18),
+        legend.text = element_text(size=18), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        strip.text = element_text(size = 18, color="Black"))
+
+```
+

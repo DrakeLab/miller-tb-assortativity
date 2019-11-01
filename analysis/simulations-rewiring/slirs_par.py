@@ -18,11 +18,12 @@ def process_file(f):
     n=f["N"]
     r=f["R"]
     tau=f["Tau"]
-    alph_s=f["Alph_s"]
     type_net = f["net_type"]
     delt=f["Del"]
     psi=f["Psi"]
     y=f["rep"]
+    alph=f["Alph_vals"]
+    alph_type=f["Alph_types"]
 
     #return [n, r, tau, y]
 
@@ -35,10 +36,6 @@ def process_file(f):
     H.add_edge('L.f', 'I.f', rate = delt)  # female  
     H.add_edge('L.m', 'I.m', rate = delt)  # male
 
-    #I->R recover to R
-    H.add_edge('I.f', 'R.f', rate = Gam)  # female  
-    H.add_edge('I.m', 'R.m', rate = Gam)  # male
-
     #R->S revert to S
     H.add_edge('R.f', 'S.f', rate = psi)   # female
     H.add_edge('R.m', 'S.m', rate = psi)   # male
@@ -50,16 +47,47 @@ def process_file(f):
     # INDUCED transitions
     J = nx.DiGraph()
 
-    #S->L I infects S
-    J.add_edge(('I.f', 'S.f'), ('I.f', 'L.f'), rate = (tau * 2.0) / (alph_s + 1.0))  # female infects female
-    J.add_edge(('I.m', 'S.m'), ('I.m', 'L.m'), rate = (tau * 2.0 * alph_s) / (alph_s + 1.0))  # male infects male  
-    J.add_edge(('I.m', 'S.f'), ('I.m', 'L.f'), rate = (tau * 2.0) / (alph_s + 1.0))  # male infects female   
-    J.add_edge(('I.f', 'S.m'), ('I.f', 'L.m'), rate = (tau * 2.0 * alph_s) / (alph_s + 1.0))  # female infects male      
-               
+    if alph_type == "SUS": 
+        #S->L I infects S
+        J.add_edge(('I.f', 'S.f'), ('I.f', 'L.f'), rate = (tau * 2.0) / (alph + 1.0))         # female infects female
+        J.add_edge(('I.m', 'S.m'), ('I.m', 'L.m'), rate = (tau * 2.0 * alph) / (alph + 1.0))  # male infects male  
+        J.add_edge(('I.m', 'S.f'), ('I.m', 'L.f'), rate = (tau * 2.0) / (alph + 1.0))         # male infects female   
+        J.add_edge(('I.f', 'S.m'), ('I.f', 'L.m'), rate = (tau * 2.0 * alph) / (alph + 1.0))  # female infects male      
 
+        #I->R recover to R
+        H.add_edge('I.f', 'R.f', rate = Gam)  # female  
+        H.add_edge('I.m', 'R.m', rate = Gam)  # male
+
+    elif alph_type == "TRA":
+        #S->L I infects S
+        J.add_edge(('I.f', 'S.f'), ('I.f', 'L.f'), rate = (tau * 2.0) / (alph + 1.0))         # female infects female
+        J.add_edge(('I.m', 'S.m'), ('I.m', 'L.m'), rate = (tau * 2.0 * alph) / (alph + 1.0))  # male infects male  
+        J.add_edge(('I.m', 'S.f'), ('I.m', 'L.f'), rate = (tau * 2.0 * alph) / (alph + 1.0))  # male infects female   
+        J.add_edge(('I.f', 'S.m'), ('I.f', 'L.m'), rate = (tau * 2.0) / (alph + 1.0))         # female infects male      
+
+        #I->R recover to R
+        H.add_edge('I.f', 'R.f', rate = Gam)  # female  
+        H.add_edge('I.m', 'R.m', rate = Gam)  # male
+
+    else: # alph_type=="INFPER"
+        #S->L I infects S
+        J.add_edge(('I.f', 'S.f'), ('I.f', 'L.f'), rate = tau)  # female infects female
+        J.add_edge(('I.m', 'S.m'), ('I.m', 'L.m'), rate = tau)  # male infects male  
+        J.add_edge(('I.m', 'S.f'), ('I.m', 'L.f'), rate = tau)  # male infects female   
+        J.add_edge(('I.f', 'S.m'), ('I.f', 'L.m'), rate = tau)  # female infects male      
+
+        #I->R recover to R
+        H.add_edge('I.f', 'R.f', rate = (Gam * (alph + 1))/2)         # female  
+        H.add_edge('I.m', 'R.m', rate = (Gam * (alph + 1))/(2*alph))  # male
+           
     ###### READ GRAPH ######
     
     G = nx.read_graphml(path="networks3/"+str(type_net)+"_"+str(r)+"N"+str(n)+"rep"+str(y)+".graphml")
+
+    clus = nx.clustering(G)
+    path_len = nx.average_shortest_path_length(G)
+    deg_mean = mean(nx.degree(G).values())
+    deg_assort = nx.degree_assortativity_coefficient(G)
 
     ###### SET INITIAL CONDITIONS ######
     # note: len(IC) needs to be = # of nodes
@@ -98,14 +126,15 @@ def process_file(f):
 
     sim_dur = end[0] # duration of simulation
 
-    mf_rec_rat = end[7]/(end[8]+0.0001) # MF ratio for SIR/SLIR models
-    mf_inf_rat = end[5]/(end[6]+0.0001) # MF ratio for SIRS/SLIRS models
+    mf_rec_rat = end[8]/(end[7]+0.0001) # MF ratio for SIR/SLIR models
+    mf_inf_rat = end[6]/(end[5]+0.0001) # MF ratio for SIRS/SLIRS models
     lat = end[3] +end[4] # amount of latent at end of sim for SLIRS model
 
     rec_size = end[7] + end[8] # for SIR/SLIR models
     inf_size = end[5] + end[6] # for SIRS/SLIRS models
 
-    results = [n, r, tau, alph_s, type_net, delt, psi, y,
+    results = [n, r, tau, alph, alph_type, delt, psi, y,
+               type_net, clus, path_len, deg_mean, deg_assort, 
                peak, sim_dur, mf_rec_rat, mf_inf_rat, lat, rec_size, inf_size]
     return results
 
@@ -114,7 +143,7 @@ def process_file(f):
 ## Model parameters ##
 N = [1000]           # Network Size
 R = [0, 0.3, 0.6, 0.9]         #, 0.6, 0.9 Assortativity coefficient (Newman)
-Tau = [0.04, 0.075, 0.1]         #  S->L Baseline transmission rate 
+Tau = [0.04, 0.075, 0.1, 0.15]         #  S->L Baseline transmission rate 
 Del = [100000, 1./10.]     # L->I Reactivation rate; 10000=>SIR, del~0=SLIR
 Gam = 1./2.          # I->R Recovery rate
 Psi =  [0, 0.33]       # R->S Reversion rate; 0=SIR, sig>0=SIRS
@@ -122,7 +151,8 @@ i0 = 0.05            # proportion initially infected
 tsteps = 200         # set max time steps to run model for
 
 # Male:female differences to explain male bias
-Alph_s = [1.0, 1.5, 2.0]   # Ratio of male:female susceptibility
+Alph_vals = [1.0, 1.5, 2.0]   # Ratio of male:female susceptibility
+Alph_types = ["SUS", "TRA", "INF_PER"]
 
 # Network parameters
 nt = ["G", "SW"]
@@ -131,7 +161,8 @@ reps = range(1, 100) # Number of reps
 
 var_grid = list(ParameterGrid({'N' : N, 'R' : R, 'Tau': Tau,
                                'Psi' : Psi, 'Del' : Del,
-                               'Alph_s': Alph_s, 'net_type' : nt,
+                               'Alph_vals': Alph_vals,'Alph_types': Alph_types,
+                               'net_type' : nt,
                                'rep': reps}))
 
 p = multiprocessing.Pool(24) # create a pool of 2 workers
@@ -140,9 +171,10 @@ sim_results = p.map(process_file, var_grid) # perform the calculations
 
 #print(sim_results)
 
-with open("SLIRS-res/"+"test2.csv",'wb') as out:
+with open("SLIRS-res/"+"test3.csv",'wb') as out:
     csv_out=csv.writer(out)
-    csv_out.writerow(["n", "r", "tau", "alph_s", "type_net", "reactivation_rate", "reversion_rate", "rep",
+    csv_out.writerow(["n", "r", "tau", "alph_val", "alph_type", "reactivation_rate", "reversion_rate", "rep",
+                      "type_net", "net_clustering", "net_path_len", "net_deg_mean", "net_deg_assort", 
                       "peak", "duration", "mf_r_ratio", "mf_i_ratio", "latent_prev", "recovered_prev", "infected_prev"])
     csv_out.writerows(sim_results)
 
