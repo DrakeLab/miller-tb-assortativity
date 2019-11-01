@@ -84,10 +84,10 @@ def process_file(f):
     
     G = nx.read_graphml(path="networks3/"+str(type_net)+"_"+str(r)+"N"+str(n)+"rep"+str(y)+".graphml")
 
-    clus = nx.clustering(G)
-    path_len = nx.average_shortest_path_length(G)
+    #clus = nx.clustering(G)
+    #path_len = nx.average_shortest_path_length(G)
     #deg_mean = mean(nx.degree(G).values())
-    deg_assort = nx.degree_assortativity_coefficient(G)
+    #deg_assort = nx.degree_assortativity_coefficient(G)
 
     ###### SET INITIAL CONDITIONS ######
     # note: len(IC) needs to be = # of nodes
