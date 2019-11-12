@@ -8,7 +8,7 @@ header-includes: \usepackage[section]{placeins}
 
 ```{r setup, include=FALSE, message=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
-
+ 
 library(dplyr)
 library(readr)
 library(magrittr)
@@ -52,7 +52,7 @@ Response variables:
 * One epidemic simulated per network
 
 ```{r nets, fig.cap="A re-wiring algorithm was developed to simulate networks with different levels of assortativity. Figure shows small networks (N=100) with r=0, 0.3, 0.6, and 0.9 from top left to bottom right. Male nodes are shown in blue and female nodes in orange. As assortativity increases, between-sex edges become less common. "}
-
+ 
 
 # SF network plots
 n0 <- read_graph("simulations-rewiring/networks3/G_0N100rep1.graphml", format="graphml")
@@ -86,7 +86,7 @@ alph <- c("1.0", "1.5", "2.0")
 psi <- c(0, 0.33) 
 
 pvars <- expand.grid(r=rs, n=ns, rep=reps, tau=tau, psi=psi, delt=delt,
-                    alph=alph, mod=c("s","t","i"))
+                     alph=alph, mod=c("s","t","i"))
 
 simList <- list()
 
@@ -127,7 +127,7 @@ simDf$modName[!simDf$modNameLatent&simDf$modNameRecover] <- "SIRS"
 simDf$modName[simDf$modNameLatent&simDf$modNameRecover] <- "SLIRS"
 
 # laod simulation ANALYSIS
-res <- read.csv("simulations-rewiring/results/slirs-prelim3.csv")
+res <- read.csv("simulations-rewiring/results/slirs-prelim4.csv")
 
 # model comparison 
 res$modNameLatent <- ifelse(res$delt==0.1, T, F)
@@ -144,7 +144,7 @@ res$net_type <- factor(res$net_type, labels = c("Scale-free", "Small-world"))
 ```
 
 ```{r commMeasures, fig.height=5, fig.width=6, fig.cap="The relationship between common measures of community structure estimated for synthetic networks (n=100) of varying sizes. Figure shows that assortativity and modularity are correlated when there are only 2 modules."}
-
+ 
 res %>%
   ggplot(aes(r_actual, q, color=factor(r))) + 
   geom_abline(slope = .5) +
@@ -191,7 +191,7 @@ res %>%
 ```{r tauPlot, fig.cap="Agreement between analytical and numerical solutions. Horizontal grey line shows $I=1$ and vertical grey line shows approximately where $R_0=1$. Results are consistent for SIR and SLIR models. High assortativity increases $R_0$ for larger values of $\\tau$ but the opposite is true for final outbreak size. No individual-level heterogeneity in transmission rates plotted here. Other parameters: $$\\gamma=0.5; I_0=.01; \\psi=0, 0.1; \\delta=0.25, 1\\cdot6$ ", fig.height=5.5}
 
 resTau <- read.csv("simulations-rewiring/SLIRS-sensitivity/slirs-tau-prelim.csv")
-
+ 
 # model comparison 
 resTau$modNameLatent <- ifelse(resTau$delt==0.25, T, F)
 resTau$modNameRecover <- ifelse(resTau$psi==0.1, T, F)
@@ -238,7 +238,7 @@ foo %>%
 ```{r delPlot, fig.cap="Prevalence of LTBI and equilibrium infected with varying rate of progression to active disease from latent disease $\\delta$. SLIRS simulations shown. No heterogeneity in individual-level infection or transmission rates. Other parameters: $\\tau=0.1; \\gamma=0.5; I_0=.01$", fig.height=5.5}
 
 resDel <- read.csv("simulations-rewiring/SLIRS-sensitivity/slirs-del-prelim.csv")
-
+ 
 # model comparison 
 resDel$modNameLatent <- ifelse(resDel$delt<100, T, F)
 resDel$modNameRecover <- ifelse(resDel$psi>0, T, F)
@@ -322,7 +322,7 @@ simDf %>%
 
 
 ```{r prev-rat-assort-SF, fig.cap="The effects of assortativity on male-bias across different model types (Scale-free graphs). Vertical panels show ratio $\\tau$. Hortizontal panels show different model types. The red dashed line shows the observed ratio of male:female cases globally and the grey dashed line represents even distribution of cases between men and women. This figure shows how no amount of assortativity will lead to male-bias alone."}
-
+ 
 res %>%
   filter(alph==1, net_type=="Scale-free") %>%
   ggplot(aes(x=as.factor(r), y=prev_ratio, fill=factor(r))) +
@@ -331,7 +331,7 @@ res %>%
                 color = "red", size=.75) +    
   geom_hline(yintercept=1, linetype="dashed", 
                 color = "grey", size=.5)   +
-  scale_y_continuous(trans="log10") + 
+  scale_y_continuous(trans="log10" , limits=c(.25, 4)) + 
   scale_fill_discrete_sequential(palette="Sunset") +
   labs(x="Assortativity", y="Prevalence ratio", fill="Assortativity") +
   theme_light() +
@@ -348,16 +348,16 @@ res %>%
 ```
 
 ```{r prev-rat-assort-SW, fig.cap="The effects of assortativity on male-bias across different model types (Small-world graphs). Vertical panels show ratio $\\tau$. Hortizontal panels show different model types. The red dashed line shows the observed ratio of male:female cases globally and the grey dashed line represents even distribution of cases between men and women. This figure shows how no amount of assortativity will lead to male-bias alone."}
-
+ 
 res %>%
   filter(alph==1, net_type=="Small-world") %>%
   ggplot(aes(x=as.factor(r), y=prev_ratio, fill=factor(r))) +
-  geom_boxplot() + facet_grid(modName ~ tau) +
+  geom_boxplot() + facet_grid(modName ~ tau)  + 
   geom_hline(yintercept=1.8, linetype="dashed", 
                 color = "red", size=.75) +    
   geom_hline(yintercept=1, linetype="dashed", 
                 color = "grey", size=.5)   +
-  scale_y_continuous(trans="log10") + 
+  scale_y_continuous(trans="log10", limits=c(.25, 4)) + 
   scale_fill_discrete_sequential(palette="Sunset") +
   labs(x="Assortativity", y="Prevalence ratio", fill="Assortativity") +
   theme_light() +
@@ -389,7 +389,7 @@ res %>%
                 color = "red", size=.75) +    
   geom_hline(yintercept=1, linetype="dashed", 
                 color = "grey", size=.5)   +
-  theme_light() +
+  theme_light() + 
   theme(axis.text=element_text(size=18),
         axis.text.x = element_text(hjust=1, angle=45),
         axis.title=element_text(size=18,face="bold"),
@@ -428,7 +428,7 @@ res %>%
 ```{r prev-rat-heatmap-SF, fig.cap="The combined effects of assortativity and individual-level variation on observed male-bias across different model types (Scale-free). Vertical panels show type of variation and horizontal panels show model type. The white triangle shows the parameter combination that is closest to the global observed value of 1.8. In general, assortativity lowers the required level of individual-level variation to produce realistic levels of male-bias.   "}
 
 hs <- 14
-
+  
 res %>%
   filter(!is.infinite(prev_ratio), tau==0.1, net_type=="Scale-free") %>%
   group_by(modName, mod, r, alph) %>%
@@ -462,7 +462,7 @@ foo %>%
 ```{r prev-rat-heatmap-SW, fig.cap="The combined effects of assortativity and individual-level variation on observed male-bias across different model types (Small-world). Vertical panels show type of variation and horizontal panels show model type. The white triangle shows the parameter combination that is closest to the global observed value of 1.8. In general, assortativity lowers the required level of individual-level variation to produce realistic levels of male-bias.   "}
 
 hs <- 14
-
+ 
 res %>%
   filter(!is.infinite(prev_ratio), tau==0.1, net_type=="Small-world") %>%
   group_by(modName, mod, r, alph) %>%
@@ -519,7 +519,7 @@ res %>%
 
 
 ```{r duration-compare, fig.cap="Effects of assortativity on epidemic duration. Vertical panels show $\\tau$ and horizontal panels show model type. Figure shows that epidemic duration is only slightly affected by assortativity and in different directions for slow vs. fast spreading pathogens. For fast spreading pathogens, assortativity decreases epidemic duration whereas for slow spreading pathogens, assortativity increases or has no effect on epidemic duration. Only simulations where $\\alpha=1$ are shown (i.e., there are no differences in susceptibility, transmissibility, or infectious period between male and female nodes). "}
-
+ 
 res %>%
   filter(psi==0, alph=="1") %>%
   ggplot(aes(x=as.factor(r), y=time_steps, fill=factor(r))) +
@@ -555,7 +555,7 @@ res %>%
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(), 
         strip.text = element_text(size = 18, color="Black"))
-
+ 
 ```
 
 ```{r infected-compare, fig.cap="Effects of assortativity on total outbreak size for SIR and SLIR models. Vertical panels show $\\tau$ and horizontal panels show model type. Figure shows that assortativity has different effects on outbreak size for fast and slow pathogens. For fast pathogens, assortativity decreases outbreak size whereas for slow pathogens assortativity has little effect on outbreak size or decreases outbreak size. Only simulations where $\\alpha=1$ are shown (i.e., there are no differences in susceptibility, transmissibility, or infectious period between male and female nodes). "}
@@ -575,7 +575,7 @@ res %>%
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(), 
         strip.text = element_text(size = 18, color="Black"))
-
+ 
 ```
 
 ```{r infected-compare-alpha, fig.cap="Effects of assortativity and individual-variation on equilibrium number of infecteds for SIRS and SLIRS models. Vertical panels show $\\tau$ and horizontal panels show model type. Figure shows that individual-variation generally decreases equilibrium prevalence faster spreading pathogens but has little effect on slower spreading pathogens. Results are shown for networks with no assortativity ($r=0$). "}
@@ -596,7 +596,7 @@ res %>%
         panel.grid.minor = element_blank(), 
         strip.text = element_text(size = 18, color="Black"))
 
-
+ 
 ```
 
 ```{r latent-compare-SF, fig.cap="Effects of assortativity and individual-level variation on prevalence ratio and equilibrium latent nodes (Scale-free). Vertical panels show assortativity level, horizontal panels show type of individual-level variation. Points are colored by transmission rate and shapes show ratio of male:female infection heterogeneity. Figure shows that observed levels of male-bias are often met in simulations with heterogeneity in male:female infectious periods  but rarely met with other parameter combinations. Assortativity slightly increases male-bias but male-bias is more associated with heterogeneity in individual-level infection dynamics. Only results from SLIRS model shown. "}
@@ -623,7 +623,7 @@ res %>%
 
 
 ```{r latent-compare-SW, fig.cap="Effects of assortativity and individual-level variation on prevalence ratio and equilibrium latent nodes (Small-world). Vertical panels show assortativity level, horizontal panels show type of individual-level variation. Points are colored by transmission rate and shapes show ratio of male:female infection heterogeneity. Figure shows that observed levels of male-bias are often met in simulations with heterogeneity in male:female infectious periods  but rarely met with other parameter combinations. Assortativity slightly increases male-bias but male-bias is more associated with heterogeneity in individual-level infection dynamics. Only results from SLIRS model shown. "}
-
+ 
 res %>% 
   filter(delt<1, psi>0, !is.infinite(prev_l), net_type=="Small-world") %>%
   ggplot(aes(x=prev_l/1000, y=prev_ratio, color=as.factor(tau))) +

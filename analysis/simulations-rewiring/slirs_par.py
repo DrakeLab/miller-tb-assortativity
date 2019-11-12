@@ -69,7 +69,7 @@ def process_file(f):
         H.add_edge('I.f', 'R.f', rate = Gam)  # female  
         H.add_edge('I.m', 'R.m', rate = Gam)  # male
 
-    else: # alph_type=="INFPER"
+    else: # alph_type=="INF_PER"
         #S->L I infects S
         J.add_edge(('I.f', 'S.f'), ('I.f', 'L.f'), rate = tau)  # female infects female
         J.add_edge(('I.m', 'S.m'), ('I.m', 'L.m'), rate = tau)  # male infects male  
@@ -126,8 +126,8 @@ def process_file(f):
 
     sim_dur = end[0] # duration of simulation
 
-    mf_rec_rat = end[8]/(end[7]+0.0001) # MF ratio for SIR/SLIR models
-    mf_inf_rat = end[6]/(end[5]+0.0001) # MF ratio for SIRS/SLIRS models
+    mf_rec_rat = end[8]/end[7] # MF ratio for SIR/SLIR models
+    mf_inf_rat = end[6]/(end[5]+0.1) # MF ratio for SIRS/SLIRS models
     lat = end[3] +end[4] # amount of latent at end of sim for SLIRS model
 
     rec_size = end[7] + end[8] # for SIR/SLIR models
@@ -148,7 +148,7 @@ Del = [100000, 1./10.]     # L->I Reactivation rate; 10000=>SIR, del~0=SLIR
 Gam = 1./2.          # I->R Recovery rate
 Psi =  [0, 0.33]       # R->S Reversion rate; 0=SIR, sig>0=SIRS
 i0 = 0.05            # proportion initially infected 
-tsteps = 200         # set max time steps to run model for
+tsteps = 250         # set max time steps to run model for
 
 # Male:female differences to explain male bias
 Alph_vals = [1.0, 1.5, 2.0]   # Ratio of male:female susceptibility

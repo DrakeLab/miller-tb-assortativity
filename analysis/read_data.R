@@ -368,7 +368,7 @@ res <- data.frame(net_type=rep(NA, nrow(vars)), size=rep(NA, nrow(vars)), rep=re
 
 for(i in 1:nrow(vars)){
   if (i%%1000==0) print(i)
-  netType=vars[i, "net_type"]
+  netType=as.character(vars[i, "net_type"])
   s=vars[i, "n"]
   r=vars[i, "r"]
   rep=vars[i, "rep"] 
@@ -423,17 +423,16 @@ for(i in 1:nrow(vars)){
   # calculate prevalence ratio
   # which t >50 for psi>0
   t.st=1
-  if(psi>0){t.st=min(which(simOut$t>100))}
+
+  I.m <- tail(simOut$I.m, 1)
+  I.f <- tail(simOut$I.f, 1)
   
   if(psi==0){
     I.m <- tail(simOut$R.m, 1)
     I.f <- tail(simOut$R.f, 1)
   }
   
-  I.m <- simOut$I.m[seq(t.st, nrow(simOut), by=20) ]
-  I.f <- simOut$I.f[seq(t.st, nrow(simOut), by=20) ]
-  
-  res[i, "prev_ratio"] <- mean(I.m/I.f, na.rm=TRUE)
+  res[i, "prev_ratio"] <- I.m/(I.f + 0.1)
   
   if(as.numeric(as.character(delt))<1){
     res[i, "prev_l"] <-  mean(simOut$L.f[simOut$t>100] + simOut$L.m[simOut$t>100])
@@ -441,7 +440,7 @@ for(i in 1:nrow(vars)){
 }
 
 
-write.csv(res, "simulations-rewiring/results/slirs-prelim3.csv") 
+write.csv(res, "simulations-rewiring/results/slirs-prelim4.csv") 
 
 ###### ----------- Testing tau values for SLIRS models -----------  ###### 
 
