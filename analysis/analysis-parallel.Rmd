@@ -1,9 +1,11 @@
 ---
-title: "Sex-assortativity, heterogeneity in infection and transmission by sex, and male-bias in TB cases: A simulation study"
+title: "The effects of mixing patterns and sex-traits on transmission and male-bias of TB"
 output: pdf_document
 editor_options: 
   chunk_output_type: console
-header-includes: \usepackage[section]{placeins}
+header-includes: 
+- \usepackage[section]{placeins}
+- \usepackage{amsmath}
 ---
 
 ```{r setup, include=FALSE, message=FALSE}
@@ -31,7 +33,59 @@ assortCols <- c("#F3E79AFF", "#F7A086FF", "#CF63A6FF", "#704D9EFF")
 ```
 
 
-```{r who-male-bias, fig.cap="Across the world, more cases of TB occur among men than women (A). These patterns are remarkably similar across regions and are not explained by rates of smoking (B), health coverage (C), or employment (D)."}
+Can assortativity drive male bias or are sex-trait differences required to explain male-bias?
+
+Preliminary results for simulations of pathogen spreading on contact networks with varying levels of assortativity ($r=0, 0.3, 0.6, 0.9$) and sex-trait ratios ($\alpha$). Sex-traits were susceptibility (SUS), infectious period (IP), and transmissibility (TRA). 
+
+Rates of susceptibility for nodes (SUS) was modeled as 
+
+| Source -> Target  | Overall transmission rate, $\beta$  | 
+|:-:|:-:|
+| F->F  | $\frac{2 \tau }                              {(\alpha + 1)}$ |
+| M->M  | $\frac{2 \tau   \alpha}                 {(\alpha + 1)}$ |
+| M->F  | $\frac{2\tau }                              {(\alpha + 1)}$ |
+| F->M  | $\frac{2 \tau  \alpha}               {(\alpha + 1)}$ |
+
+Rates of transmissibility (TRA) for nodes was modeled as 
+
+| Source -> Target  | Overall transmission rate, $\beta$  | 
+|:-:|:-:|
+| F->F  | $\frac{2 \tau   }                              {(\alpha + 1)}$ |
+| M->M  | $\frac{2 \tau   \alpha}                 {(\alpha + 1)}$ |
+| M->F  |  $\frac{ 2 \tau  \alpha}               {(\alpha + 1)}$ |
+| F->M  | $\frac{2 \tau}                              {(\alpha + 1)}$|
+
+Infectious period (INF) for nodes modeled as 
+
+| Source  | Overall transmission rate, $\beta$  | 
+|:-:|:-:|
+| F  | $\frac{\gamma (\alpha + 1)   }                              {2}$ |
+| M  | $\frac{\gamma (\alpha + 1)   }                              {2\alpha}$ |
+
+Each sex-trait was modeled separately. 
+
+Sensitivity parameters tested: 
+
+1. transmission rate ($\tau=0.04, 0.075, 0.1$, $R_0=1.5, 2.5, 3.5$)
+2. model type (SIR, SLIR, SIRS, SLIRS). SIRS and SLIRS models ran for 200 time units. 
+
+Response variables: 
+
+1. Male-bias: calculated differently for SIR/SLIR and SIRS/SLIRS. For models without recovery: number of male recovered nodes at end of simulation divided by number of female recovered nodes at end of simulation. For models with recovery: average ratio of male cases to female cases in last 100 time units for each simulation. 
+2. Epidemic duration: calculated for SIR/SLIR models as the number of time units before infectious population reached 0.
+3. Total number infected: calculated for SIR/SLIR models as the total number of individuals that became infected before infectious population reached 0. 
+4. Endemic equilibrium: calculated for SIRS/SLIRS models as the average size of the infected population in the last 100 time units. 
+5. Prevalence of latent infection: calculated for SLIRS model as the average size of the latent population in the last 100 time units. 
+
+# Notes
+
+* Began with scale-free (300) and small-world networks (300) then re-wired
+* Results for 100 network replicates shown
+* One epidemic simulated per network
+
+\clearpage
+
+```{r who-male-bias, fig.cap="Across the world, more cases of TB occur among men than women (A). These patterns are remarkably similar across regions and are not explained by rates of smoking (B), health coverage (C), or employment (D). Colors indicate regions shown in A. Not all variables were available for the same set of countries for each plot. B & D are log-scale. Data from WHO and ILO. "}
 
 # data from 
 # http://apps.who.int/gho/portal/uhc-cabinet-wrapper-v2.jsp?id=1010501
@@ -78,7 +132,8 @@ country.who %>%
   geom_vline(xintercept = 1, linetype="dotted", 
                 color = "black", size=.5) + 
   labs(x="Estimated male:female incidence, 2016", y="", title="A") + 
-  theme_light() -> mfplot
+  theme_light() + 
+  theme(strip.text = element_text(size = 10, color="Black"))-> mfplot
 
 # country.who %>% 
 #   ggplot(aes(inc, mf_inc, color=region)) +
@@ -139,7 +194,8 @@ grid.arrange(
 Take-aways for data exploration: 
 
 * Male-bias similar across regions
-* No strong predictors of male-bias at the country scale
+* Commonly cited drivers of male-bias not strongly predicting male-bias at the country or regional level 
+* There has to be something physiological
 
 \newpage
 
@@ -184,8 +240,8 @@ res %>%
         axis.title=element_text(size=18,face="bold"),
         legend.title = element_text(size=18),
         legend.text = element_text(size=18), 
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(), 
+        # panel.grid.major = element_blank(),
+        # panel.grid.minor = element_blank(), 
         strip.text = element_text(size = 18, color="Black"))
 
 ```
@@ -212,8 +268,8 @@ res %>%
         axis.title=element_text(size=18,face="bold"),
         legend.title = element_text(size=18),
         legend.text = element_text(size=18), 
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(), 
+        # panel.grid.major = element_blank(),
+        # panel.grid.minor = element_blank(), 
         strip.text = element_text(size = 18, color="Black"))
 
 ```
@@ -240,8 +296,8 @@ res %>%
         axis.title=element_text(size=18,face="bold"),
         legend.title = element_text(size=18),
         legend.text = element_text(size=18), 
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(), 
+        # panel.grid.major = element_blank(),
+        # panel.grid.minor = element_blank(), 
         strip.text = element_text(size = 18, color="Black"))
 
 ```
@@ -267,8 +323,8 @@ res %>%
         axis.title=element_text(size=18,face="bold"),
         legend.title = element_text(size=18),
         legend.text = element_text(size=18), 
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(), 
+        # panel.grid.major = element_blank(),
+        # panel.grid.minor = element_blank(), 
         strip.text = element_text(size = 18, color="Black"))
 
 ```
@@ -313,8 +369,8 @@ foo %>%
         axis.title=element_text(size=hs,face="bold"),
         legend.title = element_text(size=hs),
         legend.text = element_text(size=hs), 
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(), 
+        # panel.grid.major = element_blank(),
+        # panel.grid.minor = element_blank(), 
         strip.text = element_text(size = 18, color="Black")) 
 
 ```
@@ -358,8 +414,8 @@ foo %>%
         axis.title=element_text(size=hs,face="bold"),
         legend.title = element_text(size=hs),
         legend.text = element_text(size=hs), 
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(), 
+        # panel.grid.major = element_blank(),
+        # panel.grid.minor = element_blank(), 
         strip.text = element_text(size = 18, color="Black")) 
 
 ```
@@ -385,22 +441,40 @@ foo %>%
   ggplot(aes(x=as.factor(r), y=factor(tau))) +
   geom_tile(aes(fill=out_size)) + 
   scale_fill_viridis_c() +
-  facet_grid(type_net ~ .) +
+  facet_grid(type_net ~ modName) +
   labs(x="Assortativity", y=expression(tau), 
-       fill="Epidemic size", title = "SLIR") +
+       fill="Epidemic \n size") +
   theme_light() +
   theme(axis.text=element_text(size=14),
         axis.text.x = element_text(hjust=1, angle=45),
         axis.title=element_text(size=18,face="bold"),
         legend.title = element_text(size=18),
         legend.text = element_text(size=18), 
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(), 
-        strip.text = element_text(size = 18, color="Black"))
+        # panel.grid.major = element_blank(),
+        # panel.grid.minor = element_blank(), 
+        strip.text = element_text(size = 18, color="Black")) -> p1
+
+
+res %>%
+  filter(modName=="SLIR", tau %in% c(0.04, 0.15)) %>%
+  ggplot(aes(x=factor(r), y=recovered_prev, fill=factor(type_net))) +
+  geom_boxplot()  +  facet_wrap(tau~.) +
+  #scale_color_continuous_diverging() +
+  labs(x="Assortativity", y=("Epidemic size"), 
+       fill="Network \n type", shape="Model \n type") +
+  theme_light() +
+  theme(axis.text=element_text(size=14),
+        axis.text.x = element_text(hjust=1, angle=45),
+        axis.title=element_text(size=18,face="bold"),
+        legend.title = element_text(size=18),
+        legend.text = element_text(size=18), 
+        # panel.grid.major = element_blank(),
+        # panel.grid.minor = element_blank(), 
+        strip.text = element_text(size = 18, color="Black")) -> p2
 
 ```
 
-```{r outbreak-compare2, fig.cap="Effects of network structure on endemic prevalence in SLIRS model. Hortizontal panels show different network types (scale-free and small-world). "}
+```{r outbreak-compare2, fig.cap="Effects of network structure on endemic prevalence in SLIRS model. Hortizontal panels show different network types (scale-free and small-world). ", fig.width=8}
 
 foo <- res %>% 
   filter(modName%in% c("SIRS", "SLIRS"), alph_val==1) %>%
@@ -412,18 +486,38 @@ foo %>%
   ggplot(aes(x=as.factor(r), y=factor(tau))) +
   geom_tile(aes(fill=prev)) + 
   scale_fill_viridis_c() +
-  facet_grid(type_net ~ .) +
+  facet_grid(type_net ~ modName) +
   labs(x="Assortativity", y=expression(tau), 
-       fill="Endemic prevalence", title = "SLIRS") +
+       fill="Endemic \n prevalence") +
   theme_light() +
   theme(axis.text=element_text(size=14),
         axis.text.x = element_text(hjust=1, angle=45),
         axis.title=element_text(size=18,face="bold"),
         legend.title = element_text(size=18),
         legend.text = element_text(size=18), 
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(), 
-        strip.text = element_text(size = 18, color="Black"))
+        # panel.grid.major = element_blank(),
+        # panel.grid.minor = element_blank(), 
+        strip.text = element_text(size = 18, color="Black")) -> p3
+
+res %>%
+  filter(modName=="SLIRS", tau %in% c(0.04, 0.15)) %>%
+  ggplot(aes(x=factor(r), y=recovered_prev, fill=factor(type_net))) +
+  geom_boxplot()  +  facet_wrap(tau~.) +
+  #scale_color_continuous_diverging() +
+  labs(x="Assortativity", y=("Endemic prevalence"), 
+       fill="Network \n type", shape="Model \n type") +
+  theme_light() +
+  theme(axis.text=element_text(size=14),
+        axis.text.x = element_text(hjust=1, angle=45),
+        axis.title=element_text(size=18,face="bold"),
+        legend.title = element_text(size=18),
+        legend.text = element_text(size=18), 
+        # panel.grid.major = element_blank(),
+        # panel.grid.minor = element_blank(), 
+        strip.text = element_text(size = 18, color="Black")) -> p4
+
+
+grid.arrange(p1, p2, p3, p4, nrow=2)
 
 ```
 
