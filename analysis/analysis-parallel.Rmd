@@ -23,8 +23,9 @@ library(knitr)
 library(colorspace)
 library(tidyverse)
 library(gridExtra)
+library(ggraph)
 
-knitr::opts_chunk$set(cache=TRUE, fig.path = "slirs-par-figs/", 
+knitr::opts_chunk$set(cache=FALSE, fig.path = "slirs-par-figs/", 
                       warning = FALSE, message=FALSE, echo=FALSE, fig.height =6, fig.width = 8) 
 
 # colors for assortativity
@@ -85,7 +86,7 @@ Response variables:
 
 \clearpage
 
-```{r who-male-bias, fig.cap="Across the world, more cases of TB occur among men than women (A). These patterns are remarkably similar across regions and are not explained by rates of smoking (B), health coverage (C), or employment (D). Colors indicate regions shown in A. Not all variables were available for the same set of countries for each plot. B & D are log-scale. Data from WHO and ILO. "}
+```{r who-male-bias, fig.cap="Male-bias is remarkably similar around the world (A), and across countries. This pattern not well-explained by rates of smoking (B), overall health coverage (C), or rates of employment (D). Colors in B-D indicate regions shown in A. Not all variables were available for the same set of countries for each plot. Variables on x axis in plots B and D are on a log-scale. Data from WHO and ILO. ", fig.height=6, fig.width=5.5}
 
 # data from 
 # http://apps.who.int/gho/portal/uhc-cabinet-wrapper-v2.jsp?id=1010501
@@ -131,9 +132,9 @@ country.who %>%
   facet_wrap(.~region) +
   geom_vline(xintercept = 1, linetype="dotted", 
                 color = "black", size=.5) + 
-  labs(x="Estimated male:female incidence, 2016", y="", title="A") + 
+  labs(x=expression("Male:female cases"), y="", title="A") + 
   theme_light() + 
-  theme(strip.text = element_text(size = 10, color="Black"))-> mfplot
+  theme(strip.text = element_text(size = 10, color="Black")) -> mfplot
 
 # country.who %>% 
 #   ggplot(aes(inc, mf_inc, color=region)) +
@@ -154,8 +155,8 @@ ilo.who %>%
               size=.5) +
   geom_hline(yintercept = 1, linetype="dotted", 
                 color = "black", size=.5) + 
-  labs(x="Estimated male:female smoking rates, 2015", 
-       y="Estimated male:female incidence, 2016", title="B") +
+  labs(x=expression("Male:female smoking, 2015"), 
+       y=expression("Male:female cases, 2016"), title="B") +
   theme_light()  -> smokeplot
 
 ilo.who %>% 
@@ -166,7 +167,7 @@ ilo.who %>%
               size=.5) +
   geom_hline(yintercept = 1, linetype="dotted", 
                 color = "black", size=.5) + 
-  labs(x="Universal Health Coverage Index, 2017", y="Estimated male:female incidence, 2016", title="C") +
+  labs(x="Health Coverage Index, 2017", y="Male:female cases, 2016", title="C") +
   theme_light()  -> healthplot
 
 ilo.who %>% 
@@ -178,7 +179,8 @@ ilo.who %>%
               size=.5) +
   geom_hline(yintercept = 1, linetype="dotted", 
                 color = "black", size=.5) + 
-  labs(x="Estimated male:female employment ratio, 2016", y="Estimated male:female incidence, 2016", title = "D") +
+  labs(x="Male:female employment, 2016", 
+       y="Male:female cases, 2016", title = "D") +
   #facet_wrap(~region) +
   theme_light() -> workplot
 
@@ -191,13 +193,160 @@ grid.arrange(
 
 ```
 
-Take-aways for data exploration: 
 
-* Male-bias similar across regions
-* Commonly cited drivers of male-bias not strongly predicting male-bias at the country or regional level 
-* There has to be something physiological
+\clearpage
 
-\newpage
+```{r, include=FALSE}
+
+
+# SF network plots
+n0 <- read_graph("simulations-rewiring/networks3/G_0N100rep1.graphml", format="graphml")
+n3 <- read_graph("simulations-rewiring/networks3/G_0.3N100rep1.graphml", format="graphml")
+n6 <- read_graph("simulations-rewiring/networks3/G_0.6N100rep1.graphml", format="graphml")
+n9 <- read_graph("simulations-rewiring/networks3/G_0.9N100rep1.graphml", format="graphml")
+
+ggraph(n0, 'igraph', algorithm="lgl") + 
+  geom_edge_link(color="darkgrey", alpha=.5) + 
+  geom_node_point(aes(color=factor(sex)), size=1, alpha=.75, 
+                  show.legend = FALSE) +
+  ggtitle("A", subtitle = "r=0") +
+  theme(plot.title = element_text(hjust = 0, size=10), 
+        plot.subtitle = element_text(size=10, face="italic", color=assortCols[1])) -> pn0
+
+ggraph(n3, 'igraph', algorithm="lgl") + 
+  geom_edge_link(color="darkgrey", alpha=.5) + 
+  geom_node_point(aes(color=factor(sex)), size=1, alpha=.75, 
+                  show.legend = FALSE) +
+    ggtitle("   ", subtitle = "r=0.3") +
+  theme(plot.title = element_text(hjust = 0, size=10), 
+        plot.subtitle = element_text(size=10, face="italic", color=assortCols[2]))  -> pn1
+
+ggraph(n6, 'igraph', algorithm="lgl") + 
+  geom_edge_link(color="darkgrey", alpha=.5) + 
+  geom_node_point(aes(color=factor(sex)), size=1, alpha=.75, 
+                  show.legend = FALSE) +
+  ggtitle("   ", subtitle = "r=0.6") +
+  theme(plot.title = element_text(hjust = 0, size=10), 
+        plot.subtitle = element_text(size=10, face="italic", color=assortCols[3])) -> pn2
+
+ggraph(n9, 'igraph', algorithm="lgl") + 
+  geom_edge_link(color="darkgrey", alpha=.5) + 
+  geom_node_point(aes(color=factor(sex)), size=1, alpha=.75, 
+                  show.legend = FALSE) +
+  ggtitle("   ", subtitle = "r=0.9") +
+  theme(plot.title = element_text(hjust = 0,size=10), 
+        plot.subtitle = element_text(size=10, face="italic", color=assortCols[4])) -> pn3
+
+
+# laod simulation ANALYSIS
+res <- read.csv("simulations-rewiring/results/slirs-prelim4.csv")
+
+# network types
+res$net_type <- factor(res$net_type, labels = c("Scale-free", "Small-world"))
+
+res %>%
+  mutate(stat="Modularity") %>%
+  ggplot(aes(r_actual, q, color=factor(r))) + 
+  geom_abline(slope = .5) +
+  geom_point (size=3, alpha=.5) +  
+  facet_grid(net_type~stat) +
+  theme_gray() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = "none")  +
+  scale_color_discrete_sequential(palette="Sunset") +
+  labs(x="Assortativity  (r)", y="", color="Assortativity", title = "B") +
+  guides(colour=FALSE) +
+  theme_light() +
+  theme(plot.title = element_text(face="bold", size=10), 
+        axis.text=element_text(size=10),
+        axis.text.x = element_text(hjust=1, angle=45),
+        axis.title=element_text(size=10),
+        legend.title = element_text(size=10),
+        legend.text = element_text(size=10), 
+        #panel.grid.major = element_blank(),
+        #panel.grid.minor = element_blank(), 
+        strip.text = element_text(size = 10, color="Black"))   -> p1
+
+
+res %>%
+  mutate(stat="Clustering") %>%
+  ggplot(aes(factor(r), clustering, color=factor(r))) + 
+  geom_boxplot() +  
+  facet_grid(net_type~stat) +
+  theme_gray() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = "none")  +
+  scale_color_discrete_sequential(palette="Sunset") +
+  labs(x="Assortativity  (r)", y="", color="Assortativity", title = "C") +
+  guides(colour=FALSE) +
+  theme_light() +
+  theme(plot.title = element_text(face="bold", size=10), 
+    axis.text=element_text(size=10),
+        axis.text.x = element_text(hjust=1, angle=45),
+        axis.title=element_text(size=10),
+        legend.title = element_text(size=10),
+        legend.text = element_text(size=10), 
+        #panel.grid.major = element_blank(),
+        #panel.grid.minor = element_blank(), 
+        strip.text = element_text(size = 10, color="Black"))   -> p2
+
+res %>%
+  mutate(stat="Path Length") %>%
+  ggplot(aes(factor(r), pathLen, color=factor(r))) + 
+  geom_boxplot() +  
+  facet_grid(net_type~stat) +
+  theme_gray() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = "none")  +
+  scale_color_discrete_sequential(palette="Sunset") +
+  labs(x="Assortativity  (r)", y="", color="Assortativity", title = "D") +
+  guides(colour=FALSE) +
+  theme_light() +
+  theme(plot.title = element_text(face="bold", size=10), 
+    axis.text=element_text(size=10),
+        axis.text.x = element_text(hjust=1, angle=45),
+        axis.title=element_text(size=10),
+        legend.title = element_text(size=10),
+        legend.text = element_text(size=10), 
+        #panel.grid.major = element_blank(),
+        #panel.grid.minor = element_blank(), 
+        strip.text = element_text(size = 10, color="Black"))   -> p3
+
+res %>%
+  mutate(stat="Degree assortativity") %>%
+  ggplot(aes(factor(r), degAssort, color=factor(r))) + 
+  geom_boxplot() +  
+  facet_grid(net_type~stat) +
+  theme_gray() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = "none")  +
+  scale_color_discrete_sequential(palette="Sunset") +
+  labs(x="Assortativity  (r)", y="", color="Assortativity", title = "E") +
+  guides(colour=FALSE) +
+  theme_light() +
+  theme(plot.title = element_text(face="bold", size=10), 
+      axis.text=element_text(size=10),
+        axis.text.x = element_text(hjust=1, angle=45),
+        axis.title=element_text(size=10),
+        legend.title = element_text(size=10),
+        legend.text = element_text(size=10), 
+        #panel.grid.major = element_blank(),
+        #panel.grid.minor = element_blank(), 
+        strip.text = element_text(size = 10, color="Black"))   -> p4
+
+resStats <- res
+
+grid.arrange(pn0, pn1, pn2, pn3, nrow=1) -> g1
+
+grid.arrange(p1, p2, p3, p4, nrow=2) -> g2
+```
+
+```{r networkStructures, fig.cap="Simulated networks were generated and then re-wired to varying levels of assortativity (A). The algorithm used to re-wire networks accepted assortativity levels within a range (0.035) and these assortativity values are linearly related to modularity (B). As assortativity increased, clustering (C), path length (D), and degree assortativity (E) were altered, sometimes differently for scale-free and small-world networks. ", fig.width=5, fig.height=8}
+grid.arrange(g1, 
+             g2, 
+             heights=c(1,3))
+```
+
 
 ```{r}
 
@@ -218,6 +367,235 @@ res$alph_type <- factor(res$alph_type, labels = c("IP", "SUS", "TRA"))
 
 
 ```
+
+
+```{r prev-rat-heatmap-low-tau, fig.cap="The combined effects of assortativity and individual-level variation on male-bias across different sex-traits and network types. Vertical panels show type of sex-traits: Infectious period (IP), Susceptibility (SUS), and Transmissibility (TRA). Horizontal panels show model types (SLIR and SLIRS) and network type (scale-free and small-world). Color shows mean value of male:female prevalence for that parameter combination (only values above 1.25 are shown). In general, higher male susceptibility can lead to some amount of male-bias, but for SLIRS models, longer male infectious periods is a striking driver of male-bias.   ", fig.height=8}
+
+hs <- 14 # text size
+ 
+res %>%
+  filter(!is.infinite(mf_r_ratio), tau==0.075, modName==("SLIR")) %>%
+  group_by(modName, type_net, alph_type, r, alph_val) %>%
+  summarise(meanPrev=mean(mf_r_ratio, na.rm=TRUE)) -> fooa
+
+res %>%
+  filter(!is.infinite(mf_i_ratio), tau==0.075, modName==c("SLIRS")) %>%
+  group_by(modName, type_net, alph_type, r, alph_val) %>%
+  summarise(meanPrev=mean(mf_i_ratio, na.rm=TRUE)) -> foob
+
+# for SLIR use R, for SLIRS use I class for MF calculation
+foo <- bind_rows(fooa, foob)
+
+foo %>%
+  mutate(absPrev=abs(meanPrev-1.8)) %>%
+  group_by(type_net, modName, alph_type, r) %>%
+  summarise(alphVal=which.min(absPrev)) -> foo2
+
+foo %>%
+  ggplot(aes(x=factor(r), y=factor(alph_val))) +
+  geom_tile(aes(fill=meanPrev)) + 
+  scale_fill_gradient2(midpoint=log10(1.8), trans="log10", 
+                                     low="red4", mid = "dodgerblue",
+                       high="black", limits=c(1.25,5), na.value = "white") +
+  # geom_point(data=foo2, aes(x=factor(r), y=alphVal), 
+  #            shape=17, color="white") +
+  facet_grid(type_net ~ modName ~ alph_type) +
+  labs(x="Assortativity (r)", y=expression(alpha), 
+       fill="Mean \nPrevalence \nRatio", title = "R0=1.5") +
+  theme_light() +
+  theme(axis.text=element_text(size=hs),
+        axis.text.x = element_text(hjust=1, angle=45),
+        axis.title=element_text(size=hs,face="bold"),
+        legend.title = element_text(size=hs),
+        legend.text = element_text(size=hs), 
+        # panel.grid.major = element_blank(),
+        # panel.grid.minor = element_blank(), 
+        strip.text = element_text(size = 18, color="Black")) 
+
+```
+
+\clearpage
+
+```{r outbreak-compare1, fig.cap="Effects of network structure on epidemic size in SLIR model and endemic level in SLIRS model. Hortizontal panels show different network types (scale-free and small-world). "}
+
+foo <- res %>% 
+  filter(modName%in% c("SIR", "SLIR"), alph_val==1) %>%
+  group_by(modName, tau, r, type_net) %>%
+  summarise(out_size=mean(recovered_prev))
+
+foo %>%
+  filter(modName=="SLIR") %>%
+  ggplot(aes(x=as.factor(r), y=factor(tau))) +
+  geom_tile(aes(fill=out_size)) + 
+  scale_fill_viridis_c() +
+  facet_grid(factor(type_net) ~ modName) +
+  labs(x="Assortativity (r)", y=expression(tau), 
+       fill="Epidemic \n size") +
+  theme_light() +
+  theme(axis.text=element_text(size=14),
+        axis.text.x = element_text(hjust=1, angle=45),
+        axis.title.y = element_text(angle=0, vjust = 0.5),
+        axis.title=element_text(size=14,face="bold"),
+        legend.title = element_text(size=14),
+        legend.text = element_text(size=14), 
+        # panel.grid.major = element_blank(),
+        # panel.grid.minor = element_blank(), 
+        strip.text = element_text(size = 14, color="Black")) -> p1
+
+
+res %>%
+  filter(modName=="SLIR", tau %in% c(0.04, 0.15)) %>%
+  ggplot(aes(x=factor(r), y=recovered_prev, 
+             fill=factor(type_net, labels=c("SF", "SW")))) +
+  geom_boxplot()  +  facet_wrap(tau~.) +
+  #scale_color_continuous_diverging() +
+  labs(x="Assortativity (r)", y=("Epidemic size"), 
+       fill="Network \n type", shape="Model \n type") +
+  theme_light() +
+  theme(axis.text=element_text(size=14),
+        axis.text.x = element_text(hjust=1, angle=45),
+        axis.title=element_text(size=14,face="bold"),
+        legend.title = element_text(size=14),
+        legend.text = element_text(size=14), 
+        # panel.grid.major = element_blank(),
+        # panel.grid.minor = element_blank(), 
+        strip.text = element_text(size = 14, color="Black")) -> p2
+
+```
+
+
+```{r outbreak-compare2, fig.cap="Effects of network structure on endemic prevalence in SLIRS model. Hortizontal panels show different network types (scale-free and small-world). ", fig.width=8, fig.height=7}
+
+foo <- res %>% 
+  filter(modName%in% c("SIRS", "SLIRS"), alph_val==1) %>%
+  mutate(infected_prev=infected_prev/1000) %>%
+  group_by(modName, tau, r, type_net) %>%
+  summarise(prev=mean(infected_prev))
+
+foo %>%
+  filter(modName=="SLIRS") %>%
+  ggplot(aes(x=as.factor(r), y=factor(tau))) +
+  geom_tile(aes(fill=prev)) + 
+  scale_fill_viridis_c() +
+  facet_grid(type_net ~ modName) +
+  labs(x="Assortativity (r)", y=expression(tau), 
+       fill="Endemic \n prevalence") +
+  theme_light() +
+  theme(axis.text=element_text(size=14),
+        axis.text.x = element_text(hjust=1, angle=45),
+        axis.title.y = element_text(vjust=.5, angle=0),
+        axis.title=element_text(size=14,face="bold"),
+        legend.title = element_text(size=14),
+        legend.text = element_text(size=14), 
+        # panel.grid.major = element_blank(),
+        # panel.grid.minor = element_blank(), 
+        strip.text = element_text(size = 14, color="Black")) -> p3
+
+res %>%
+  filter(modName=="SLIRS", tau %in% c(0.04, 0.15)) %>%
+  mutate(infected_prev=infected_prev/1000) %>%
+  ggplot(aes(x=factor(r), y=infected_prev, 
+             fill=factor(type_net, labels=c("SF", "SW")))) +
+  geom_boxplot()  +  facet_wrap(tau~.) +
+  #scale_color_continuous_diverging() +
+  labs(x="Assortativity (r)", y=("Endemic prevalence"), 
+       fill="Network \n type", shape="Model \n type") +
+  theme_light() +
+  theme(axis.text=element_text(size=14),
+        axis.text.x = element_text(hjust=1, angle=45),
+        axis.title=element_text(size=14,face="bold"),
+        legend.title = element_text(size=14),
+        legend.text = element_text(size=14), 
+        # panel.grid.major = element_blank(),
+        # panel.grid.minor = element_blank(), 
+        strip.text = element_text(size = 14, color="Black")) -> p4
+
+
+grid.arrange(p1, p2, p3, p4, nrow=2)
+
+```
+
+\clearpage
+
+## Results
+
+Data exploration: 
+
+* Male-bias similar across regions
+* Commonly cited drivers of male-bias not strongly predicting male-bias at the country or regional level 
+* There has to be something physiological
+
+Network structure with varying assortativity: 
+
+* Assortativity and modularity linearly related
+* Median clustering increased in scale-free and decreased in small-world, both trending toward more "random" as assortativity increased
+* Median shortest path length between nodes increased with assortativity for scale-free networks, but was relatively unchanged in small-world networks
+* Median degree assortativity increased with assortativity in both network types
+
+Which variables can lead to observed levels of male-bias: 
+
+* In SLIR models, observed levels of male-bias (~1.5-2) are rarely observed given variables tested here. Patterns are similar for scale-free and small-world networks: observed levels of male-bias are observed in highly assortative networks with strong sex-traits. In particular, male susceptibility seems to be the strongest sex-trait driving male-bias in SLIR models. 
+* In SLIRS models, observed levels of male-bias are frequently observed in parameter combinations tested here. Patterns are similar for scale-free and small-world networks: assortativity increases male-bias, although some sex-traits by themselves can drive male-bias. In particular, longer male infectious periods seem to be particularly likely to lead to male-bias in SLIRS simulations. 
+* But for faster spreading (higher $R_0$) pathogens, few parameter combinations can lead to male-bias, in SLIR and SLIRS models. 
+* Changing network structure (clustering, path length, degree assortativity) had little effect on results for male-bias (Supplement figures)
+
+Effect of network structure on epidemic dynamics: 
+
+* Assortativity had little effect on measured epidemic dynamics (epidemic size/endemic prevalence)
+* Higher transmission rates led to higher epidemic sizes/endemic prevalence levels
+* For pathogens with low transmission rate, assortativity increased epidemic size slightly (SLIR). In contrast, for high transmission rate pathogens, increasing assortativity decreased epidemic size (SLIR). This effect was more prominant in SF than SW networks. 
+* Assortativity had a damped effect on endemic prevalence levels (SLIRS) compared with SLIR.
+* However, results of epidemic dynamics were probably affected by changes in network structure (Supplement figures)
+
+## Sensitivity analyses (Supplements)
+
+
+```{r prev-rat-heatmap-high-tau, fig.cap="The combined effects of assortativity and individual-level variation on male-bias across different sex-traits and network types. Vertical panels show type of sex-traits: Infectious period (IP), Susceptibility (SUS), and Transmissibility (TRA). Horizontal panels show model types (SLIR and SLIRS) and network type (scale-free and small-world). Color shows mean value of male:female prevalence for that parameter combination (only values above 1.25 are shown). In general, higher male susceptibility can lead to some amount of male-bias, but for SLIRS models, longer male infectious periods is a striking driver of male-bias.   ", fig.height=6, fig.width=6}
+
+hs <- 12 # text size
+ 
+res %>%
+  filter(!is.infinite(mf_r_ratio), tau==0.15, modName==("SLIR")) %>%
+  group_by(modName, type_net, alph_type, r, alph_val) %>%
+  summarise(meanPrev=mean(mf_r_ratio, na.rm=TRUE)) -> fooa
+
+res %>%
+  filter(!is.infinite(mf_i_ratio), tau==0.15, modName==c("SLIRS")) %>%
+  group_by(modName, type_net, alph_type, r, alph_val) %>%
+  summarise(meanPrev=mean(mf_i_ratio, na.rm=TRUE)) -> foob
+
+# for SLIR use R, for SLIRS use I class for MF calculation
+foo <- bind_rows(fooa, foob)
+
+foo %>%
+  mutate(absPrev=abs(meanPrev-1.8)) %>%
+  group_by(type_net, modName, alph_type, r) %>%
+  summarise(alphVal=which.min(absPrev)) -> foo2
+
+foo %>%
+  ggplot(aes(x=factor(r), y=factor(alph_val))) +
+  geom_tile(aes(fill=meanPrev)) + 
+  scale_fill_gradient2(midpoint=log10(1.8), trans="log10", 
+                                     low="red4", mid = "dodgerblue",
+                       high="black", limits=c(1.25,5), na.value = "white") +
+  # geom_point(data=foo2, aes(x=factor(r), y=alphVal), 
+  #            shape=17, color="white") +
+  facet_grid(type_net ~ modName ~ alph_type) +
+  labs(x="Assortativity", y=expression(alpha), 
+       fill="Mean \nPrevalence \nRatio", title="R0=3.5") +
+  theme_light() +
+  theme(axis.text=element_text(size=hs),
+        axis.text.x = element_text(hjust=1, angle=45),
+        axis.title=element_text(size=hs,face="bold"),
+        legend.title = element_text(size=hs),
+        legend.text = element_text(size=hs), 
+        # panel.grid.major = element_blank(),
+        # panel.grid.minor = element_blank(), 
+        strip.text = element_text(size = 14, color="Black")) 
+
+```
+
+\clearpage 
 
 ```{r SLIR-prev-rat-low-tau, fig.cap="The effects of assortativity on male-bias in SLIR model.  Vertical panels show sex-trait ratios ($\\alpha$) for sex-traits shown at the bottom including male:female infectious period (IP), susceptibility (SUS), and transmissibility (TRA). Hortizontal panels show different network types (scale-free and small-world). The red dashed line shows the observed ratio of male:female cases globally and the grey dashed line represents even distribution of cases between men and women. Results for $\\tau=0.075$ shown. "}
 
@@ -274,6 +652,7 @@ res %>%
 
 ```
 
+\clearpage
 
 ```{r SLIRS-prev-rat-low-tau, fig.cap="The effects of assortativity on male-bias in SLIRS model.  Vertical panels show sex-trait ratios ($\\alpha$) for sex-traits shown at the bottom including male:female infectious period (IP), susceptibility (SUS), and transmissibility (TRA). Hortizontal panels show different network types (scale-free and small-world). The red dashed line shows the observed ratio of male:female cases globally and the grey dashed line represents even distribution of cases between men and women. Results for $\\tau=0.075$ shown. "}
 
@@ -301,6 +680,8 @@ res %>%
         strip.text = element_text(size = 18, color="Black"))
 
 ```
+
+\clearpage
 
 ```{r SLIRS-prev-rat-high-tau, fig.cap="The effects of assortativity on male-bias in SLIRS model.  Vertical panels show sex-trait ratios ($\\alpha$) for sex-traits shown at the bottom including male:female infectious period (IP), susceptibility (SUS), and transmissibility (TRA). Hortizontal panels show different network types (scale-free and small-world). The red dashed line shows the observed ratio of male:female cases globally and the grey dashed line represents even distribution of cases between men and women. Results for $\\tau=0.15$ shown. "}
 
@@ -330,194 +711,75 @@ res %>%
 ```
 
 
-```{r prev-rat-heatmap-low-tau, fig.cap="The combined effects of assortativity and individual-level variation on male-bias across different sex-traits and network types. Vertical panels show type of sex-traits: Infectious period (IP), Susceptibility (SUS), and Transmissibility (TRA). Horizontal panels show model types (SLIR and SLIRS) and network type (scale-free and small-world). Color shows mean value of male:female prevalence for that parameter combination (only values above 1.25 are shown). In general, higher male susceptibility can lead to some amount of male-bias, but for SLIRS models, longer male infectious periods is a striking driver of male-bias.   ", fig.height=8}
 
-hs <- 14 # text size
- 
-res %>%
-  filter(!is.infinite(mf_r_ratio), tau==0.075, modName==("SLIR")) %>%
-  group_by(modName, type_net, alph_type, r, alph_val) %>%
-  summarise(meanPrev=mean(mf_r_ratio, na.rm=TRUE)) -> fooa
+```{r structureMFbias, fig.cap="There are minimal effects of changes in network structure to male-bias. Results shown for SLIR model with $\\tau=0.1$. ", fig.width=6, fig.height=4.5}
 
-res %>%
-  filter(!is.infinite(mf_i_ratio), tau==0.075, modName==c("SLIRS")) %>%
-  group_by(modName, type_net, alph_type, r, alph_val) %>%
-  summarise(meanPrev=mean(mf_i_ratio, na.rm=TRUE)) -> foob
+tv <- 0.1 # tau value
 
-# for SLIR use R, for SLIRS use I class for MF calculation
-foo <- bind_rows(fooa, foob)
-
-foo %>%
-  mutate(absPrev=abs(meanPrev-1.8)) %>%
-  group_by(type_net, modName, alph_type, r) %>%
-  summarise(alphVal=which.min(absPrev)) -> foo2
-
-foo %>%
-  ggplot(aes(x=factor(r), y=factor(alph_val))) +
-  geom_tile(aes(fill=meanPrev)) + 
-  scale_fill_gradient2(midpoint=log10(1.8), trans="log10", 
-                                     low="red4", mid = "dodgerblue",
-                       high="black", limits=c(1.25,5), na.value = "white") +
-  # geom_point(data=foo2, aes(x=factor(r), y=alphVal), 
-  #            shape=17, color="white") +
-  facet_grid(type_net ~ modName ~ alph_type) +
-  labs(x="Assortativity", y=expression(alpha), 
-       fill="Mean \nPrevalence \nRatio", title = "R0=1.5") +
+resStats %>%
+  filter(prev_ratio < 10, tau==tv, alph==1) %>%
+  select(prev_ratio, r, net_type, clustering, pathLen, degAssort) %>%
+  gather("stat", "val", 4:6) %>%
+  ggplot(aes(val, prev_ratio, col=factor(r))) +
+  geom_point() + geom_smooth(method="lm", color="black") + facet_grid(net_type~ stat, scales="free") +
+  scale_color_discrete_sequential(palette="Sunset") +
+  labs(x="", y="M:F Case Bias", color="Assortativity (r)") +
   theme_light() +
-  theme(axis.text=element_text(size=hs),
+  theme(axis.text=element_text(size=10),
         axis.text.x = element_text(hjust=1, angle=45),
-        axis.title=element_text(size=hs,face="bold"),
-        legend.title = element_text(size=hs),
-        legend.text = element_text(size=hs), 
+        axis.title=element_text(size=12),
+        legend.title = element_text(size=12),
+        legend.text = element_text(size=12), 
         # panel.grid.major = element_blank(),
         # panel.grid.minor = element_blank(), 
-        strip.text = element_text(size = 18, color="Black")) 
+        strip.text = element_text(size = 12, color="Black"))
+
 
 ```
 
-```{r prev-rat-heatmap-high-tau, fig.cap="The combined effects of assortativity and individual-level variation on male-bias across different sex-traits and network types. Vertical panels show type of sex-traits: Infectious period (IP), Susceptibility (SUS), and Transmissibility (TRA). Horizontal panels show model types (SLIR and SLIRS) and network type (scale-free and small-world). Color shows mean value of male:female prevalence for that parameter combination (only values above 1.25 are shown). In general, higher male susceptibility can lead to some amount of male-bias, but for SLIRS models, longer male infectious periods is a striking driver of male-bias.   ", fig.height=8}
+```{r structureOutSize, fig.cap="Higher clustering and path length decrease outbreak size in scale-free and small-world networks. Degree assortativity increases outbreak size in small-world networks but decreases outbreaks in scale-free networks.  Results shown for SLIR models. ", fig.width=6, fig.height=4.5}
 
-hs <- 14 # text size
- 
-res %>%
-  filter(!is.infinite(mf_r_ratio), tau==0.15, modName==("SLIR")) %>%
-  group_by(modName, type_net, alph_type, r, alph_val) %>%
-  summarise(meanPrev=mean(mf_r_ratio, na.rm=TRUE)) -> fooa
-
-res %>%
-  filter(!is.infinite(mf_i_ratio), tau==0.15, modName==c("SLIRS")) %>%
-  group_by(modName, type_net, alph_type, r, alph_val) %>%
-  summarise(meanPrev=mean(mf_i_ratio, na.rm=TRUE)) -> foob
-
-# for SLIR use R, for SLIRS use I class for MF calculation
-foo <- bind_rows(fooa, foob)
-
-foo %>%
-  mutate(absPrev=abs(meanPrev-1.8)) %>%
-  group_by(type_net, modName, alph_type, r) %>%
-  summarise(alphVal=which.min(absPrev)) -> foo2
-
-foo %>%
-  ggplot(aes(x=factor(r), y=factor(alph_val))) +
-  geom_tile(aes(fill=meanPrev)) + 
-  scale_fill_gradient2(midpoint=log10(1.8), trans="log10", 
-                                     low="red4", mid = "dodgerblue",
-                       high="black", limits=c(1.25,5), na.value = "white") +
-  # geom_point(data=foo2, aes(x=factor(r), y=alphVal), 
-  #            shape=17, color="white") +
-  facet_grid(type_net ~ modName ~ alph_type) +
-  labs(x="Assortativity", y=expression(alpha), 
-       fill="Mean \nPrevalence \nRatio", title="R0=3.5") +
-  theme_light() +
-  theme(axis.text=element_text(size=hs),
+resStats %>%
+  filter(tau==tv, alph==1, psi==0, delt<10) %>%
+  select(tot_inf, r, net_type, clustering, pathLen, degAssort) %>%
+  gather("stat", "val", 4:6) %>%
+  ggplot(aes(val, tot_inf, col=factor(r))) +
+  geom_point() + geom_smooth(method="lm", color="black") + facet_grid(net_type~ stat, scales="free") +
+  scale_color_discrete_sequential(palette="Sunset") +
+  labs(x="", y="Total infected", color="Assortativity (r)") +
+    theme_light() +
+  theme(axis.text=element_text(size=10),
         axis.text.x = element_text(hjust=1, angle=45),
-        axis.title=element_text(size=hs,face="bold"),
-        legend.title = element_text(size=hs),
-        legend.text = element_text(size=hs), 
+        axis.title=element_text(size=12),
+        legend.title = element_text(size=12),
+        legend.text = element_text(size=12), 
         # panel.grid.major = element_blank(),
         # panel.grid.minor = element_blank(), 
-        strip.text = element_text(size = 18, color="Black")) 
+        strip.text = element_text(size = 12, color="Black"))
+
 
 ```
 
-Take-aways for male-bias: 
+```{r structureEpiDur, fig.cap="Higher degree assortativity and path length decrease epidemic duration in scale-free and small-world networks. Clustering increases epidemic duration in scale-free networks but decreases epidemic duration in small-world networks.  ", fig.width=6, fig.height=4.5}
 
-* Low transmissibility
-* With endemic (SLIRS) dynamics
-* Infectious period especially, and also susceptibility can lead to male bias
-* Interaction between sex-traits and assortativity on male-bias 
-
-\newpage
-
-```{r outbreak-compare1, fig.cap="Effects of network structure on epidemic size in SLIR model. Hortizontal panels show different network types (scale-free and small-world). "}
-
-foo <- res %>% 
-  filter(modName%in% c("SIR", "SLIR"), alph_val==1) %>%
-  group_by(modName, tau, r, type_net) %>%
-  summarise(out_size=mean(recovered_prev))
-
-foo %>%
-  filter(modName=="SLIR") %>%
-  ggplot(aes(x=as.factor(r), y=factor(tau))) +
-  geom_tile(aes(fill=out_size)) + 
-  scale_fill_viridis_c() +
-  facet_grid(type_net ~ modName) +
-  labs(x="Assortativity", y=expression(tau), 
-       fill="Epidemic \n size") +
-  theme_light() +
-  theme(axis.text=element_text(size=14),
+resStats %>%
+  filter(tau==tv, alph==1, psi==0, delt<10) %>%
+  select(time_steps, r, net_type, clustering, pathLen, degAssort) %>%
+  gather("stat", "val", 4:6) %>%
+  ggplot(aes(val, time_steps, col=factor(r))) +
+  geom_point() + geom_smooth(method="lm", color="black") + facet_grid(net_type~ stat, scales="free") +
+  scale_color_discrete_sequential(palette="Sunset") +
+  labs(x="", y="Epidemic duration", color="Assortativity (r)") +
+    theme_light() +
+  theme(axis.text=element_text(size=10),
         axis.text.x = element_text(hjust=1, angle=45),
-        axis.title=element_text(size=18,face="bold"),
-        legend.title = element_text(size=18),
-        legend.text = element_text(size=18), 
+        axis.title=element_text(size=12),
+        legend.title = element_text(size=12),
+        legend.text = element_text(size=12), 
         # panel.grid.major = element_blank(),
         # panel.grid.minor = element_blank(), 
-        strip.text = element_text(size = 18, color="Black")) -> p1
+        strip.text = element_text(size = 12, color="Black"))
 
-
-res %>%
-  filter(modName=="SLIR", tau %in% c(0.04, 0.15)) %>%
-  ggplot(aes(x=factor(r), y=recovered_prev, fill=factor(type_net))) +
-  geom_boxplot()  +  facet_wrap(tau~.) +
-  #scale_color_continuous_diverging() +
-  labs(x="Assortativity", y=("Epidemic size"), 
-       fill="Network \n type", shape="Model \n type") +
-  theme_light() +
-  theme(axis.text=element_text(size=14),
-        axis.text.x = element_text(hjust=1, angle=45),
-        axis.title=element_text(size=18,face="bold"),
-        legend.title = element_text(size=18),
-        legend.text = element_text(size=18), 
-        # panel.grid.major = element_blank(),
-        # panel.grid.minor = element_blank(), 
-        strip.text = element_text(size = 18, color="Black")) -> p2
-
-```
-
-```{r outbreak-compare2, fig.cap="Effects of network structure on endemic prevalence in SLIRS model. Hortizontal panels show different network types (scale-free and small-world). ", fig.width=8}
-
-foo <- res %>% 
-  filter(modName%in% c("SIRS", "SLIRS"), alph_val==1) %>%
-  group_by(modName, tau, r, type_net) %>%
-  summarise(prev=mean(infected_prev))
-
-foo %>%
-  filter(modName=="SLIRS") %>%
-  ggplot(aes(x=as.factor(r), y=factor(tau))) +
-  geom_tile(aes(fill=prev)) + 
-  scale_fill_viridis_c() +
-  facet_grid(type_net ~ modName) +
-  labs(x="Assortativity", y=expression(tau), 
-       fill="Endemic \n prevalence") +
-  theme_light() +
-  theme(axis.text=element_text(size=14),
-        axis.text.x = element_text(hjust=1, angle=45),
-        axis.title=element_text(size=18,face="bold"),
-        legend.title = element_text(size=18),
-        legend.text = element_text(size=18), 
-        # panel.grid.major = element_blank(),
-        # panel.grid.minor = element_blank(), 
-        strip.text = element_text(size = 18, color="Black")) -> p3
-
-res %>%
-  filter(modName=="SLIRS", tau %in% c(0.04, 0.15)) %>%
-  ggplot(aes(x=factor(r), y=recovered_prev, fill=factor(type_net))) +
-  geom_boxplot()  +  facet_wrap(tau~.) +
-  #scale_color_continuous_diverging() +
-  labs(x="Assortativity", y=("Endemic prevalence"), 
-       fill="Network \n type", shape="Model \n type") +
-  theme_light() +
-  theme(axis.text=element_text(size=14),
-        axis.text.x = element_text(hjust=1, angle=45),
-        axis.title=element_text(size=18,face="bold"),
-        legend.title = element_text(size=18),
-        legend.text = element_text(size=18), 
-        # panel.grid.major = element_blank(),
-        # panel.grid.minor = element_blank(), 
-        strip.text = element_text(size = 18, color="Black")) -> p4
-
-
-grid.arrange(p1, p2, p3, p4, nrow=2)
 
 ```
 

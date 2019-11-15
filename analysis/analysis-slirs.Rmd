@@ -19,6 +19,7 @@ library(cowplot)
 library(plotrix)
 library(knitr)
 library(colorspace)
+library(gridExtra)
 
 knitr::opts_chunk$set(cache=TRUE, fig.path = "slirs-figs/", 
                       warning = FALSE, message=FALSE, echo=FALSE, fig.height =6, fig.width = 8) 
@@ -143,48 +144,100 @@ res$net_type <- factor(res$net_type, labels = c("Scale-free", "Small-world"))
 
 ```
 
-```{r commMeasures, fig.height=5, fig.width=6, fig.cap="The relationship between common measures of community structure estimated for synthetic networks (n=100) of varying sizes. Figure shows that assortativity and modularity are correlated when there are only 2 modules."}
- 
+
+```{r net-structure, fig.height=6, fig.width=6, fig.cap="Network structure across assortativity values. Assortativity and modularity are highly correlated (A). Other measures of network structure relevant to disease spread change with assortativity (B-D). Horizontal panels in each plot show network ", fig.width=6}
+
 res %>%
+  mutate(stat="Modularity") %>%
   ggplot(aes(r_actual, q, color=factor(r))) + 
   geom_abline(slope = .5) +
   geom_point (size=3, alpha=.5) +  
-  facet_grid(.~net_type) +
+  facet_grid(net_type~stat) +
   theme_gray() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1),
         legend.position = "none")  +
   scale_color_discrete_sequential(palette="Sunset") +
-  labs(x="Assortativity", y="Modularity", color="Assortativity") +
+  labs(x="Assortativity", y="", color="Assortativity", title = "A") +
+  guides(colour=FALSE) +
   theme_light() +
-  theme(axis.text=element_text(size=18),
+  theme(plot.title = element_text(face="bold", size=18), 
+        axis.text=element_text(size=18),
         axis.text.x = element_text(hjust=1, angle=45),
         axis.title=element_text(size=18,face="bold"),
         legend.title = element_text(size=18),
         legend.text = element_text(size=18), 
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(), 
-        strip.text = element_text(size = 18, color="Black"))  
+        strip.text = element_text(size = 18, color="Black"))   -> p1
 
-```
-
-```{r net-structure, fig.height=6, fig.width=5, fig.cap="Measures of network structure relevant to disease spread (Clustering, degree assortativity, and maximum shortest path length between any two nodes).  Columns faceted by network statistic. Colors show assortativity. Boxplots show median and IQR of 100 replicates at each size and assortativity level. Figure shows how these statistics are changed by the re-wiring process. ", fig.width=6}
 
 res %>%
-  select(r, size, degAssort, clustering, pathLen, net_type) %>%
-  gather("stat", "val", 3:5) %>%
-  ggplot(aes(factor(r), val, fill=factor(r))) + 
-  geom_boxplot() + 
-  facet_grid(stat ~ net_type, scales="free_y") + 
-  scale_fill_discrete_sequential(palette="Sunset") +
-  labs(x="", y="") +
+  mutate(stat="Clustering") %>%
+  ggplot(aes(factor(r), clustering, color=factor(r))) + 
+  geom_boxplot() +  
+  facet_grid(net_type~stat) +
+  theme_gray() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = "none")  +
+  scale_color_discrete_sequential(palette="Sunset") +
+  labs(x="Assortativity", y="", color="Assortativity", title = "B") +
+  guides(colour=FALSE) +
   theme_light() +
-  theme(axis.text=element_text(size=18),
+  theme(plot.title = element_text(face="bold", size=18), 
+    axis.text=element_text(size=18),
         axis.text.x = element_text(hjust=1, angle=45),
         axis.title=element_text(size=18,face="bold"),
-        legend.position = "none", 
+        legend.title = element_text(size=18),
+        legend.text = element_text(size=18), 
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(), 
-        strip.text = element_text(size = 18, color="Black"))
+        strip.text = element_text(size = 18, color="Black"))   -> p2
+
+res %>%
+  mutate(stat="Path Length") %>%
+  ggplot(aes(factor(r), pathLen, color=factor(r))) + 
+  geom_boxplot() +  
+  facet_grid(net_type~stat) +
+  theme_gray() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = "none")  +
+  scale_color_discrete_sequential(palette="Sunset") +
+  labs(x="Assortativity", y="", color="Assortativity", title = "C") +
+  guides(colour=FALSE) +
+  theme_light() +
+  theme(plot.title = element_text(face="bold", size=18), 
+    axis.text=element_text(size=18),
+        axis.text.x = element_text(hjust=1, angle=45),
+        axis.title=element_text(size=18,face="bold"),
+        legend.title = element_text(size=18),
+        legend.text = element_text(size=18), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        strip.text = element_text(size = 18, color="Black"))   -> p3
+
+res %>%
+  mutate(stat="Degree assortativity") %>%
+  ggplot(aes(factor(r), degAssort, color=factor(r))) + 
+  geom_boxplot() +  
+  facet_grid(net_type~stat) +
+  theme_gray() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = "none")  +
+  scale_color_discrete_sequential(palette="Sunset") +
+  labs(x="Assortativity", y="", color="Assortativity", title = "D") +
+  guides(colour=FALSE) +
+  theme_light() +
+  theme(plot.title = element_text(face="bold", size=18), 
+      axis.text=element_text(size=18),
+        axis.text.x = element_text(hjust=1, angle=45),
+        axis.title=element_text(size=18,face="bold"),
+        legend.title = element_text(size=18),
+        legend.text = element_text(size=18), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        strip.text = element_text(size = 18, color="Black"))   -> p4
+
+grid.arrange(p1, p2, p3, p4, nrow=2)
 
 ```
 
