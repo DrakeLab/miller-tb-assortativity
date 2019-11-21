@@ -142,7 +142,7 @@ def process_file(f):
 
 ## Model parameters ##
 N = [1000]           # Network Size
-R = [0, 0.3, 0.6, 0.9]         #, 0.6, 0.9 Assortativity coefficient (Newman)
+R = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]         #, 0.6, 0.9 Assortativity coefficient (Newman)
 Tau = [0.04, 0.075, 0.1, 0.15]         #  S->L Baseline transmission rate 
 Del = [100000, 1./10.]     # L->I Reactivation rate; 10000=>SIR, del~0=SLIR
 Gam = 1./2.          # I->R Recovery rate
@@ -151,7 +151,8 @@ i0 = 0.05            # proportion initially infected
 tsteps = 250         # set max time steps to run model for
 
 # Male:female differences to explain male bias
-Alph_vals = [1.0, 1.5, 2.0]   # Ratio of male:female susceptibility
+Alph_vals = [1.0, 1.125, 1.25, 1.375, 1.5, 1.625, 1.75, 1.875, 2.0, 2.125,
+             2.25, 2.375, 2.5, 2.625, 2.75, 2.875, 3.0]   # Ratio of male:female susceptibility
 Alph_types = ["SUS", "TRA", "INF_PER"]
 
 # Network parameters
@@ -165,7 +166,7 @@ var_grid = list(ParameterGrid({'N' : N, 'R' : R, 'Tau': Tau,
                                'net_type' : nt,
                                'rep': reps}))
 
-p = multiprocessing.Pool(12) # create a pool of 2 workers
+p = multiprocessing.Pool(24) # create a pool of 2 workers
 
 sim_results = p.map(process_file, var_grid) # perform the calculations
 
