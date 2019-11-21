@@ -3,7 +3,7 @@ library(igraph)
 library(tidyverse)
 library(magrittr)
 
-setwd("~/Documents/UGA/phd/research-projects/miller-tb-assortativity/analysis/simulations-rewiring/networks3")
+setwd("~/Documents/UGA/phd/research-projects/miller-tb-assortativity/analysis/simulations-rewiring/networks4")
 
 # function for finding within and between edges
 get_e_type <- function(elRow, types){
@@ -18,7 +18,7 @@ max.iter <- 2000
 
 # sizes
 ns <- 1e3
-rs <- c(0, 0.3, 0.6, 0.9)
+rs <- 0:9/10
 alph <- 0.2
 eps <- 0.035
 
