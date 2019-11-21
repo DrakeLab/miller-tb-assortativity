@@ -82,7 +82,7 @@ def process_file(f):
            
     ###### READ GRAPH ######
     
-    G = nx.read_graphml(path="networks3/"+str(type_net)+"_"+str(r)+"N"+str(n)+"rep"+str(y)+".graphml")
+    G = nx.read_graphml(path="networks4/"+str(type_net)+"_"+str(r)+"N"+str(n)+"rep"+str(y)+".graphml")
 
     clus = 0 #nx.clustering(G)
     path_len = 0 # nx.average_shortest_path_length(G)
@@ -172,10 +172,9 @@ sim_results = p.map(process_file, var_grid) # perform the calculations
 
 #print(sim_results)
 
-with open("SLIRS-res/"+"test3.csv",'wb') as out:
+with open("SLIRS-res/"+"full_res.csv",'wb') as out:
     csv_out=csv.writer(out)
     csv_out.writerow(["n", "r", "tau", "alph_val", "alph_type", "reactivation_rate", "reversion_rate", "rep",
                       "type_net", "net_clustering", "net_path_len", "net_deg_assort", 
                       "peak", "duration", "mf_r_ratio", "mf_i_ratio", "latent_prev", "recovered_prev", "infected_prev"])
     csv_out.writerows(sim_results)
-
