@@ -25,7 +25,7 @@ library(tidyverse)
 library(gridExtra)
 library(ggraph)
 
-knitr::opts_chunk$set(cache=FALSE, fig.path = "slirs-par-figs/", 
+knitr::opts_chunk$set(cache=TRUE, fig.path = "slirs-par-figs/", 
                       warning = FALSE, message=FALSE, echo=FALSE, fig.height =6, fig.width = 8) 
 
 # colors for assortativity
@@ -86,7 +86,7 @@ Response variables:
 
 \clearpage
 
-```{r who-male-bias, fig.cap="Male-bias is remarkably similar around the world (A), and across countries. This pattern not well-explained by rates of smoking (B), overall health coverage (C), or rates of employment (D). Colors in B-D indicate regions shown in A. Not all variables were available for the same set of countries for each plot. Variables on x axis in plots B and D are on a log-scale. Data from WHO and ILO. ", fig.height=6, fig.width=5.5}
+```{r who-male-bias, fig.cap="Male-bias is remarkably similar around the world (A), and across countries. This pattern not well-explained by rates of smoking (B), overall health coverage (C), or rates of employment (D). Colors in B-D indicate regions shown in A. Not all variables were available for the same set of countries for each plot. Variables on x axis in plots B and D are on a log-scale. Data from WHO and ILO. ", fig.height=6, fig.width=6}
 
 # data from 
 # http://apps.who.int/gho/portal/uhc-cabinet-wrapper-v2.jsp?id=1010501
@@ -133,8 +133,11 @@ country.who %>%
   geom_vline(xintercept = 1, linetype="dotted", 
                 color = "black", size=.5) + 
   labs(x=expression("Male:female cases"), y="", title="A") + 
-  theme_light() + 
-  theme(strip.text = element_text(size = 10, color="Black")) -> mfplot
+  theme_bw() + 
+  theme(strip.text = element_text(size = 14, color="Black"),
+        axis.title=element_text(size=14),
+        legend.title = element_text(size=14),
+        legend.text = element_text(size=14)) -> mfplot
 
 # country.who %>% 
 #   ggplot(aes(inc, mf_inc, color=region)) +
@@ -145,7 +148,7 @@ country.who %>%
 #   geom_hline(yintercept = 1, linetype="dotted", 
 #                 color = "black", size=.5) + 
 #   labs(x="Estimated incidence (per 100,000)", y="Estimated male:female incidence", title="B") +
-#   theme_light()  -> incplot
+#   theme_bw()  -> incplot
 
 ilo.who %>% 
   ggplot(aes(mf_smoke, mf_inc, color=region)) +
@@ -157,7 +160,11 @@ ilo.who %>%
                 color = "black", size=.5) + 
   labs(x=expression("Male:female smoking, 2015"), 
        y=expression("Male:female cases, 2016"), title="B") +
-  theme_light()  -> smokeplot
+  theme_bw() + 
+  theme(strip.text = element_text(size = 14, color="Black"),
+        axis.title=element_text(size=14),
+        legend.title = element_text(size=14),
+        legend.text = element_text(size=14))  -> smokeplot
 
 ilo.who %>% 
   ggplot(aes(UHC, mf_inc, color=region)) +
@@ -168,7 +175,11 @@ ilo.who %>%
   geom_hline(yintercept = 1, linetype="dotted", 
                 color = "black", size=.5) + 
   labs(x="Health Coverage Index, 2017", y="Male:female cases, 2016", title="C") +
-  theme_light()  -> healthplot
+  theme_bw() +
+  theme(strip.text = element_text(size = 14, color="Black"),
+        axis.title=element_text(size=14),
+        legend.title = element_text(size=14),
+        legend.text = element_text(size=14)) -> healthplot
 
 ilo.who %>% 
   filter(!is.na(region)) %>%
@@ -182,7 +193,11 @@ ilo.who %>%
   labs(x="Male:female employment, 2016", 
        y="Male:female cases, 2016", title = "D") +
   #facet_wrap(~region) +
-  theme_light() -> workplot
+  theme_bw() + 
+  theme(strip.text = element_text(size = 14, color="Black"),
+        axis.title=element_text(size=14),
+        legend.title = element_text(size=14),
+        legend.text = element_text(size=14)) -> workplot
 
 grid.arrange(
   mfplot, smokeplot, healthplot, workplot,
@@ -256,7 +271,7 @@ res %>%
   scale_color_discrete_sequential(palette="Sunset") +
   labs(x="Assortativity  (r)", y="", color="Assortativity", title = "B") +
   guides(colour=FALSE) +
-  theme_light() +
+  theme_bw() +
   theme(plot.title = element_text(face="bold", size=10), 
         axis.text=element_text(size=10),
         axis.text.x = element_text(hjust=1, angle=45),
@@ -279,7 +294,7 @@ res %>%
   scale_color_discrete_sequential(palette="Sunset") +
   labs(x="Assortativity  (r)", y="", color="Assortativity", title = "C") +
   guides(colour=FALSE) +
-  theme_light() +
+  theme_bw() +
   theme(plot.title = element_text(face="bold", size=10), 
     axis.text=element_text(size=10),
         axis.text.x = element_text(hjust=1, angle=45),
@@ -301,7 +316,7 @@ res %>%
   scale_color_discrete_sequential(palette="Sunset") +
   labs(x="Assortativity  (r)", y="", color="Assortativity", title = "D") +
   guides(colour=FALSE) +
-  theme_light() +
+  theme_bw() +
   theme(plot.title = element_text(face="bold", size=10), 
     axis.text=element_text(size=10),
         axis.text.x = element_text(hjust=1, angle=45),
@@ -323,7 +338,7 @@ res %>%
   scale_color_discrete_sequential(palette="Sunset") +
   labs(x="Assortativity  (r)", y="", color="Assortativity", title = "E") +
   guides(colour=FALSE) +
-  theme_light() +
+  theme_bw() +
   theme(plot.title = element_text(face="bold", size=10), 
       axis.text=element_text(size=10),
         axis.text.x = element_text(hjust=1, angle=45),
@@ -350,7 +365,7 @@ grid.arrange(g1,
 
 ```{r}
 
-res <- read.csv("simulations-rewiring/SLIRS-res/test3.csv")
+res <- read.csv("simulations-rewiring/SLIRS-res/full_res.csv")
 
 # model comparison 
 res$modNameLatent <- ifelse(res$reactivation_rate==0.1, T, F)
@@ -396,13 +411,13 @@ foo %>%
   geom_tile(aes(fill=meanPrev)) + 
   scale_fill_gradient2(midpoint=log10(1.8), trans="log10", 
                                      low="red4", mid = "dodgerblue",
-                       high="black", limits=c(1.25,5), na.value = "white") +
+                       high="black", limits=c(1.25,max(foo$meanPrev)), na.value = "white") +
   # geom_point(data=foo2, aes(x=factor(r), y=alphVal), 
   #            shape=17, color="white") +
   facet_grid(type_net ~ modName ~ alph_type) +
   labs(x="Assortativity (r)", y=expression(alpha), 
        fill="Mean \nPrevalence \nRatio", title = "R0=1.5") +
-  theme_light() +
+  theme_bw() +
   theme(axis.text=element_text(size=hs),
         axis.text.x = element_text(hjust=1, angle=45),
         axis.title=element_text(size=hs,face="bold"),
@@ -431,7 +446,7 @@ foo %>%
   facet_grid(factor(type_net) ~ modName) +
   labs(x="Assortativity (r)", y=expression(tau), 
        fill="Epidemic \n size") +
-  theme_light() +
+  theme_bw() +
   theme(axis.text=element_text(size=14),
         axis.text.x = element_text(hjust=1, angle=45),
         axis.title.y = element_text(angle=0, vjust = 0.5),
@@ -451,7 +466,7 @@ res %>%
   #scale_color_continuous_diverging() +
   labs(x="Assortativity (r)", y=("Epidemic size"), 
        fill="Network \n type", shape="Model \n type") +
-  theme_light() +
+  theme_bw() +
   theme(axis.text=element_text(size=14),
         axis.text.x = element_text(hjust=1, angle=45),
         axis.title=element_text(size=14,face="bold"),
@@ -480,7 +495,7 @@ foo %>%
   facet_grid(type_net ~ modName) +
   labs(x="Assortativity (r)", y=expression(tau), 
        fill="Endemic \n prevalence") +
-  theme_light() +
+  theme_bw() +
   theme(axis.text=element_text(size=14),
         axis.text.x = element_text(hjust=1, angle=45),
         axis.title.y = element_text(vjust=.5, angle=0),
@@ -500,7 +515,7 @@ res %>%
   #scale_color_continuous_diverging() +
   labs(x="Assortativity (r)", y=("Endemic prevalence"), 
        fill="Network \n type", shape="Model \n type") +
-  theme_light() +
+  theme_bw() +
   theme(axis.text=element_text(size=14),
         axis.text.x = element_text(hjust=1, angle=45),
         axis.title=element_text(size=14,face="bold"),
@@ -583,7 +598,7 @@ foo %>%
   facet_grid(type_net ~ modName ~ alph_type) +
   labs(x="Assortativity", y=expression(alpha), 
        fill="Mean \nPrevalence \nRatio", title="R0=3.5") +
-  theme_light() +
+  theme_bw() +
   theme(axis.text=element_text(size=hs),
         axis.text.x = element_text(hjust=1, angle=45),
         axis.title=element_text(size=hs,face="bold"),
@@ -601,7 +616,7 @@ foo %>%
 
  
 res %>%
-  filter(modName == "SLIR", tau == 0.075) %>%
+  filter(modName == "SLIR", tau == 0.075, r%in%c(0, 0.3, 0.9), alph_val%in%c(1, 2, 3)) %>%
   ggplot(aes(x=as.factor(alph_type), y=mf_r_ratio, fill=factor(r))) +
   geom_boxplot() + facet_grid(type_net ~ alph_val) +
   geom_hline(yintercept=1.8, linetype="dashed", 
@@ -612,7 +627,7 @@ res %>%
   scale_fill_discrete_sequential(palette="Sunset") +
   labs(x="Sex trait", y="M:F case bias", 
        fill="Assortativity", title = "SLIR, R0=1.5") +
-  theme_light() +
+  theme_bw() +
   theme(axis.text=element_text(size=14),
         axis.text.x = element_text(hjust=1, angle=45),
         axis.title=element_text(size=18,face="bold"),
@@ -629,7 +644,7 @@ res %>%
 
  
 res %>%
-  filter(modName == "SLIR", tau == 0.15) %>%
+  filter(modName == "SLIR", tau == 0.15, r%in%c(0, 0.3, 0.9), alph_val%in%c(1, 2, 3)) %>%
   ggplot(aes(x=as.factor(alph_type), y=mf_r_ratio, fill=factor(r))) +
   geom_boxplot() + facet_grid(type_net ~ alph_val) +
   geom_hline(yintercept=1.8, linetype="dashed", 
@@ -640,7 +655,7 @@ res %>%
   scale_fill_discrete_sequential(palette="Sunset") +
   labs(x="Sex trait", y="M:F case bias", 
        fill="Assortativity", title = "SLIR, R0=3.5") +
-  theme_light() +
+  theme_bw() +
   theme(axis.text=element_text(size=14),
         axis.text.x = element_text(hjust=1, angle=45),
         axis.title=element_text(size=18,face="bold"),
@@ -658,7 +673,7 @@ res %>%
 
 
 res %>%
-  filter(modName == "SLIRS", tau == 0.075) %>%
+  filter(modName == "SLIRS", tau == 0.075, r%in%c(0, 0.3, 0.9), alph_val%in%c(1, 2, 3)) %>%
   ggplot(aes(x=as.factor(alph_type), y=mf_i_ratio, fill=factor(r))) +
   geom_boxplot() + facet_grid(type_net ~ alph_val) +
   geom_hline(yintercept=1.8, linetype="dashed", 
@@ -669,7 +684,7 @@ res %>%
   scale_fill_discrete_sequential(palette="Sunset") +
   labs(x="Sex-trait", y="M:F case bias", 
        fill="Assortativity", title = "SLIRS, R0=1.5") +
-  theme_light() +
+  theme_bw() +
   theme(axis.text=element_text(size=14),
         axis.text.x = element_text(hjust=1, angle=45),
         axis.title=element_text(size=18,face="bold"),
@@ -687,7 +702,7 @@ res %>%
 
 
 res %>%
-  filter(modName == "SLIRS", tau == 0.15) %>%
+  filter(modName == "SLIRS", tau == 0.15, r%in%c(0, 0.3, 0.9), alph_val%in%c(1, 2, 3)) %>%
   ggplot(aes(x=as.factor(alph_type), y=mf_i_ratio, fill=factor(r))) +
   geom_boxplot() + facet_grid(type_net ~ alph_val) +
   geom_hline(yintercept=1.8, linetype="dashed", 
@@ -698,7 +713,7 @@ res %>%
   scale_fill_discrete_sequential(palette="Sunset") +
   labs(x="Sex-trait", y="M:F case bias", 
        fill="Assortativity", title = "SLIRS, R0=3.5") +
-  theme_light() +
+  theme_bw() +
   theme(axis.text=element_text(size=14),
         axis.text.x = element_text(hjust=1, angle=45),
         axis.title=element_text(size=18,face="bold"),
@@ -724,7 +739,7 @@ resStats %>%
   geom_point() + geom_smooth(method="lm", color="black") + facet_grid(net_type~ stat, scales="free") +
   scale_color_discrete_sequential(palette="Sunset") +
   labs(x="", y="M:F Case Bias", color="Assortativity (r)") +
-  theme_light() +
+  theme_bw() +
   theme(axis.text=element_text(size=10),
         axis.text.x = element_text(hjust=1, angle=45),
         axis.title=element_text(size=12),
@@ -747,7 +762,7 @@ resStats %>%
   geom_point() + geom_smooth(method="lm", color="black") + facet_grid(net_type~ stat, scales="free") +
   scale_color_discrete_sequential(palette="Sunset") +
   labs(x="", y="Total infected", color="Assortativity (r)") +
-    theme_light() +
+    theme_bw() +
   theme(axis.text=element_text(size=10),
         axis.text.x = element_text(hjust=1, angle=45),
         axis.title=element_text(size=12),
@@ -770,7 +785,7 @@ resStats %>%
   geom_point() + geom_smooth(method="lm", color="black") + facet_grid(net_type~ stat, scales="free") +
   scale_color_discrete_sequential(palette="Sunset") +
   labs(x="", y="Epidemic duration", color="Assortativity (r)") +
-    theme_light() +
+    theme_bw() +
   theme(axis.text=element_text(size=10),
         axis.text.x = element_text(hjust=1, angle=45),
         axis.title=element_text(size=12),
