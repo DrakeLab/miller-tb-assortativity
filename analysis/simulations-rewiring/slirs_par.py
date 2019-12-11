@@ -158,7 +158,7 @@ Alph_types = ["SUS", "TRA", "INF_PER"]
 # Network parameters
 nt = ["G", "SW"]
 
-reps = range(1,30) # Number of reps 
+reps = range(1,150) # Number of reps 
 
 var_grid = list(ParameterGrid({'N' : N, 'R' : R, 'Tau': Tau,
                                'Psi' : Psi, 'Del' : Del,
