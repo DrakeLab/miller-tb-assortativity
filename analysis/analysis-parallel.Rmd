@@ -36,7 +36,7 @@ assortCols <- c("#F3E79AFF", "#F7A086FF", "#CF63A6FF", "#704D9EFF")
 
 Can assortativity drive male bias or are sex-trait differences required to explain male-bias?
 
-Preliminary results for simulations of pathogen spreading on contact networks with varying levels of assortativity ($r=0, 0.3, 0.6, 0.9$) and sex-trait ratios ($\alpha$). Sex-traits were susceptibility (SUS), infectious period (IP), and transmissibility (TRA). 
+Preliminary results for simulations of pathogen spreading on contact networks with varying levels of assortativity (r=0 to 0.9 by 0.1) and sex-trait ratios ($\alpha$). Sex-traits were susceptibility (SUS), infectious period (IP), and transmissibility (TRA). 
 
 Rates of susceptibility for nodes (SUS) was modeled as 
 
@@ -80,8 +80,7 @@ Response variables:
 
 # Notes
 
-* Began with scale-free (300) and small-world networks (300) then re-wired
-* Results for 100 network replicates shown
+* Preliminary results for 150 replicates on scale-free and 150 replicates on small-world 
 * One epidemic simulated per network
 
 \clearpage
@@ -212,13 +211,11 @@ grid.arrange(
 \clearpage
 
 ```{r, include=FALSE}
-
-
 # SF network plots
-n0 <- read_graph("simulations-rewiring/networks3/G_0N100rep1.graphml", format="graphml")
-n3 <- read_graph("simulations-rewiring/networks3/G_0.3N100rep1.graphml", format="graphml")
-n6 <- read_graph("simulations-rewiring/networks3/G_0.6N100rep1.graphml", format="graphml")
-n9 <- read_graph("simulations-rewiring/networks3/G_0.9N100rep1.graphml", format="graphml")
+n0 <- read_graph("simulations-rewiring/networks4/G_0N100rep1.graphml", format="graphml")
+n3 <- read_graph("simulations-rewiring/networks4/G_0.3N100rep1.graphml", format="graphml")
+n6 <- read_graph("simulations-rewiring/networks4/G_0.6N100rep1.graphml", format="graphml")
+n9 <- read_graph("simulations-rewiring/networks4/G_0.9N100rep1.graphml", format="graphml")
 
 ggraph(n0, 'igraph', algorithm="lgl") + 
   geom_edge_link(color="darkgrey", alpha=.5) + 
@@ -254,7 +251,7 @@ ggraph(n9, 'igraph', algorithm="lgl") +
 
 
 # laod simulation ANALYSIS
-res <- read.csv("simulations-rewiring/results/slirs-prelim4.csv")
+res <- read.csv("simulations-rewiring/SLIRS-res/slirs-prelim4.csv")
 
 # network types
 res$net_type <- factor(res$net_type, labels = c("Scale-free", "Small-world"))
@@ -616,7 +613,7 @@ foo %>%
 
  
 res %>%
-  filter(modName == "SLIR", tau == 0.075, r%in%c(0, 0.3, 0.9), alph_val%in%c(1, 2, 3)) %>%
+  filter(modName == "SLIR", tau == 0.075, r%in%c(0, 0.3,0.7, 0.9), alph_val%in%c(1, 2, 3)) %>%
   ggplot(aes(x=as.factor(alph_type), y=mf_r_ratio, fill=factor(r))) +
   geom_boxplot() + facet_grid(type_net ~ alph_val) +
   geom_hline(yintercept=1.8, linetype="dashed", 
@@ -644,7 +641,7 @@ res %>%
 
  
 res %>%
-  filter(modName == "SLIR", tau == 0.15, r%in%c(0, 0.3, 0.9), alph_val%in%c(1, 2, 3)) %>%
+  filter(modName == "SLIR", tau == 0.15, r%in%c(0, 0.3, 0.6, 0.9), alph_val%in%c(1, 2, 3)) %>%
   ggplot(aes(x=as.factor(alph_type), y=mf_r_ratio, fill=factor(r))) +
   geom_boxplot() + facet_grid(type_net ~ alph_val) +
   geom_hline(yintercept=1.8, linetype="dashed", 
@@ -673,7 +670,7 @@ res %>%
 
 
 res %>%
-  filter(modName == "SLIRS", tau == 0.075, r%in%c(0, 0.3, 0.9), alph_val%in%c(1, 2, 3)) %>%
+  filter(modName == "SLIRS", tau == 0.075, r%in%c(0, 0.3, 0.7, 0.9), alph_val%in%c(1, 2, 3)) %>%
   ggplot(aes(x=as.factor(alph_type), y=mf_i_ratio, fill=factor(r))) +
   geom_boxplot() + facet_grid(type_net ~ alph_val) +
   geom_hline(yintercept=1.8, linetype="dashed", 
@@ -702,7 +699,7 @@ res %>%
 
 
 res %>%
-  filter(modName == "SLIRS", tau == 0.15, r%in%c(0, 0.3, 0.9), alph_val%in%c(1, 2, 3)) %>%
+  filter(modName == "SLIRS", tau == 0.15, r%in%c(0, 0.3, 0.7, 0.9), alph_val%in%c(1, 2, 3)) %>%
   ggplot(aes(x=as.factor(alph_type), y=mf_i_ratio, fill=factor(r))) +
   geom_boxplot() + facet_grid(type_net ~ alph_val) +
   geom_hline(yintercept=1.8, linetype="dashed", 
