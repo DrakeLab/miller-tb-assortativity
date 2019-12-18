@@ -14,7 +14,7 @@ __email__ = "ps875@georgetown.edu"
 import networkx as nx 
 import random as rnd
 import numpy as np
-import sequence_generator as sg
+#import sequence_generator as sg
 import matplotlib.pyplot as plt 
 
 #############################################################################
@@ -27,7 +27,7 @@ import matplotlib.pyplot as plt
 #############################################################################
 
 #enter the degree distribution, modularity, total network size, number of modules, and the mean degree
-def generate_modular_networks(N, sfunction, modfunction, Q, m, avg_degree, **kwds):
+def generate_modular_networks(N, sfunction, modfunction, Q, m, avg_degree, verbose=False, **kwds):
     """This function generates modular random connected graph with a specified
     degree distribution and number of modules.
     Q is the desired value of modularity as defined by Newman (2004)
@@ -80,8 +80,8 @@ def generate_modular_networks(N, sfunction, modfunction, Q, m, avg_degree, **kwd
         while connect_trial >= 10 or outedge_graphical == False or graph_connected == False:    
             connect_trial = 0
             print ("generating degree lists......")
-            #assigns total-degree to each node  ; CHANGED 1000 -> 2000
-            degree_list = create_total_degree_sequence (N, sfunction, avg_degree, mod_nodes, 0.01*tol, max_tries=2000, **kwds) 
+            #assigns total-degree to each node  
+            degree_list = create_total_degree_sequence (N, sfunction, avg_degree, mod_nodes, 0.01*tol, max_tries=1000, **kwds) 
             
             
             #assigns within-degree to each node                
@@ -111,7 +111,7 @@ def generate_modular_networks(N, sfunction, modfunction, Q, m, avg_degree, **kwd
                     connect_in_nodes(G, m, mod_nodes, indegree_list, outdegree_list) 
             graph_connected = nx.is_connected(G) # check if the graph is connected 
 
-    Q1 = test_modularity_variable_mod(G, mod_nodes)
+    Q1 = test_modularity_variable_mod(G, mod_nodes, verbose)
     return G
     
 #############################################################################
@@ -258,7 +258,7 @@ def create_indegree_sequence(n, m , sfunction, mod_nodes, wd,  degree_list, tole
                         break                     
 
             
-            if connect_trial>20:break	  # CHANGED 10 -> 25   
+            if connect_trial>10:break	    
           
         return indegree_list
    
@@ -321,18 +321,18 @@ def connect_in_nodes(G, m, mod_nodes, indegree_list, outdegree_list):
     
 #############################################################################
 
-#Connect outstubs (form between-edges)      ### ERRORS COME FROM INSIDE THIS FUNCTION!!!!
+#Connect outstubs (form between-edges)      
 def connect_out_nodes(G, m, mod_nodes, outdegree_list, connect_trial, indegree_list):
     """Connects between-module stubs (or half edges) using a modified version of 
     Havel-Hakimi algorithm"""
     nbunch = G.edges()
     # additonal check: to ensure that Graph G does not have any 
     # pre-existing edges from earlier steps 
-    G.remove_edges_from(nbunch)  # THIS IS WHERE WE SOMETIMES GET AN ERROR.... 
+    G.remove_edges_from(nbunch) 
     is_valid_connection = False
 
     # maximum attemp to connect outstubs=10
-    while is_valid_connection == False and connect_trial < 20: # changed 10 -> 20
+    while is_valid_connection == False and connect_trial < 10:
         is_valid_connection = True     
         trial = 0
         outnodelist = []
@@ -635,7 +635,7 @@ def adjust_indegree_seq(mod_nodes, indegree_seq):
 ##############################################################################################
 
 # 
-def test_modularity_variable_mod(G, mod_nodes):
+def test_modularity_variable_mod(G, mod_nodes, verbose):
     """Computes Q value of a graph when the nodal assignment to modules is known"""
     
     mods = len(mod_nodes.keys()) # number of modules
@@ -646,6 +646,9 @@ def test_modularity_variable_mod(G, mod_nodes):
     Q=0
     wd_bar=[]
     d_bar=[]
+    
+
+	
     for modules in range (0,mods):
         wdsum=0
         dsum=0
@@ -669,13 +672,11 @@ def test_modularity_variable_mod(G, mod_nodes):
     print ("Network size"), N
     print ("List of module sizes"), s
     print ("Estimated modularity = "), Q
-
-    # ADDED MODULE ATTRIBUTE TO G
-    for modid in range(0, mods):
-        for memberind in range(0, s[modid]):
-            id = mod_nodes[modid][memberind]
-            G.nodes[id]['module'] = modid
+    if verbose:
+	for modules in range (0,mods):
+	    print ("Module #"+str(modules)+" has node ids ="), mod_nodes[modules]
   
+    
     return Q
     
 ############################################################################################## 

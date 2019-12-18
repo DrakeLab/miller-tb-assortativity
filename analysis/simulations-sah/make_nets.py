@@ -15,15 +15,11 @@ os.chdir('/Users/paigemiller/Documents/UGA/phd/research-projects/miller-tb-assor
 # Network params
 N= [1000]                                  # network sizes
 Q= [0, 0.15, 0.3, 0.45]                    # network modularity 
-d= 10                                      # mean degree
-m= 2                                       # number of modules (sexes)
-sfunction = sg.geometric_sequence          # degree distribution 
-modfunction = sg.regular_sequence          # module size distribution
 
 var_grid = list(ParameterGrid({'N' : N, 'Q' : Q}))
 
 # Loop params
-reps= 50
+reps= 10
 
 ##### Create and save networks  ########
 
@@ -33,7 +29,7 @@ for x in range(0, len(var_grid)):
         q=var_grid[x]["Q"]
     
         # generating network
-        G = rmg.generate_modular_networks(n, sfunction, modfunction, q, m, d)
+        G = rmg.generate_modular_networks(n, sg.geometric_sequence, sg.regular_sequence, q, 2, 10)
         nx.write_graphml(G, "networks/GG_Q"+str(q)+"_N"+str(n)+"_rep"+str(y)+".graphml")
 
         
