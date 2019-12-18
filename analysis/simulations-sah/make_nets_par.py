@@ -14,7 +14,7 @@ from collections import defaultdict
 from collections import Counter
 import multiprocessing 
 
-os.chdir('/Users/paigemiller/Documents/UGA/phd/research-projects/miller-tb-assortativity/analysis/simulations-sah')
+#os.chdir('/Users/paigemiller/Documents/UGA/phd/research-projects/miller-tb-assortativity/analysis/simulations-sah')
 
 
 def process_file(f): # parallelized version of Sah et al. (PNAS 2019) network generation algorithm

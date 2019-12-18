@@ -29,7 +29,7 @@ def process_file(f):
     
     ###### READ GRAPH ######
     
-    G = nx.read_graphml(path="/Users/paigemiller/Documents/UGA/phd/research-projects/miller-tb-assortativity/analysis/simulations-sah/networks/GG_Q"+str(r)+"_N1000"+"_rep"+str(y)+".graphml")
+    G = nx.read_graphml(path="~/Documents/miller-tb-assortativity/analysis/simulations-sah/networks/GG_Q"+str(r)+"_N1000"+"_rep"+str(y)+".graphml")
 
     clus = nx.average_clustering(G)
     path_len = nx.average_shortest_path_length(G)
