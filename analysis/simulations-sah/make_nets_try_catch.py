@@ -36,3 +36,6 @@ try:
 	        # generating network
 	        G = rmg.generate_modular_networks(n, sfunction, modfunction, q, m, d)
 	        nx.write_graphml(G, "networks/GG_Q"+str(q)+"_N"+str(n)+"_rep"+str(y)+".graphml")
+
+except Exception as ex: 
+	pass 
