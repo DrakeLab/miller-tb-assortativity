@@ -23,7 +23,7 @@ modfunction = sg.regular_sequence          # module size distribution
 var_grid = list(ParameterGrid({'N' : N, 'Q' : Q}))
 
 # Loop params
-reps= 5
+reps= 50
 
 ##### Create and save networks  ########
 

@@ -167,7 +167,7 @@ var_grid = list(ParameterGrid({'N' : N, 'R' : R, 'Tau': Tau,
                                'Alph_vals': Alph_vals,'Alph_types': Alph_types,
                                'rep': reps}))
 
-p = multiprocessing.Pool(2) # create a pool of 2 workers
+p = multiprocessing.Pool(24) # create a pool of 2 workers
 
 sim_results = p.map(process_file, var_grid) # perform the calculations
 
