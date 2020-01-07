@@ -18,7 +18,7 @@ def process_file(f):
     n=f["N"]
     r=f["R"]
     tau=f["Tau"]
-    #type_net = f["net_type"]
+    type_net = f["net_type"]
     delt=f["Del"]
     psi=f["Psi"]
     y=f["rep"]
@@ -30,7 +30,8 @@ def process_file(f):
     ###### READ GRAPH ######
     
     #G = nx.read_graphml(path="/Users/paigemiller/Documents/UGA/phd/research-projects/miller-tb-assortativity/analysis/simulations-sah/networks/GG_Q"+str(r)+"_N1000"+"_rep"+str(y)+".graphml")
-    G = nx.read_graphml(path="~/Documents/miller-tb-assortativity/analysis/simulations-sah/networks/GG_Q"+str(r)+"_N1000"+"_rep"+str(y)+".graphml")
+    #G = nx.read_graphml(path="~/Documents/miller-tb-assortativity/analysis/simulations-sah/networks/GG_Q"+str(r)+"_N1000"+"_rep"+str(y)+".graphml")
+    G = nx.read_graphml(path="networks/GG_Q"+str(r)+"_N1000"+"_rep"+str(y)+".graphml")
 
     clus = nx.average_clustering(G)
     path_len = nx.average_shortest_path_length(G)
@@ -99,15 +100,16 @@ def process_file(f):
     IC = defaultdict(lambda: "S.f") # initialize all susceptible women
 
     for i in range(len(G)):
-        if G.node["n"+str(i)]['sex'] == 1.0: # but if sex=1, they are male
-            IC["n"+str(i)] = 'S.m'
+        if i <500:
+            IC[i] = 'S.m'
             if np.random.uniform(0,1,1)[0] < i0:
-                IC["n"+str(i)] = 'I.m'
-        else:
-            IC["n"+str(i)] = 'S.f' 
-            if np.random.uniform(0,1,1)[0] < i0:
-                IC["n"+str(i)] = 'I.f' # set some susceptible f to infected f
+                IC[i] = 'I.m'
 
+        else:
+            IC[i] = 'S.f'
+            if np.random.uniform(0,1,1)[0] <i0:
+                IC[i] = 'I.f'
+                
     # Set state variables to return
     return_statuses = ('S.f', 'S.m', 'L.f', 'L.m',
                        'I.f', 'I.m', 'R.f', 'R.m')
@@ -159,16 +161,16 @@ Alph_vals = [1.0,  2.0, 3.0]   # Ratio of male:female susceptibility
 Alph_types = ["SUS", "TRA", "INF_PER"]
 
 # Network parameters
-#nt = ["G", "SW"]
+nt = 'Sah'
 
 reps = range(0,50) # Number of reps 
 
 var_grid = list(ParameterGrid({'N' : N, 'R' : R, 'Tau': Tau,
-                               'Psi' : Psi, 'Del' : Del,
+                               'Psi' : Psi, 'Del' : Del, 'net_type' : nt, 
                                'Alph_vals': Alph_vals,'Alph_types': Alph_types,
                                'rep': reps}))
 
-p = multiprocessing.Pool(24) # create a pool of 2 workers
+p = multiprocessing.Pool(24) # create a pool of  workers
 
 sim_results = p.map(process_file, var_grid) # perform the calculations
 
@@ -177,6 +179,6 @@ print(sim_results)
 with open("test_res.csv",'wb') as out:
     csv_out=csv.writer(out)
     csv_out.writerow(["n", "r", "tau", "alph_val", "alph_type", "reactivation_rate", "reversion_rate", "rep",
-                      "type_net", "net_clustering", "net_path_len", "net_deg_assort", 
+                      "net_type", "net_clustering", "net_path_len", "net_deg_assort", 
                       "peak", "duration", "mf_r_ratio", "mf_i_ratio", "latent_prev", "recovered_prev", "infected_prev"])
     csv_out.writerows(sim_results)

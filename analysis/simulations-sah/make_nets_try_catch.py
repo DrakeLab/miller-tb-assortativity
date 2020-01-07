@@ -9,7 +9,7 @@ import os
 import csv
 import random
 
-os.chdir('/Users/paigemiller/Documents/UGA/phd/research-projects/miller-tb-assortativity/analysis/simulations-sah')
+#os.chdir('/Users/paigemiller/Documents/UGA/phd/research-projects/miller-tb-assortativity/analysis/simulations-sah')
 
 ##### Parameters for SIR simulations
 # Network params
