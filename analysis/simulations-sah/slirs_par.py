@@ -176,7 +176,7 @@ sim_results = p.map(process_file, var_grid) # perform the calculations
 
 print(sim_results)
 
-with open("test_res.csv",'wb') as out:
+with open("test_res_sah.csv",'wb') as out:
     csv_out=csv.writer(out)
     csv_out.writerow(["n", "r", "tau", "alph_val", "alph_type", "reactivation_rate", "reversion_rate", "rep",
                       "net_type", "net_clustering", "net_path_len", "net_deg_assort", 
