@@ -132,7 +132,7 @@ def process_file(f):
 
     sim_dur = end[0] # duration of simulation
 
-    mf_rec_rat = end[8]/end[7] # MF ratio for SIR/SLIR models
+    mf_rec_rat = end[8]/(end[1]+0.1) # MF ratio for SIR/SLIR models
     mf_inf_rat = end[6]/(end[5]+0.1) # MF ratio for SIRS/SLIRS models
     lat = end[3] +end[4] # amount of latent at end of sim for SLIRS model
 
@@ -174,7 +174,7 @@ p = multiprocessing.Pool(24) # create a pool of  workers
 
 sim_results = p.map(process_file, var_grid) # perform the calculations
 
-print(sim_results)
+#print(sim_results)
 
 with open("test_res_sah.csv",'wb') as out:
     csv_out=csv.writer(out)
