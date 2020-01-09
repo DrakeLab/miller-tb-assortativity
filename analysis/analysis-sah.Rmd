@@ -69,7 +69,6 @@ Sensitivity parameters tested:
 
 1. transmission rate ($\tau=0.04, 0.075, 0.1$, $R_0=1.5, 2.5, 3.5$)
 2. model type (SIR, SLIR, SIRS, SLIRS). SIRS and SLIRS models ran for 200 time units. 
-3. Network type: SW, SF, and Sah algorithm
 
 Response variables: 
 
@@ -86,211 +85,37 @@ Response variables:
 
 \clearpage
 
-```{r who-male-bias, fig.cap="Male-bias is remarkably similar around the world (A), and across countries. This pattern not well-explained by rates of smoking (B), overall health coverage (C), or rates of employment (D). Colors in B-D indicate regions shown in A. Not all variables were available for the same set of countries for each plot. Variables on x axis in plots B and D are on a log-scale. Data from WHO and ILO. ", fig.height=6, fig.width=6}
-
-# data from 
-# http://apps.who.int/gho/portal/uhc-cabinet-wrapper-v2.jsp?id=1010501
-
-ilo <- readxl::read_excel("ILO-employment.xlsx", skip=5)
-
-country.ilo <- ilo %>% filter(Age=="15+", Time==2016) %>%
-  rename(male=`Male...6`, female=`Female...7`, country=`Reference area`) %>%
-  select(male, female, country) %>%
-  group_by(country) %>%
-  summarise(male=mean(male), female=mean(female)) %>% 
-  mutate(work_ratio=male/female)
-
-who <- read_csv("TB_burden_countries_2018-06-12.csv")
-
-health <- read_csv("data-health.csv", skip = 1) %>%
-  rename(country=Country, UHC=`2017`) %>%
-  select(country, UHC)
-
-smoke <- read_csv("data-smoke.csv", skip = 1) %>%
-  rename(country=Country) %>%
-  select(country, Year, Male, Female) %>%
-  filter(Year==2015) %>%
-  mutate(Male=substr(Male, 1,4), Female=substr(Female, 1,4)) %>%
-  mutate(Male=as.numeric(Male), Female=as.numeric(Female)) %>%
-  mutate(mf_smoke=Male/Female)
-
-country.who <- who %>% 
-  filter(year==2016) %>% group_by(country) %>% 
-  summarise(inc=mean(e_inc_100k),
-            mf_inc=(e_inc_num_m/e_inc_num_f), 
-            pop_size=e_pop_num, region=g_whoregion)
-
-ilo.who <- full_join(country.ilo, country.who, by="country")
-ilo.who <- full_join(ilo.who, health, by="country")
-ilo.who <- full_join(ilo.who, smoke, by="country")
-
-### plots
-
-country.who %>% 
-  ggplot(aes(mf_inc, fill=region)) +
-  geom_histogram(bins = 20, show.legend=FALSE) +
-  facet_wrap(.~region) +
-  geom_vline(xintercept = 1, linetype="dotted", 
-                color = "black", size=.5) + 
-  labs(x=expression("Male:female cases"), y="", title="A") + 
-  theme_bw() + 
-  theme(strip.text = element_text(size = 14, color="Black"),
-        axis.title=element_text(size=14),
-        legend.title = element_text(size=14),
-        legend.text = element_text(size=14)) -> mfplot
-
-# country.who %>% 
-#   ggplot(aes(inc, mf_inc, color=region)) +
-#   geom_point(show.legend=FALSE) +
-#   #scale_y_continuous(trans="log10") + 
-#   geom_smooth(method="lm", se=FALSE, show.legend = FALSE,
-#               size=.5) +
-#   geom_hline(yintercept = 1, linetype="dotted", 
-#                 color = "black", size=.5) + 
-#   labs(x="Estimated incidence (per 100,000)", y="Estimated male:female incidence", title="B") +
-#   theme_bw()  -> incplot
-
-ilo.who %>% 
-  ggplot(aes(mf_smoke, mf_inc, color=region)) +
-  geom_point(show.legend=FALSE) +
-  scale_x_continuous(trans="log10") + 
-  geom_smooth(method="lm", se=FALSE, show.legend = FALSE, 
-              size=.5) +
-  geom_hline(yintercept = 1, linetype="dotted", 
-                color = "black", size=.5) + 
-  labs(x=expression("Male:female smoking, 2015"), 
-       y=expression("Male:female cases, 2016"), title="B") +
-  theme_bw() + 
-  theme(strip.text = element_text(size = 14, color="Black"),
-        axis.title=element_text(size=14),
-        legend.title = element_text(size=14),
-        legend.text = element_text(size=14))  -> smokeplot
-
-ilo.who %>% 
-  ggplot(aes(UHC, mf_inc, color=region)) +
-  geom_point(show.legend=FALSE) +
-  #scale_y_continuous(trans="log10") + 
-  geom_smooth(method="lm", se=FALSE, show.legend = FALSE, 
-              size=.5) +
-  geom_hline(yintercept = 1, linetype="dotted", 
-                color = "black", size=.5) + 
-  labs(x="Health Coverage Index, 2017", y="Male:female cases, 2016", title="C") +
-  theme_bw() +
-  theme(strip.text = element_text(size = 14, color="Black"),
-        axis.title=element_text(size=14),
-        legend.title = element_text(size=14),
-        legend.text = element_text(size=14)) -> healthplot
-
-ilo.who %>% 
-  filter(!is.na(region)) %>%
-  ggplot(aes(work_ratio, mf_inc, color=region)) + 
-  geom_point(show.legend = FALSE) +
-  scale_x_continuous(trans="log10") + 
-  geom_smooth(method="lm", se=FALSE, show.legend = FALSE, 
-              size=.5) +
-  geom_hline(yintercept = 1, linetype="dotted", 
-                color = "black", size=.5) + 
-  labs(x="Male:female employment, 2016", 
-       y="Male:female cases, 2016", title = "D") +
-  #facet_wrap(~region) +
-  theme_bw() + 
-  theme(strip.text = element_text(size = 14, color="Black"),
-        axis.title=element_text(size=14),
-        legend.title = element_text(size=14),
-        legend.text = element_text(size=14)) -> workplot
-
-grid.arrange(
-  mfplot, smokeplot, healthplot, workplot,
-  widths = c(1, 1),
-  layout_matrix = rbind(c(1, 2),
-                        c(3, 4))
-)
-
-```
-
-
-\clearpage
 
 ```{r, include=FALSE}
 # SF network plots
-n0 <- read_graph("simulations-rewiring/networks4/G_0N100rep1.graphml", format="graphml")
-n3 <- read_graph("simulations-rewiring/networks4/G_0.3N100rep1.graphml", format="graphml")
-n6 <- read_graph("simulations-rewiring/networks4/G_0.6N100rep1.graphml", format="graphml")
-n9 <- read_graph("simulations-rewiring/networks4/G_0.9N100rep1.graphml", format="graphml")
+n0 <- read_graph("simulations-sah/networks/GG_Q0_N1000_rep1.graphml", format="graphml")
+n3 <- read_graph("simulations-sah/networks/GG_Q0.15_N1000_rep1.graphml", format="graphml")
+n6 <- read_graph("simulations-sah/networks/GG_Q0.3_N1000_rep1.graphml", format="graphml")
+n9 <- read_graph("simulations-sah/networks/GG_Q0.45_N1000_rep1.graphml", format="graphml")
 
-ggraph(n0, 'igraph', algorithm="lgl") + 
-  geom_edge_link(color="darkgrey", alpha=.5) + 
-  geom_node_point(aes(color=factor(sex)), size=1, alpha=.75, 
-                  show.legend = FALSE) +
-  ggtitle("A", subtitle = "r=0") +
-  theme(plot.title = element_text(hjust = 0, size=10), 
-        plot.subtitle = element_text(size=10, face="italic", color=assortCols[1])) -> pn0
-
-ggraph(n3, 'igraph', algorithm="lgl") + 
-  geom_edge_link(color="darkgrey", alpha=.5) + 
-  geom_node_point(aes(color=factor(sex)), size=1, alpha=.75, 
-                  show.legend = FALSE) +
-    ggtitle("   ", subtitle = "r=0.3") +
-  theme(plot.title = element_text(hjust = 0, size=10), 
-        plot.subtitle = element_text(size=10, face="italic", color=assortCols[2]))  -> pn1
-
-ggraph(n6, 'igraph', algorithm="lgl") + 
-  geom_edge_link(color="darkgrey", alpha=.5) + 
-  geom_node_point(aes(color=factor(sex)), size=1, alpha=.75, 
-                  show.legend = FALSE) +
-  ggtitle("   ", subtitle = "r=0.6") +
-  theme(plot.title = element_text(hjust = 0, size=10), 
-        plot.subtitle = element_text(size=10, face="italic", color=assortCols[3])) -> pn2
-
-ggraph(n9, 'igraph', algorithm="lgl") + 
-  geom_edge_link(color="darkgrey", alpha=.5) + 
-  geom_node_point(aes(color=factor(sex)), size=1, alpha=.75, 
-                  show.legend = FALSE) +
-  ggtitle("   ", subtitle = "r=0.9") +
-  theme(plot.title = element_text(hjust = 0,size=10), 
-        plot.subtitle = element_text(size=10, face="italic", color=assortCols[4])) -> pn3
+par(mfrow=c(2,2), mar=c(0,0,0,0))
+plot(n0, vertex.label="", vertex.size=1, vertex.color=c(rep(1, 500), rep(2,500)))
+plot(n3, vertex.label="", vertex.size=1, vertex.color=c(rep(1, 500), rep(2,500)))
+plot(n6, vertex.label="", vertex.size=1, vertex.color=c(rep(1, 500), rep(2,500)))
+plot(n9, vertex.label="", vertex.size=1, vertex.color=c(rep(1, 500), rep(2,500)))
 
 
 # laod simulation ANALYSIS
-res <- read.csv("simulations-rewiring/SLIRS-res/slirs-prelim4.csv")
+res <- read.csv("simulations-sah/test_res_sah.csv")
 
 # network types
-res$net_type <- factor(res$net_type, labels = c("Scale-free", "Small-world"))
-
-res %>%
-  mutate(stat="Modularity") %>%
-  ggplot(aes(r_actual, q, color=factor(r))) + 
-  geom_abline(slope = .5) +
-  geom_point (size=3, alpha=.5) +  
-  facet_grid(net_type~stat) +
-  theme_gray() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1),
-        legend.position = "none")  +
-  scale_color_discrete_sequential(palette="Sunset") +
-  labs(x="Assortativity  (r)", y="", color="Assortativity", title = "B") +
-  guides(colour=FALSE) +
-  theme_bw() +
-  theme(plot.title = element_text(face="bold", size=10), 
-        axis.text=element_text(size=10),
-        axis.text.x = element_text(hjust=1, angle=45),
-        axis.title=element_text(size=10),
-        legend.title = element_text(size=10),
-        legend.text = element_text(size=10), 
-        #panel.grid.major = element_blank(),
-        #panel.grid.minor = element_blank(), 
-        strip.text = element_text(size = 10, color="Black"))   -> p1
-
+res %<>% mutate(net_type="sah") %>% rename(q=r)
 
 res %>%
   mutate(stat="Clustering") %>%
-  ggplot(aes(factor(r), clustering, color=factor(r))) + 
+  ggplot(aes(factor(q), net_clustering, color=factor(q))) + 
   geom_boxplot() +  
   facet_grid(net_type~stat) +
   theme_gray() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1),
         legend.position = "none")  +
   scale_color_discrete_sequential(palette="Sunset") +
-  labs(x="Assortativity  (r)", y="", color="Assortativity", title = "C") +
+  labs(x="Modularity  (q)", y="", color="Assortativity", title = "C") +
   guides(colour=FALSE) +
   theme_bw() +
   theme(plot.title = element_text(face="bold", size=10), 
@@ -301,18 +126,18 @@ res %>%
         legend.text = element_text(size=10), 
         #panel.grid.major = element_blank(),
         #panel.grid.minor = element_blank(), 
-        strip.text = element_text(size = 10, color="Black"))   -> p2
+        strip.text = element_text(size = 10, color="Black"))  
 
 res %>%
   mutate(stat="Path Length") %>%
-  ggplot(aes(factor(r), pathLen, color=factor(r))) + 
+  ggplot(aes(factor(q), net_path_len, color=factor(q))) + 
   geom_boxplot() +  
   facet_grid(net_type~stat) +
   theme_gray() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1),
         legend.position = "none")  +
   scale_color_discrete_sequential(palette="Sunset") +
-  labs(x="Assortativity  (r)", y="", color="Assortativity", title = "D") +
+  labs(x="Modularity  (q)", y="", color="Assortativity", title = "D") +
   guides(colour=FALSE) +
   theme_bw() +
   theme(plot.title = element_text(face="bold", size=10), 
@@ -323,18 +148,18 @@ res %>%
         legend.text = element_text(size=10), 
         #panel.grid.major = element_blank(),
         #panel.grid.minor = element_blank(), 
-        strip.text = element_text(size = 10, color="Black"))   -> p3
+        strip.text = element_text(size = 10, color="Black"))   
 
 res %>%
   mutate(stat="Degree assortativity") %>%
-  ggplot(aes(factor(r), degAssort, color=factor(r))) + 
+  ggplot(aes(factor(q), net_deg_assort, color=factor(q))) + 
   geom_boxplot() +  
   facet_grid(net_type~stat) +
   theme_gray() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1),
         legend.position = "none")  +
   scale_color_discrete_sequential(palette="Sunset") +
-  labs(x="Assortativity  (r)", y="", color="Assortativity", title = "E") +
+  labs(x="Modularity  (q)", y="", color="Assortativity", title = "E") +
   guides(colour=FALSE) +
   theme_bw() +
   theme(plot.title = element_text(face="bold", size=10), 
@@ -345,27 +170,12 @@ res %>%
         legend.text = element_text(size=10), 
         #panel.grid.major = element_blank(),
         #panel.grid.minor = element_blank(), 
-        strip.text = element_text(size = 10, color="Black"))   -> p4
+        strip.text = element_text(size = 10, color="Black"))  
 
-resStats <- res
-
-grid.arrange(pn0, pn1, pn2, pn3, nrow=1) -> g1
-
-grid.arrange(p1, p2, p3, p4, nrow=2) -> g2
 ```
-
-```{r networkStructures, fig.cap="Simulated networks were generated and then re-wired to varying levels of assortativity (A). The algorithm used to re-wire networks accepted assortativity levels within a range (0.035) and these assortativity values are linearly related to modularity (B). As assortativity increased, clustering (C), path length (D), and degree assortativity (E) were altered, sometimes differently for scale-free and small-world networks. ", fig.width=5, fig.height=8}
-grid.arrange(g1, 
-             g2, 
-             heights=c(1,3))
-```
-
 
 ```{r}
 
-res <- read.csv("simulations-rewiring/SLIRS-res/full_res.csv")
-
-# model comparison 
 res$modNameLatent <- ifelse(res$reactivation_rate==0.1, T, F)
 res$modNameRecover <- ifelse(res$reversion_rate==0.33, T, F)
 res$modName <- NA
@@ -374,8 +184,6 @@ res$modName[res$modNameLatent&!res$modNameRecover] <- "SLIR"
 res$modName[!res$modNameLatent&res$modNameRecover] <- "SIRS"
 res$modName[res$modNameLatent&res$modNameRecover] <- "SLIRS"
 
-# network types
-res$type_net <- factor(res$type_net, labels = c("Scale-free", "Small-world"))
 res$alph_type <- factor(res$alph_type, labels = c("IP", "SUS", "TRA"))
 
 
@@ -388,12 +196,12 @@ hs <- 14 # text size
  
 res %>%
   filter(!is.infinite(mf_r_ratio), tau==0.075, modName==("SLIR")) %>%
-  group_by(modName, type_net, alph_type, r, alph_val) %>%
+  group_by(modName, net_type, alph_type, q, alph_val) %>%
   summarise(meanPrev=mean(mf_r_ratio, na.rm=TRUE)) -> fooa
 
 res %>%
   filter(!is.infinite(mf_i_ratio), tau==0.075, modName==c("SLIRS")) %>%
-  group_by(modName, type_net, alph_type, r, alph_val) %>%
+  group_by(modName, net_type, alph_type, q, alph_val) %>%
   summarise(meanPrev=mean(mf_i_ratio, na.rm=TRUE)) -> foob
 
 # for SLIR use R, for SLIRS use I class for MF calculation
@@ -401,18 +209,18 @@ foo <- bind_rows(fooa, foob)
 
 foo %>%
   mutate(absPrev=abs(meanPrev-1.8)) %>%
-  group_by(type_net, modName, alph_type, r) %>%
+  group_by(net_type, modName, alph_type, r) %>%
   summarise(alphVal=which.min(absPrev)) -> foo2
 
 foo %>%
-  ggplot(aes(x=factor(r), y=factor(alph_val))) +
+  ggplot(aes(x=factor(q), y=factor(alph_val))) +
   geom_tile(aes(fill=meanPrev)) + 
   scale_fill_gradient2(midpoint=log10(1.8), trans="log10", 
                                      low="red4", mid = "dodgerblue",
                        high="black", limits=c(1.25,max(foo$meanPrev)), na.value = "white") +
   # geom_point(data=foo2, aes(x=factor(r), y=alphVal), 
   #            shape=17, color="white") +
-  facet_grid(type_net ~ modName ~ alph_type) +
+  facet_grid(net_type ~ modName ~ alph_type) +
   labs(x="Assortativity (r)", y=expression(alpha), 
        fill="Mean \nPrevalence \nRatio", title = "R0=1.5") +
   theme_bw() +

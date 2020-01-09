@@ -132,16 +132,17 @@ def process_file(f):
 
     sim_dur = end[0] # duration of simulation
 
-    mf_rec_rat = end[8]/(end[1]+0.1) # MF ratio for SIR/SLIR models
-    mf_inf_rat = end[6]/(end[5]+0.1) # MF ratio for SIRS/SLIRS models
+
+    m_rec = end[8]
+    f_rec = end[7]
+    m_inf = end[6]
+    f_inf = end[5]
     lat = end[3] +end[4] # amount of latent at end of sim for SLIRS model
 
-    rec_size = end[7] + end[8] # for SIR/SLIR models
-    inf_size = end[5] + end[6] # for SIRS/SLIRS models
 
     results = [n, r, tau, alph, alph_type, delt, psi, y,
                type_net, clus, path_len, deg_assort, 
-               peak, sim_dur, mf_rec_rat, mf_inf_rat, lat, rec_size, inf_size]
+               peak, sim_dur, m_rec, f_rec,m_inf, f_inf, lat]
     return results
 
 # ##### SET UP #####
@@ -170,7 +171,7 @@ var_grid = list(ParameterGrid({'N' : N, 'R' : R, 'Tau': Tau,
                                'Alph_vals': Alph_vals,'Alph_types': Alph_types,
                                'rep': reps}))
 
-p = multiprocessing.Pool(24) # create a pool of  workers
+p = multiprocessing.Pool(30) # create a pool of  workers
 
 sim_results = p.map(process_file, var_grid) # perform the calculations
 
@@ -180,5 +181,5 @@ with open("test_res_sah.csv",'wb') as out:
     csv_out=csv.writer(out)
     csv_out.writerow(["n", "r", "tau", "alph_val", "alph_type", "reactivation_rate", "reversion_rate", "rep",
                       "net_type", "net_clustering", "net_path_len", "net_deg_assort", 
-                      "peak", "duration", "mf_r_ratio", "mf_i_ratio", "latent_prev", "recovered_prev", "infected_prev"])
+                      "peak", "duration", "m_rec", "f_rec","m_inf", "f_inf", "latent_prev"])
     csv_out.writerows(sim_results)
