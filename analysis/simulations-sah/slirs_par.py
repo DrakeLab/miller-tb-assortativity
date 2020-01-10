@@ -121,65 +121,72 @@ def process_file(f):
     ###### GET SIMULATION RESULTS ######
     tots = zip(*sim)
 
-    s = []
+    return tots
 
-    for row in tots:
-        s.append(row[5] + row[6]) # time series of infecteds
+    # s = []
 
-    peak = max(s)
+    # for row in tots:
+    #     s.append(row[5] + row[6]) # time series of infecteds
+
+    # peak = max(s)
     
-    end = zip(*sim)[-1] # ending values for SSLLIIRR
+    # end = zip(*sim)[-1] # ending values for SSLLIIRR
 
-    sim_dur = end[0] # duration of simulation
-
-
-    m_rec = end[8]
-    f_rec = end[7]
-    m_inf = end[6]
-    f_inf = end[5]
-    lat = end[3] +end[4] # amount of latent at end of sim for SLIRS model
+    # sim_dur = end[0] # duration of simulation
 
 
-    results = [n, r, tau, alph, alph_type, delt, psi, y,
-               type_net, clus, path_len, deg_assort, 
-               peak, sim_dur, m_rec, f_rec,m_inf, f_inf, lat]
-    return results
+    # m_rec = end[8]
+    # f_rec = end[7]
+    # m_inf = end[6]
+    # f_inf = end[5]
+    # lat = end[3] +end[4] # amount of latent at end of sim for SLIRS model
+
+
+    # results = [n, r, tau, alph, alph_type, delt, psi, y,
+    #            type_net, clus, path_len, deg_assort, 
+    #            peak, sim_dur, m_rec, f_rec,m_inf, f_inf, lat]
+    # return results
 
 # ##### SET UP #####
 
 ## Model parameters ##
 N = [1000]           # Network Size
-R = [0, 0.15, 0.3, 0.45]         #, 0.6, 0.9 Assortativity coefficient (Newman)
-Tau = [0.04, 0.075, 0.1, 0.15]         #  S->L Baseline transmission rate 
-Del = [100000, 1./10.]     # L->I Reactivation rate; 10000=>SIR, del~0=SLIR
+R = [0] #[0, 0.15, 0.3, 0.45]         #, 0.6, 0.9 Assortativity coefficient (Newman)
+Tau = [0.075] #[0.04, 0.075, 0.1, 0.15]         #  S->L Baseline transmission rate 
+Del = [1./10.] #[100000, 1./10.]     # L->I Reactivation rate; 10000=>SIR, del~0=SLIR
 Gam = 1./2.          # I->R Recovery rate
-Psi =  [0, 0.33]       # R->S Reversion rate; 0=SIR, sig>0=SIRS
-i0 = 0.05            # proportion initially infected 
-tsteps = 250         # set max time steps to run model for
+Psi =  [0] #[0, 0.33]       # R->S Reversion rate; 0=SIR, sig>0=SIRS
+i0 = 0.5            # proportion initially infected 
+tsteps = 100         # set max time steps to run model for
 
 # Male:female differences to explain male bias
-Alph_vals = [1.0,  2.0, 3.0]   # Ratio of male:female susceptibility
+Alph_vals = [1.0] #[1.0,  2.0, 3.0]   # Ratio of male:female susceptibility
 Alph_types = ["SUS", "TRA", "INF_PER"]
 
 # Network parameters
 nt = 'Sah'
 
-reps = range(0,50) # Number of reps 
+reps = range(0,1) # Number of reps 
 
 var_grid = list(ParameterGrid({'N' : N, 'R' : R, 'Tau': Tau,
                                'Psi' : Psi, 'Del' : Del, 'net_type' : nt, 
                                'Alph_vals': Alph_vals,'Alph_types': Alph_types,
                                'rep': reps}))
 
-p = multiprocessing.Pool(30) # create a pool of  workers
+p = multiprocessing.Pool(2) # create a pool of  workers
 
 sim_results = p.map(process_file, var_grid) # perform the calculations
 
 #print(sim_results)
 
-with open("test_res_sah.csv",'wb') as out:
+with open("test_res_sah2.csv",'wb') as out:
     csv_out=csv.writer(out)
-    csv_out.writerow(["n", "r", "tau", "alph_val", "alph_type", "reactivation_rate", "reversion_rate", "rep",
-                      "net_type", "net_clustering", "net_path_len", "net_deg_assort", 
-                      "peak", "duration", "m_rec", "f_rec","m_inf", "f_inf", "latent_prev"])
+    csv_out.writerow(["t", "s1", "s2", "l1", "l2", "i1", "i2", "r1", "r2"])
     csv_out.writerows(sim_results)
+
+# with open("test_res_sah.csv",'wb') as out:
+#     csv_out=csv.writer(out)
+#     csv_out.writerow(["n", "r", "tau", "alph_val", "alph_type", "reactivation_rate", "reversion_rate", "rep",
+#                       "net_type", "net_clustering", "net_path_len", "net_deg_assort", 
+#                       "peak", "duration", "m_rec", "f_rec","m_inf", "f_inf", "latent_prev"])
+#     csv_out.writerows(sim_results)
