@@ -173,16 +173,16 @@ var_grid = list(ParameterGrid({'N' : N, 'R' : R, 'Tau': Tau,
                                'Alph_vals': Alph_vals,'Alph_types': Alph_types,
                                'rep': reps}))
 
-p = multiprocessing.Pool(2) # create a pool of  workers
+p = multiprocessing.Pool(1) # create a pool of  workers
 
 sim_results = p.map(process_file, var_grid) # perform the calculations
 
-#print(sim_results)
+print(sim_results)
 
-with open("test_res_sah2.csv",'wb') as out:
-    csv_out=csv.writer(out)
-    csv_out.writerow(["t", "s1", "s2", "l1", "l2", "i1", "i2", "r1", "r2"])
-    csv_out.writerows(sim_results)
+# with open("test_res_sah2.csv",'wb') as out:
+#     csv_out=csv.writer(out)
+#     #csv_out.writerow(["t", "s1", "s2", "l1", "l2", "i1", "i2", "r1", "r2"])
+#     csv_out.writerows(sim_results)
 
 # with open("test_res_sah.csv",'wb') as out:
 #     csv_out=csv.writer(out)
