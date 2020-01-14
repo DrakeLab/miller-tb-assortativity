@@ -25,12 +25,6 @@ def process_file(f):
     alph=f["Alph_vals"]
     alph_type=f["Alph_types"]
 
-    #return [n, r, tau, y]
-    
-    ###### READ GRAPH ######
-    
-    #G = nx.read_graphml(path="/Users/paigemiller/Documents/UGA/phd/research-projects/miller-tb-assortativity/analysis/simulations-sah/networks/GG_Q"+str(r)+"_N1000"+"_rep"+str(y)+".graphml")
-    #G = nx.read_graphml(path="~/Documents/miller-tb-assortativity/analysis/simulations-sah/networks/GG_Q"+str(r)+"_N1000"+"_rep"+str(y)+".graphml")
     G = nx.read_graphml(path="networks/GG_Q"+str(r)+"_N1000"+"_rep"+str(y)+".graphml")
 
     clus = nx.average_clustering(G)
@@ -38,10 +32,7 @@ def process_file(f):
     #deg_mean = 0 #mean(nx.degree(G).values())
     deg_assort = nx.degree_assortativity_coefficient(G)
 
-    #return [clus]
-
     # ###### Model transitions ######
-
     # SPONTANEOUS transitions H
     H = nx.DiGraph()  
 
@@ -101,14 +92,14 @@ def process_file(f):
 
     for i in range(len(G)):
         if i <500:
-            IC[i] = 'S.m'
+            IC[str(i)] = 'S.m'
             if np.random.uniform(0,1,1)[0] < i0:
-                IC[i] = 'I.m'
+                IC[str(i)] = 'I.m'
 
         else:
-            IC[i] = 'S.f'
+            IC[str(i)] = 'S.f'
             if np.random.uniform(0,1,1)[0] <i0:
-                IC[i] = 'I.f'
+                IC[str(i)] = 'I.f'
                 
     # Set state variables to return
     return_statuses = ('S.f', 'S.m', 'L.f', 'L.m',
@@ -116,77 +107,71 @@ def process_file(f):
 
     ###### RUN SIMULATION ######
     
-    sim = EoN.Gillespie_simple_contagion(G, H, J, IC, return_statuses, tmax = tsteps)
+    sim = EoN.Gillespie_Arbitrary(G, H, J, IC, return_statuses, tmax = tsteps)
 
     ###### GET SIMULATION RESULTS ######
     tots = zip(*sim)
 
-    return tots
+    #return tots
 
-    # s = []
+    s = []
 
-    # for row in tots:
-    #     s.append(row[5] + row[6]) # time series of infecteds
+    for row in tots:
+        s.append(row[5] + row[6]) # time series of infecteds
 
-    # peak = max(s)
+    peak = max(s)
     
-    # end = zip(*sim)[-1] # ending values for SSLLIIRR
+    end = zip(*sim)[-1] # ending values for SSLLIIRR
 
-    # sim_dur = end[0] # duration of simulation
-
-
-    # m_rec = end[8]
-    # f_rec = end[7]
-    # m_inf = end[6]
-    # f_inf = end[5]
-    # lat = end[3] +end[4] # amount of latent at end of sim for SLIRS model
+    sim_dur = end[0] # duration of simulation
 
 
-    # results = [n, r, tau, alph, alph_type, delt, psi, y,
-    #            type_net, clus, path_len, deg_assort, 
-    #            peak, sim_dur, m_rec, f_rec,m_inf, f_inf, lat]
-    # return results
+    m_rec = end[8]
+    f_rec = end[7]
+    m_inf = end[6]
+    f_inf = end[5]
+    lat = end[3] +end[4] # amount of latent at end of sim for SLIRS model
+
+
+    results = [n, r, tau, alph, alph_type, delt, psi, y,
+               type_net, clus, path_len, deg_assort, 
+               peak, sim_dur, m_rec, f_rec,m_inf, f_inf, lat]
+    return results
 
 # ##### SET UP #####
 
 ## Model parameters ##
 N = [1000]           # Network Size
-R = [0] #[0, 0.15, 0.3, 0.45]         #, 0.6, 0.9 Assortativity coefficient (Newman)
-Tau = [0.075] #[0.04, 0.075, 0.1, 0.15]         #  S->L Baseline transmission rate 
-Del = [1./10.] #[100000, 1./10.]     # L->I Reactivation rate; 10000=>SIR, del~0=SLIR
+R = [0, 0.15, 0.3, 0.45]         #, 0.6, 0.9 Assortativity coefficient (Newman)
+Tau = [0.04, 0.075, 0.1, 0.15]         #  S->L Baseline transmission rate 
+Del = [100000, 1./10.]     # L->I Reactivation rate; 10000=>SIR, del~0=SLIR
 Gam = 1./2.          # I->R Recovery rate
-Psi =  [0] #[0, 0.33]       # R->S Reversion rate; 0=SIR, sig>0=SIRS
+Psi =  [0, 0.33]       # R->S Reversion rate; 0=SIR, sig>0=SIRS
 i0 = 0.5            # proportion initially infected 
 tsteps = 100         # set max time steps to run model for
 
 # Male:female differences to explain male bias
-Alph_vals = [1.0] #[1.0,  2.0, 3.0]   # Ratio of male:female susceptibility
+Alph_vals = [1.0, 2.0, 3.0]   # Ratio of male:female susceptibility
 Alph_types = ["SUS", "TRA", "INF_PER"]
 
 # Network parameters
-nt = 'Sah'
+nt = ["SAH"]
 
-reps = range(0,1) # Number of reps 
+reps = range(0,50) # Number of reps 
 
 var_grid = list(ParameterGrid({'N' : N, 'R' : R, 'Tau': Tau,
                                'Psi' : Psi, 'Del' : Del, 'net_type' : nt, 
                                'Alph_vals': Alph_vals,'Alph_types': Alph_types,
                                'rep': reps}))
 
-p = multiprocessing.Pool(1) # create a pool of  workers
+p = multiprocessing.Pool(15) # create a pool of  workers
 
 sim_results = p.map(process_file, var_grid) # perform the calculations
 
-print(sim_results)
 
-# with open("test_res_sah2.csv",'wb') as out:
-#     csv_out=csv.writer(out)
-#     #csv_out.writerow(["t", "s1", "s2", "l1", "l2", "i1", "i2", "r1", "r2"])
-#     csv_out.writerows(sim_results)
-
-# with open("test_res_sah.csv",'wb') as out:
-#     csv_out=csv.writer(out)
-#     csv_out.writerow(["n", "r", "tau", "alph_val", "alph_type", "reactivation_rate", "reversion_rate", "rep",
-#                       "net_type", "net_clustering", "net_path_len", "net_deg_assort", 
-#                       "peak", "duration", "m_rec", "f_rec","m_inf", "f_inf", "latent_prev"])
-#     csv_out.writerows(sim_results)
+with open("res_sah_150.csv",'wb') as out:
+    csv_out=csv.writer(out)
+    csv_out.writerow(["n", "r", "tau", "alph_val", "alph_type", "reactivation_rate", "reversion_rate", "rep",
+                      "net_type", "net_clustering", "net_path_len", "net_deg_assort", 
+                      "peak", "duration", "m_rec", "f_rec","m_inf", "f_inf", "latent_prev"])
+    csv_out.writerows(sim_results)
