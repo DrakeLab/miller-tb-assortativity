@@ -19,7 +19,7 @@ Q= [0, 0.15, 0.3, 0.45]                    # network modularity
 var_grid = list(ParameterGrid({'N' : N, 'Q' : Q}))
 
 # Loop params
-reps= 10
+reps= 50
 
 ##### Create and save networks  ########
 

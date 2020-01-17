@@ -31,10 +31,10 @@ def process_file(f): # parallelized version of Sah et al. (PNAS 2019) network ge
 # Network params
 N= [1000]                                  # network sizes
 Q= [0, 0.15, 0.3, 0.45]                    # network modularity 
-Y= range(0, 50)
+Y= range(0, 150)
 
 var_grid = list(ParameterGrid({'N' : N, 'Q' : Q, 'Y' : Y}))
 
 ##### Create and save networks  ########
-p = multiprocessing.Pool(24) # create a pool of workers
+p = multiprocessing.Pool(15) # create a pool of workers
 sim_results = p.map(process_file, var_grid) # perform the calculations

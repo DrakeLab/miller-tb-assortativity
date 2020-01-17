@@ -1,4 +1,4 @@
 #!/bin/bash
 
-python make_nets_par.py
+python make_nets_try_catch.py
 python slirs_par.py
