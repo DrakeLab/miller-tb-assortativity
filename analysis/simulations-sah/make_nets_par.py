@@ -30,7 +30,7 @@ def process_file(f): # parallelized version of Sah et al. (PNAS 2019) network ge
 ##### Parameters for SIR simulations
 # Network params
 N= [1000]                                  # network sizes
-Q= [0, 0.15, 0.3, 0.45]                    # network modularity 
+Q= [0, 0.05, 0.15, 0.25, 0.35, 0.45]                    # network modularity 
 Y= range(0, 150)
 
 var_grid = list(ParameterGrid({'N' : N, 'Q' : Q, 'Y' : Y}))

@@ -1,4 +1,0 @@
-#!/bin/bash
-
-python make_nets_par.py
-python slirs_par.py
