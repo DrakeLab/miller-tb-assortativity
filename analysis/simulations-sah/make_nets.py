@@ -14,12 +14,12 @@ os.chdir('/Users/paigemiller/Documents/UGA/phd/research-projects/miller-tb-assor
 ##### Parameters for SIR simulations
 # Network params
 N= [1000]                                  # network sizes
-Q= [0, 0.15, 0.3, 0.45]                    # network modularity 
+Q= [.45, .3, .15, 0]                    # network modularity 
 
 var_grid = list(ParameterGrid({'N' : N, 'Q' : Q}))
 
 # Loop params
-reps= 50
+reps= 2
 
 ##### Create and save networks  ########
 
@@ -30,6 +30,6 @@ for x in range(0, len(var_grid)):
     
         # generating network
         G = rmg.generate_modular_networks(n, sg.geometric_sequence, sg.regular_sequence, q, 2, 10)
-        nx.write_graphml(G, "networks/GG_Q"+str(q)+"_N"+str(n)+"_rep"+str(y)+".graphml")
+        nx.write_graphml(G, "networks/SAH_Q"+str(q)+"_N"+str(n)+"_rep"+str(y)+".graphml")
 
         
