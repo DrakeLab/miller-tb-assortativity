@@ -210,10 +210,10 @@ grid.arrange(
 
 ```{r netPlots}
 # SF network plots
-n0 <- read_graph("simulations-rewiring/networks4/G_0N100rep1.graphml", format="graphml")
-n3 <- read_graph("simulations-rewiring/networks4/G_0.3N100rep1.graphml", format="graphml")
-n6 <- read_graph("simulations-rewiring/networks4/G_0.6N100rep1.graphml", format="graphml")
-n9 <- read_graph("simulations-rewiring/networks4/G_0.9N100rep1.graphml", format="graphml")
+n0 <- read_graph("simulations/networks4/G_0N100rep1.graphml", format="graphml")
+n3 <- read_graph("simulations/networks4/G_0.3N100rep1.graphml", format="graphml")
+n6 <- read_graph("simulations/networks4/G_0.6N100rep1.graphml", format="graphml")
+n9 <- read_graph("simulations/networks4/G_0.9N100rep1.graphml", format="graphml")
 
 ggraph(n0, 'igraph', algorithm="lgl") + 
   geom_edge_link(color="darkgrey", alpha=.5) + 
@@ -253,7 +253,8 @@ ggraph(n9, 'igraph', algorithm="lgl") +
 ```{r loadSimData}
 
 # laod simulations on rewired networks
-tmp <- read.csv("simulations-rewiring/SLIRS-res/slirs-prelim4.csv")
+tmp <- read.csv("simulations/SLIRS-res/slirs-prelim4.csv")
+tmp$net_type <- factor(tmp$net_type, labels=c("Scale-Free", "Small-World"))  
 
 tmp %>%
   mutate(stat="Modularity") %>%
@@ -349,10 +350,17 @@ grid.arrange(pn0, pn1, pn2, pn3, nrow=1) -> g1
 grid.arrange(p1, p2, p3, p4, nrow=2) -> g2
 ```
 
-```{r networkStructures, fig.cap="Simulated networks were generated with the Sah or rewiring algorithm to varying levels of assortativity (A). Assortativity values are linearly related to modularity when there are two modules, i.e., sexes (B). As assortativity increased, clustering (C), path length (D), and degree assortativity (E) were altered depending on the algorithm used to generate assortative networks. ", fig.width=5, fig.height=8}
+```{r rewiredNetworkStructure, fig.cap="Changes in network statistics using the rewiring algorithm to make networks of varying assortativity (A). Assortativity and modularity are linearly related when there are 2 modules, i.e., sexes (B). As assortativity increased, clustering (C), path length (D), and degree assortativity (E) were altered. ", fig.width=5, fig.height=8}
 grid.arrange(g1, 
              g2, 
              heights=c(1,3))
+```
+
+
+```{r}
+
+sah_res <- readRDS("simulations/SLIRS-res/sah_res_300.RDS")
+
 ```
 
 
