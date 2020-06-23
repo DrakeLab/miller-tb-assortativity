@@ -31,12 +31,14 @@ assortCols <- c("#F3E79AFF", "#F7A086FF", "#CF63A6FF", "#704D9EFF")
 
 Can assortativity drive male bias or is heterogeneity in infection and transmission by sex required to explain male-bias?
 
-Preliminary results for simulations of pathogen spreading on contact networks with varying levels of assortativity ($r=0, 0.3, 0.6, 0.9$) and intensities of heterogeneities by sex ($\alpha$). Heterogeneities by sex were susceptibility, infectious period, transmissibility. 
+Results for simulations of pathogen spreading on contact networks with varying levels of assortativity ($r=0, 0.3, 0.6, 0.9$) and intensities of heterogeneities by sex ($\alpha$). Heterogeneities by sex were susceptibility, infectious period, transmissibility. 300 replicates of each parameter combination.
 
 Sensitivity parameters tested: 
 
-1. transmission rate ($\tau=0.04, 0.075, 0.1$, $R_0=1.5, 2.5, 3.5$)
-2. model type (SIR, SLIR, SIRS, SLIRS). SIRS and SLIRS models ran for 200 time units. 
+1. Transmission rate ($\tau=0.04, 0.075, 0.1$, $R_0=1.5, 2.5, 3.5$)
+2. Model type (SIR, SLIR, SIRS, SLIRS). SIRS and SLIRS models ran for 200 time units. 
+3. Starting network type (small world, scale free, geometric)
+4. Assortative network algorithm (SAH, REWIRING)
 
 Response variables: 
 
@@ -46,11 +48,6 @@ Response variables:
 4. Endemic equilibrium: calculated for SIRS/SLIRS models as the average size of the infected population in the last 100 time units. 
 5. Prevalence of latent infection: calculated for SLIRS model as the average size of the latent population in the last 100 time units. 
 
-# Notes
-
-* Began with scale-free (300) and small-world networks (300) then re-wired
-* Results for 100 network replicates shown
-* One epidemic simulated per network
 
 ```{r nets, fig.cap="A re-wiring algorithm was developed to simulate networks with different levels of assortativity. Figure shows small networks (N=100) with r=0, 0.3, 0.6, and 0.9 from top left to bottom right. Male nodes are shown in blue and female nodes in orange. As assortativity increases, between-sex edges become less common. "}
  
