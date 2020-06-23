@@ -100,16 +100,16 @@ def process_file(f):
     ###### SET INITIAL CONDITIONS ######
     # note: len(IC) needs to be = # of nodes
     
-    IC = defaultdict(lambda: "S.f") # initialize all susceptible women
+    IC = defaultdict(lambda: "S.m") # initialize all susceptible women
     for i in range(len(G)):
         if G.node[i] < 500: # but if sex=1, they are male
-            IC[i] = 'S.m'
+            IC[i] = 'S.f'
             if np.random.uniform(0,1,1)[0] < i0:
-                IC[i] = 'I.m'
+                IC[i] = 'I.f'
         else:
-            IC[i] = 'S.f' 
+            IC[i] = 'S.m' 
             if np.random.uniform(0,1,1)[0] < i0:
-                IC[i] = 'I.f' # set some susceptible f to infected f
+                IC[i] = 'I.m' # set some susceptible f to infected f
 
     # Set state variables to return
     return_statuses = ('S.f', 'S.m', 'L.f', 'L.m',
