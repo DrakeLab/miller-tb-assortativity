@@ -1,5 +1,6 @@
 ###### Parallelized version of SLIRS.py ######
-
+import random_modular_generator_variable_modules as rmg
+import sequence_generator as sg
 import networkx as nx
 import EoN
 import random
@@ -79,30 +80,36 @@ def process_file(f):
         #I->R recover to R
         H.add_edge('I.f', 'R.f', rate = (Gam * (alph + 1))/2)         # female  
         H.add_edge('I.m', 'R.m', rate = (Gam * (alph + 1))/(2*alph))  # male
-           
-    ###### READ GRAPH ######
     
-    G = nx.read_graphml(path="networks4/"+str(type_net)+"_"+str(r)+"N"+str(n)+"rep"+str(y)+".graphml")
 
-    clus = 0 #nx.clustering(G)
-    path_len = 0 # nx.average_shortest_path_length(G)
+    #G = nx.read_graphml(path="networks/sah_net"+str(r)+"_"+str(y)+".graphml")
+       
+    ###### make GRAPH ######
+    failed="no"
+    try: 
+        G = rmg.generate_modular_networks(n, sg.geometric_sequence, sg.regular_sequence, r, 2, 10)
+    except (RuntimeError, TypeError, NameError):
+        failed="yes"
+        G = nx.gnp_random_graph(n, .1) 
+
+    clus = nx.average_clustering(G)
+    path_len = nx.average_shortest_path_length(G)
     #deg_mean = mean(nx.degree(G).values())
-    deg_assort = 0 #nx.degree_assortativity_coefficient(G)
+    deg_assort = nx.degree_assortativity_coefficient(G)
 
     ###### SET INITIAL CONDITIONS ######
     # note: len(IC) needs to be = # of nodes
     
     IC = defaultdict(lambda: "S.f") # initialize all susceptible women
-
     for i in range(len(G)):
-        if G.node["n"+str(i)]['sex'] == 1.0: # but if sex=1, they are male
-            IC["n"+str(i)] = 'S.m'
+        if G.node[i] < 500: # but if sex=1, they are male
+            IC[i] = 'S.m'
             if np.random.uniform(0,1,1)[0] < i0:
-                IC["n"+str(i)] = 'I.m'
+                IC[i] = 'I.m'
         else:
-            IC["n"+str(i)] = 'S.f' 
+            IC[i] = 'S.f' 
             if np.random.uniform(0,1,1)[0] < i0:
-                IC["n"+str(i)] = 'I.f' # set some susceptible f to infected f
+                IC[i] = 'I.f' # set some susceptible f to infected f
 
     # Set state variables to return
     return_statuses = ('S.f', 'S.m', 'L.f', 'L.m',
@@ -126,23 +133,22 @@ def process_file(f):
 
     sim_dur = end[0] # duration of simulation
 
-    mf_rec_rat = end[8]/end[7] # MF ratio for SIR/SLIR models
-    mf_inf_rat = end[6]/(end[5]+0.1) # MF ratio for SIRS/SLIRS models
+    m_rec_rat = end[8] # males rec
+    f_rec_rat = end[7] # females rec
+    m_inf_rat = end[6] # males inf
+    f_inf_rat = end[5] # females inf
     lat = end[3] +end[4] # amount of latent at end of sim for SLIRS model
 
-    rec_size = end[7] + end[8] # for SIR/SLIR models
-    inf_size = end[5] + end[6] # for SIRS/SLIRS models
-
-    results = [n, r, tau, alph, alph_type, delt, psi, y,
+    results = [failed, n, r, tau, alph, alph_type, delt, psi, y,
                type_net, clus, path_len, deg_assort, 
-               peak, sim_dur, mf_rec_rat, mf_inf_rat, lat, rec_size, inf_size]
+               peak, sim_dur, m_rec_rat,f_rec_rat, m_inf_rat,f_inf_rat, lat]
     return results
 
 ##### SET UP #####
 
 ## Model parameters ##
 N = [1000]           # Network Size
-R = [0, 0.1, 0.3, 0.5, 0.7, 0.9]         #, 0.6, 0.9 Assortativity coefficient (Newman)
+R = [0, .05, .1,.15, .2,.25, .3,.35] # Actually Q (Newman)
 Tau = [0.04, 0.075, 0.1, 0.15]         #  S->L Baseline transmission rate 
 Del = [100000, 1./10.]     # L->I Reactivation rate; 10000=>SIR, del~0=SLIR
 Gam = 1./2.          # I->R Recovery rate
@@ -151,14 +157,13 @@ i0 = 0.05            # proportion initially infected
 tsteps = 250         # set max time steps to run model for
 
 # Male:female differences to explain male bias
-Alph_vals = [1.0, 1.25, 1.5, 1.75, 2.0,
-             2.25, 2.5, 2.75, 3.0]   # Ratio of male:female susceptibility
+Alph_vals = [1.0, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5, 2.75, 3.0]   # Ratio of male:female susceptibility
 Alph_types = ["SUS", "TRA", "INF_PER"]
 
 # Network parameters
-nt = ["G", "SW"]
+nt = ["SAH"]
 
-reps = range(1,150) # Number of reps 
+reps = range(1,300) # Number of reps 
 
 var_grid = list(ParameterGrid({'N' : N, 'R' : R, 'Tau': Tau,
                                'Psi' : Psi, 'Del' : Del,
@@ -172,9 +177,7 @@ sim_results = p.map(process_file, var_grid) # perform the calculations
 
 #print(sim_results)
 
-with open("SLIRS-res/"+"full_res_test.csv",'wb') as out:
+with open("SLIRS-res/"+"sah_res_300.csv",'wb') as out:
     csv_out=csv.writer(out)
-    csv_out.writerow(["n", "r", "tau", "alph_val", "alph_type", "reactivation_rate", "reversion_rate", "rep",
-                      "type_net", "net_clustering", "net_path_len", "net_deg_assort", 
-                      "peak", "duration", "mf_r_ratio", "mf_i_ratio", "latent_prev", "recovered_prev", "infected_prev"])
+    csv_out.writerow(["failed", "net_size", "r", "tau", "alph_val", "alph_type", "delt", "psi", "rep","type_net", "net_clus", "net_path_len", "net_deg_assort", "peak", "sim_dur", "m_rec", "f_rec", "m_inf","f_inf", "tot_lat"])
     csv_out.writerows(sim_results)
