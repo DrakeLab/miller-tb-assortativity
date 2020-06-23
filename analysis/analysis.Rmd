@@ -258,7 +258,7 @@ tmp$net_type <- factor(tmp$net_type, labels=c("Scale-Free", "Small-World"))
 
 tmp %>%
   mutate(stat="Modularity") %>%
-  ggplot(aes(r, q, color=factor(r))) + 
+  ggplot(aes(factor(r), q, color=factor(r))) + 
   geom_abline(slope = .5) +
   geom_point (size=3, alpha=.5) +  
   facet_grid(net_type~stat) +
@@ -359,23 +359,65 @@ grid.arrange(g1,
 
 ```{r}
 
-sah_res <- readRDS("simulations/SLIRS-res/sah_res_300.RDS")
+sah_res <- readRDS("simulations/SLIRS-res/sah_res_300.RDS") %>%
+  filter(failed=="no")
+sah_res$net_type="SAH"
+
+sah_res$modNameLatent <- ifelse(sah_res$delt==0.1, T, F)
+sah_res$modNameRecover <- ifelse(sah_res$psi==0.33, T, F)
+sah_res$modName <- NA
+sah_res$modName[!sah_res$modNameLatent&!sah_res$modNameRecover] <- "SIR"
+sah_res$modName[sah_res$modNameLatent&!sah_res$modNameRecover] <- "SLIR"
+sah_res$modName[!sah_res$modNameLatent&sah_res$modNameRecover] <- "SIRS"
+sah_res$modName[sah_res$modNameLatent&sah_res$modNameRecover] <- "SLIRS"
+
+sah_res$alph_type <- factor(sah_res$alph_type, labels = c("IP", "SUS", "TRA"))
+
+sah_res$mf_r_ratio <- sah_res$m_rec/sah_res$f_rec
+sah_res$mf_i_ratio <- sah_res$m_inf/sah_res$f_inf
+sah_res$infected_prev <- sah_res$m_inf+sah_res$f_inf
+sah_res$recovered_prev <- sah_res$m_rec+sah_res$f_rec
+
+
+
+sah_res %>%
+  select(r, net_clus, net_path_len, net_deg_assort, net_type) %>%
+  gather("stat", "val", -r, -net_type) %>%
+  rename(Q=r) %>%
+  ggplot(aes(factor(Q), val, color=factor(Q))) + 
+  geom_boxplot(alpha=.5) +  
+  facet_grid(stat~., scales="free_y") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = "none")  +
+  scale_color_discrete_sequential(palette="Sunset") +
+  labs(x="Modularity  (Q)", y="", color="Modularity", title = "B") +
+  guides(colour=FALSE) +
+  theme_bw() +
+  theme(plot.title = element_text(face="bold", size=10), 
+        axis.text=element_text(size=10),
+        axis.text.x = element_text(hjust=1, angle=45),
+        axis.title=element_text(size=10),
+        legend.title = element_text(size=10),
+        legend.text = element_text(size=10), 
+        #panel.grid.major = element_blank(),
+        #panel.grid.minor = element_blank(), 
+        strip.text = element_text(size = 10, color="Black"))  # -> p1
 
 ```
 
 
 ```{r joinSimulations}
 
-res <- read.csv("simulations-rewiring/SLIRS-res/full_res.csv")
+rewire_res <- read.csv("simulations/SLIRS-res/full_res.csv")
 
 # model comparison 
-res$modNameLatent <- ifelse(res$reactivation_rate==0.1, T, F)
-res$modNameRecover <- ifelse(res$reversion_rate==0.33, T, F)
-res$modName <- NA
-res$modName[!res$modNameLatent&!res$modNameRecover] <- "SIR"
-res$modName[res$modNameLatent&!res$modNameRecover] <- "SLIR"
-res$modName[!res$modNameLatent&res$modNameRecover] <- "SIRS"
-res$modName[res$modNameLatent&res$modNameRecover] <- "SLIRS"
+rewire_res$modNameLatent <- ifelse(rewire_res$reactivation_rate==0.1, T, F)
+rewire_res$modNameRecover <- ifelse(rewire_res$reversion_rate==0.33, T, F)
+rewire_res$modName <- NA
+rewire_res$modName[!rewire_res$modNameLatent&!rewire_res$modNameRecover] <- "SIR"
+rewire_res$modName[rewire_res$modNameLatent&!rewire_res$modNameRecover] <- "SLIR"
+rewire_res$modName[!rewire_res$modNameLatent&rewire_res$modNameRecover] <- "SIRS"
+rewire_res$modName[rewire_res$modNameLatent&rewire_res$modNameRecover] <- "SLIRS"
 
 # network types
 res$type_net <- factor(res$type_net, labels = c("Scale-free", "Small-world"))
@@ -383,7 +425,7 @@ res$alph_type <- factor(res$alph_type, labels = c("IP", "SUS", "TRA"))
 
 
 ### JOIN WITH SAH DATA ###
-resRewired <- res
+rewire_res <- res
 
 res <- read.csv("simulations-sah/res_sah_50.csv")
 
