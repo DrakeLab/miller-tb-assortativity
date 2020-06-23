@@ -1,0 +1,3 @@
+#!/bin/bash                                                                     
+python make_nets_try_catch.py
+python slirs_par.py

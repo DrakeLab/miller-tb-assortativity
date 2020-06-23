@@ -1,4 +1,4 @@
-###### Parallelized version of SLIRS.py ######
+###### SLIRS.py ######
 
 import networkx as nx
 import EoN
@@ -12,20 +12,50 @@ import csv
 from sklearn.model_selection import ParameterGrid
 from collections import defaultdict
 from collections import Counter
-import multiprocessing 
 
-def process_file(f):
-    n=f["N"]
-    r=f["R"]
-    tau=f["Tau"]
-    type_net = f["net_type"]
-    delt=f["Del"]
-    psi=f["Psi"]
-    y=f["rep"]
-    alph=f["Alph_vals"]
-    alph_type=f["Alph_types"]
 
-    #return [n, r, tau, y]
+##### SET UP #####
+
+## Model parameters ##
+N = [1000]           # Network Size
+R = [0, 15, 3, 45]         #, 0.6, 0.9 Assortativity coefficient (Newman)
+Tau = [0.04, 0.075, 0.1, 0.15]         #  S->L Baseline transmission rate 
+Del = [100000, 1./10.]     # L->I Reactivation rate; 10000=>SIR, del~0=SLIR
+Gam = 1./2.          # I->R Recovery rate
+Psi =  [0, 0.33]       # R->S Reversion rate; 0=SIR, sig>0=SIRS
+i0 = 0.05            # proportion initially infected 
+tsteps = 250         # set max time steps to run model for
+
+# Male:female differences to explain male bias
+Alph_vals = [1.0]#[1.0, 1.25, 1.5, 1.75, 2.0,
+             #2.25, 2.5, 2.75, 3.0]   # Ratio of male:female susceptibility
+Alph_types = ["SUS", "TRA", "INF_PER"]
+
+# Network parameters
+nt = ["sah"]
+
+reps = range(1,300) # Number of reps 
+
+var_grid = ParameterGrid({'N' : N, 'R' : R, 'Tau': Tau,
+                               'Psi' : Psi, 'Del' : Del,
+                               'Alph_vals': Alph_vals,'Alph_types': Alph_types,
+                               'net_type' : nt,
+                               'rep': reps})
+
+results = []
+
+for params in var_grid:
+    n=params["N"]
+    r=params["R"]
+    tau=params["Tau"]
+    type_net = params["net_type"]
+    delt=params["Del"]
+    psi=params["Psi"]
+    y=params["rep"]
+    alph=params["Alph_vals"]
+    alph_type=params["Alph_types"]
+
+    print alph_type
 
     ###### Model transitions ######
 
@@ -82,12 +112,13 @@ def process_file(f):
            
     ###### READ GRAPH ######
     
-    G = nx.read_graphml(path="networks4/"+str(type_net)+"_"+str(r)+"N"+str(n)+"rep"+str(y)+".graphml")
-
-    clus = 0 #nx.clustering(G)
-    path_len = 0 # nx.average_shortest_path_length(G)
-    #deg_mean = mean(nx.degree(G).values())
-    deg_assort = 0 #nx.degree_assortativity_coefficient(G)
+    G = nx.read_graphml(path="networks/sah_net"+str(r)+"_"+str(y)+".graphml")
+	
+    clus = nx.average_clustering(G)
+    path_len = nx.average_shortest_path_length(G)
+    #degrees= G.degree()
+    #deg_mean = sum(degrees.values())/1000.
+    deg_assort = nx.degree_assortativity_coefficient(G)
 
     ###### SET INITIAL CONDITIONS ######
     # note: len(IC) needs to be = # of nodes
@@ -95,14 +126,14 @@ def process_file(f):
     IC = defaultdict(lambda: "S.f") # initialize all susceptible women
 
     for i in range(len(G)):
-        if G.node["n"+str(i)]['sex'] == 1.0: # but if sex=1, they are male
-            IC["n"+str(i)] = 'S.m'
+        if i<500: # but if sex=1, they are male
+            IC[str(i)] = 'S.m'
             if np.random.uniform(0,1,1)[0] < i0:
-                IC["n"+str(i)] = 'I.m'
+                IC[str(i)] = 'I.m'
         else:
-            IC["n"+str(i)] = 'S.f' 
+            IC[str(i)] = 'S.f' 
             if np.random.uniform(0,1,1)[0] < i0:
-                IC["n"+str(i)] = 'I.f' # set some susceptible f to infected f
+                IC[str(i)] = 'I.f' # set some susceptible f to infected f
 
     # Set state variables to return
     return_statuses = ('S.f', 'S.m', 'L.f', 'L.m',
@@ -125,56 +156,23 @@ def process_file(f):
     end = zip(*sim)[-1] # ending values for SSLLIIRR
 
     sim_dur = end[0] # duration of simulation
+    m_rec = end[8]
+    f_rec = end[7]
+    m_inf = end[6]
+    f_inf = end[5]
+    lat = end[3] + end[4]
 
-    mf_rec_rat = end[8]/end[7] # MF ratio for SIR/SLIR models
-    mf_inf_rat = end[6]/(end[5]+0.1) # MF ratio for SIRS/SLIRS models
-    lat = end[3] +end[4] # amount of latent at end of sim for SLIRS model
 
-    rec_size = end[7] + end[8] # for SIR/SLIR models
-    inf_size = end[5] + end[6] # for SIRS/SLIRS models
+    results.append([n, r, tau, alph, alph_type, delt, psi, y,
+               type_net, clus, path_len, deg_assort,
+               peak, sim_dur, m_rec, f_rec, m_inf, f_inf, lat])
+    
 
-    results = [n, r, tau, alph, alph_type, delt, psi, y,
-               type_net, clus, path_len, deg_assort, 
-               peak, sim_dur, mf_rec_rat, mf_inf_rat, lat, rec_size, inf_size]
-    return results
-
-##### SET UP #####
-
-## Model parameters ##
-N = [1000]           # Network Size
-R = [0, 0.1, 0.3, 0.5, 0.7, 0.9]         #, 0.6, 0.9 Assortativity coefficient (Newman)
-Tau = [0.04, 0.075, 0.1, 0.15]         #  S->L Baseline transmission rate 
-Del = [100000, 1./10.]     # L->I Reactivation rate; 10000=>SIR, del~0=SLIR
-Gam = 1./2.          # I->R Recovery rate
-Psi =  [0, 0.33]       # R->S Reversion rate; 0=SIR, sig>0=SIRS
-i0 = 0.05            # proportion initially infected 
-tsteps = 250         # set max time steps to run model for
-
-# Male:female differences to explain male bias
-Alph_vals = [1.0, 1.25, 1.5, 1.75, 2.0,
-             2.25, 2.5, 2.75, 3.0]   # Ratio of male:female susceptibility
-Alph_types = ["SUS", "TRA", "INF_PER"]
-
-# Network parameters
-nt = ["G", "SW"]
-
-reps = range(1,150) # Number of reps 
-
-var_grid = list(ParameterGrid({'N' : N, 'R' : R, 'Tau': Tau,
-                               'Psi' : Psi, 'Del' : Del,
-                               'Alph_vals': Alph_vals,'Alph_types': Alph_types,
-                               'net_type' : nt,
-                               'rep': reps}))
-
-p = multiprocessing.Pool(24) # create a pool of 2 workers
-
-sim_results = p.map(process_file, var_grid) # perform the calculations
-
-#print(sim_results)
-
-with open("SLIRS-res/"+"full_res_test.csv",'wb') as out:
+with open("sah_res_300.csv",'wb') as out:
     csv_out=csv.writer(out)
-    csv_out.writerow(["n", "r", "tau", "alph_val", "alph_type", "reactivation_rate", "reversion_rate", "rep",
-                      "type_net", "net_clustering", "net_path_len", "net_deg_assort", 
-                      "peak", "duration", "mf_r_ratio", "mf_i_ratio", "latent_prev", "recovered_prev", "infected_prev"])
+    csv_out.writerow(["n", "r", "tau", "alph", "alph_type", "delt", "psi", "y", "type_net", "clus", "path_len", "deg_assort", "peak", "sim_dur", "m_rec", "f_rec", "m_inf", "f_inf", "lat"])
     csv_out.writerows(sim_results)
+
+
+
+

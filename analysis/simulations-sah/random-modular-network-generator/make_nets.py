@@ -9,17 +9,15 @@ import os
 import csv
 import random
 
-os.chdir('/Users/paigemiller/Documents/UGA/phd/research-projects/miller-tb-assortativity/analysis/simulations-sah')
-
 ##### Parameters for SIR simulations
 # Network params
 N= [1000]                                  # network sizes
-Q= [.45, .3, .15, 0]                    # network modularity 
+Q= [0,0.05, 0.15, 0.25, 0.35, 0.45]                    # network modularity 
 
 var_grid = list(ParameterGrid({'N' : N, 'Q' : Q}))
 
 # Loop params
-reps= 2
+reps= 50
 
 ##### Create and save networks  ########
 
@@ -30,6 +28,6 @@ for x in range(0, len(var_grid)):
     
         # generating network
         G = rmg.generate_modular_networks(n, sg.geometric_sequence, sg.regular_sequence, q, 2, 10)
-        nx.write_graphml(G, "networks/SAH_Q"+str(q)+"_N"+str(n)+"_rep"+str(y)+".graphml")
+        nx.write_graphml(G, "networks/Sah_Q"+str(q)+"_N"+str(n)+"_rep"+str(y)+".graphml")
 
         
