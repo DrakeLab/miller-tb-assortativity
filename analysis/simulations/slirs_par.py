@@ -27,6 +27,19 @@ def process_file(f):
 
     #return [n, r, tau, y]
 
+    ###### READ GRAPH ######
+    failed="no"
+    try: 
+        G = nx.read_graphml(path="networks4/"+str(type_net)+"_"+str(r)+"N"+str(n)+"rep"+str(y)+".graphml")
+    except (RuntimeError, TypeError, NameError):
+        failed="yes"
+        G = nx.gnp_random_graph(n, .1) 
+
+    clus = nx.average_clustering(G)
+    path_len = nx.average_shortest_path_length(G)
+    #deg_mean = mean(nx.degree(G).values())
+    deg_assort = nx.degree_assortativity_coefficient(G)
+
     ###### Model transitions ######
 
     # SPONTANEOUS transitions H
@@ -80,15 +93,6 @@ def process_file(f):
         H.add_edge('I.f', 'R.f', rate = (Gam * (alph + 1))/2)         # female  
         H.add_edge('I.m', 'R.m', rate = (Gam * (alph + 1))/(2*alph))  # male
            
-    ###### READ GRAPH ######
-    
-    G = nx.read_graphml(path="networks4/"+str(type_net)+"_"+str(r)+"N"+str(n)+"rep"+str(y)+".graphml")
-
-    clus = 0 #nx.clustering(G)
-    path_len = 0 # nx.average_shortest_path_length(G)
-    #deg_mean = mean(nx.degree(G).values())
-    deg_assort = 0 #nx.degree_assortativity_coefficient(G)
-
     ###### SET INITIAL CONDITIONS ######
     # note: len(IC) needs to be = # of nodes
     
@@ -109,14 +113,12 @@ def process_file(f):
                        'I.f', 'I.m', 'R.f', 'R.m')
 
     ###### RUN SIMULATION ######
-    
     sim = EoN.Gillespie_simple_contagion(G, H, J, IC, return_statuses, tmax = tsteps)
 
     ###### GET SIMULATION RESULTS ######
     tots = zip(*sim)
 
     s = []
-
     for row in tots:
         s.append(row[5] + row[6]) # time series of infecteds
 
@@ -126,24 +128,22 @@ def process_file(f):
 
     sim_dur = end[0] # duration of simulation
 
-    mf_rec_rat = end[8]/end[7] # MF ratio for SIR/SLIR models
-    mf_inf_rat = end[6]/(end[5]+0.1) # MF ratio for SIRS/SLIRS models
+    m_rec_rat = end[8] # males rec
+    f_rec_rat = end[7] # females rec
+    m_inf_rat = end[6] # males inf
+    f_inf_rat = end[5] # females inf
     lat = end[3] +end[4] # amount of latent at end of sim for SLIRS model
 
-    rec_size = end[7] + end[8] # for SIR/SLIR models
-    inf_size = end[5] + end[6] # for SIRS/SLIRS models
-
-    results = [n, r, tau, alph, alph_type, delt, psi, y,
+    results = [failed, n, r, tau, alph, alph_type, delt, psi, y,
                type_net, clus, path_len, deg_assort, 
-               peak, sim_dur, mf_rec_rat, mf_inf_rat, lat, rec_size, inf_size]
-    return results
+               peak, sim_dur, m_rec_rat, f_rec_rat, m_inf_rat, f_inf_rat, lat]
 
 ##### SET UP #####
 
 ## Model parameters ##
 N = [1000]           # Network Size
-R = [0, 0.1, 0.2, 0.3, 0.4, 0.5,0.6, 0.7]         #, 0.6, 0.9 Assortativity coefficient (Newman)
-Tau = [0.04, 0.075, 0.1, 0.15]         #  S->L Baseline transmission rate 
+R = [0,  0.2, 0.4,0.6]       # Assortativity coefficient (Newman)
+Tau = [0.04, 0.075, 0.1]         #  S->L Baseline transmission rate 
 Del = [100000, 1./10.]     # L->I Reactivation rate; 10000=>SIR, del~0=SLIR
 Gam = 1./2.          # I->R Recovery rate
 Psi =  [0, 0.33]       # R->S Reversion rate; 0=SIR, sig>0=SIRS
@@ -151,14 +151,12 @@ i0 = 0.05            # proportion initially infected
 tsteps = 250         # set max time steps to run model for
 
 # Male:female differences to explain male bias
-Alph_vals = [1.0, 1.25, 1.5, 1.75, 2.0,
-             2.25, 2.5, 2.75, 3.0]   # Ratio of male:female susceptibility
+Alph_vals =  [1.0, 2.0, 3.0]   # Ratio of male:female susceptibility
 Alph_types = ["SUS", "TRA", "INF_PER"]
 
 # Network parameters
 nt = ["G", "SW"]
-
-reps = range(1,300) # Number of reps 
+reps = range(0,100)
 
 var_grid = list(ParameterGrid({'N' : N, 'R' : R, 'Tau': Tau,
                                'Psi' : Psi, 'Del' : Del,
@@ -166,13 +164,13 @@ var_grid = list(ParameterGrid({'N' : N, 'R' : R, 'Tau': Tau,
                                'net_type' : nt,
                                'rep': reps}))
 
-p = multiprocessing.Pool(25) # create a pool of 2 workers
+p = multiprocessing.Pool(31) # create a pool of 2 workers
 
 sim_results = p.map(process_file, var_grid) # perform the calculations
 
 #print(sim_results)
 
-with open("SLIRS-res/"+"rewired_res_300.csv",'wb') as out:
+with open("SLIRS-res/"+"rewired_res_100.csv",'wb') as out:
     csv_out=csv.writer(out)
     csv_out.writerow(["n", "r", "tau", "alph_val", "alph_type", "reactivation_rate", "reversion_rate", "rep",
                       "type_net", "net_clustering", "net_path_len", "net_deg_assort", 
