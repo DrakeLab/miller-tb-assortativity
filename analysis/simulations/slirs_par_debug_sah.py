@@ -99,6 +99,7 @@ def process_file(f):
 
     ###### SET INITIAL CONDITIONS ######
     # note: len(IC) needs to be = # of nodes
+    G.nodes()
     
     IC = defaultdict(lambda: "S.m") # initialize all susceptible women
     for i in range(len(G)):
