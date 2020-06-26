@@ -156,7 +156,7 @@ Alph_types = ["SUS", "TRA", "INF_PER"]
 
 # Network parameters
 nt = ["G", "SW"]
-reps = range(0,100)
+reps = range(1,101)
 
 var_grid = list(ParameterGrid({'N' : N, 'R' : R, 'Tau': Tau,
                                'Psi' : Psi, 'Del' : Del,
@@ -164,7 +164,7 @@ var_grid = list(ParameterGrid({'N' : N, 'R' : R, 'Tau': Tau,
                                'net_type' : nt,
                                'rep': reps}))
 
-p = multiprocessing.Pool(31) # create a pool of 2 workers
+p = multiprocessing.Pool(31) # create a pool of workers
 
 sim_results = p.map(process_file, var_grid) # perform the calculations
 
