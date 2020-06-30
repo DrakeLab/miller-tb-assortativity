@@ -164,7 +164,7 @@ Alph_types = ["SUS", "TRA", "INF_PER"]
 # Network parameters
 nt = ["SAH"]
 
-reps = range(1,201) # Number of reps 
+reps = range(1,251) # Number of reps 
 
 var_grid = list(ParameterGrid({'N' : N, 'R' : R, 'Tau': Tau,
                                'Psi' : Psi, 'Del' : Del,
@@ -178,7 +178,7 @@ sim_results = p.map(process_sah, var_grid) # perform the calculations
 
 #print(sim_results)
 
-with open("SLIRS-res/sah_res_100_full.csv",'wb') as out:
+with open("SLIRS-res/sah_res_250_full.csv",'wb') as out:
     csv_out=csv.writer(out)
     csv_out.writerow(["failed", "net_size", "r", "tau", "alph_val", "alph_type", "delt", "psi", "rep","type_net", "net_clus", "net_path_len", "net_deg_assort", "peak", "sim_dur", "m_rec", "f_rec", "m_inf","f_inf", "tot_lat"])
     csv_out.writerows(sim_results)
@@ -324,7 +324,7 @@ Alph_types = ["SUS", "TRA", "INF_PER"]
 
 # Network parameters
 nt = ["G", "SW"]
-reps = range(1,201)
+reps = range(1,251)
 
 var_grid = list(ParameterGrid({'N' : N, 'R' : R, 'Tau': Tau,
                                'Psi' : Psi, 'Del' : Del,
@@ -338,7 +338,7 @@ sim_results = p.map(process_rewire, var_grid) # perform the calculations
 
 #print(sim_results)
 
-with open("SLIRS-res/rewired_res_100_full.csv",'wb') as out:
+with open("SLIRS-res/rewired_res_250_full.csv",'wb') as out:
     csv_out=csv.writer(out)
     csv_out.writerow(["failed", "net_size", "r", "tau", "alph_val", "alph_type", "delt", "psi", "rep", "type_net", "net_clus", "net_path_len", "net_deg_assort", "peak", "sim_dur", "m_rec", "f_rec", "m_inf","f_inf", "tot_lat"])
     csv_out.writerows(sim_results)
