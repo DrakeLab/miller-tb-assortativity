@@ -16,6 +16,7 @@ from sklearn.model_selection import ParameterGrid
 from collections import defaultdict
 from collections import Counter
 import multiprocessing 
+from statistics import mean 
 
 def process_file(f):
     n=f["N"]
@@ -55,17 +56,23 @@ def process_file(f):
     J.add_edge(('I.m', 'S.f'), ('I.m', 'L.f'), rate = tau)  # male infects female   
     J.add_edge(('I.f', 'S.m'), ('I.f', 'L.m'), rate = tau)  # female infects male      
     
-    # ###### READ GRAPH ######
-    # 
+    # ###### READ REWIRED GRAPH ######
     # G = nx.read_graphml(path="networks3/G_"+str(r)+"N"+str(n)+"rep"+str(y)+".graphml")
         
-    ###### make GRAPH ######
+    ###### MAKE SAH GRAPHS ######
     failed="no"
     try: 
         G = rmg.generate_modular_networks(n, sg.geometric_sequence, sg.regular_sequence, r, 2, 10)
     except (RuntimeError, TypeError, NameError):
         failed="yes"
         G = nx.gnp_random_graph(n, .1) 
+    
+    ###### CALCULATE NETWORK STATS #####
+    deg_dict = list(G.degree())
+    deg_vals_1=[x[1] for x in deg_dict]
+    net_mean_k=mean(deg_vals_1)   # <K>
+    deg_vals_2=[x[1]**2 - x[1] for x in deg_dict]
+    net_var_k=mean(deg_vals_2)    # <K^2-K>
 
     ###### SET INITIAL CONDITIONS ######
     # note: len(IC) needs to be = # of nodes
@@ -86,24 +93,20 @@ def process_file(f):
                            'I.f', 'I.m', 'R.f', 'R.m')
 
     ###### RUN SIMULATION ######
-        
     sim = EoN.Gillespie_simple_contagion(G, H, J, IC, return_statuses, tmax = tsteps)
 
     ###### GET SIMULATION RESULTS ######
     end = zip(*sim)[-1] # ending values for SSLLIIRR
-
     sim_dur = end[0] # duration of simulation
-
     m_rec = end[8] # males rec
     f_rec = end[7] # females rec
-
-    results = [failed, n, r, tau, delt, psi, y, sim_dur, m_rec, f_rec]
+    results = [failed, n, r, tau, delt, psi, y, net_mean_k, net_var_k, sim_dur, m_rec, f_rec]
     return results
         
 ###### Model parameters ######
 N = [1000]           # Network Size
 R = [0, 0.3]         # (modularity if using Sah)
-Tau = [0.0001, 0.001, 0.005, 0.01, 0.015, 0.03, 0.06, 0.12, 0.24, 0.36]    #  S->L Baseline transmission rate 
+Tau = [0.0001, 0.001, 0.005, 0.01, 0.015, 0.03, 0.04, 0.06, 0.075, 0.1, 0.12, 0.24, 0.36]    #  S->L Baseline transmission rate 
 Del = [100000, 1./4.]     # L->I Reactivation rate; 10000=>SIR, del~0=SLIR
 Gam = 1./2.          # I->R Recovery rate
 Psi = [0]       # R->S Reversion rate; 0=SIR, sig>0=SIRS
@@ -125,6 +128,6 @@ sim_results = p.map(process_file, var_grid) # perform the calculations
 
 with open("SLIRS-res/"+"sah_res_tau_25.csv",'wb') as out:
     csv_out=csv.writer(out)
-    csv_out.writerow(['failed', 'n', 'q', 'tau', 'delt', 'psi', 'y','sim_dur', 'm_rec', 'f_rec'])
+    csv_out.writerow(['failed', 'n', 'q', 'tau', 'delt', 'psi', 'y','net_mean_k', 'net_var_k','sim_dur', 'm_rec', 'f_rec'])
     csv_out.writerows(sim_results)
 
