@@ -23,6 +23,7 @@ def process_file(f):
     tau=f["Tau"]
     delt=f["Del"]
     psi=f["Psi"]
+    y=f["rep"]
 
     ###### Model transitions ######
 
@@ -86,7 +87,7 @@ def process_file(f):
 
     ###### RUN SIMULATION ######
         
-    sim = EoN.Gillespie_Arbitrary(G, H, J, IC, return_statuses, tmax = tsteps)
+    sim = EoN.Gillespie_simple_contagion(G, H, J, IC, return_statuses, tmax = tsteps)
 
     ###### GET SIMULATION RESULTS ######
     end = zip(*sim)[-1] # ending values for SSLLIIRR
