@@ -25,15 +25,14 @@ def process_file(f):
     alph=f["Alph_vals"]
     alph_type=f["Alph_types"]
 
-    #return [n, r, tau, y]
 
     ###### READ GRAPH ######
     failed="no"
-    try: 
+    try:
         G = nx.read_graphml(path="networks4/"+str(type_net)+"_"+str(r)+"N"+str(n)+"rep"+str(y)+".graphml")
     except (RuntimeError, TypeError, NameError):
         failed="yes"
-        G = nx.gnp_random_graph(n, .1) 
+        G = nx.gnp_random_graph(n, .1)
 
     clus = nx.average_clustering(G)
     path_len = nx.average_shortest_path_length(G)
@@ -43,10 +42,10 @@ def process_file(f):
     ###### Model transitions ######
 
     # SPONTANEOUS transitions H
-    H = nx.DiGraph()  
+    H = nx.DiGraph()
 
     #L->I reactivation of latent infection
-    H.add_edge('L.f', 'I.f', rate = delt)  # female  
+    H.add_edge('L.f', 'I.f', rate = delt)  # female
     H.add_edge('L.m', 'I.m', rate = delt)  # male
 
     #R->S revert to S
@@ -60,42 +59,42 @@ def process_file(f):
     # INDUCED transitions
     J = nx.DiGraph()
 
-    if alph_type == "SUS": 
+    if alph_type == "SUS":
         #S->L I infects S
         J.add_edge(('I.f', 'S.f'), ('I.f', 'L.f'), rate = (tau * 2.0) / (alph + 1.0))         # female infects female
-        J.add_edge(('I.m', 'S.m'), ('I.m', 'L.m'), rate = (tau * 2.0 * alph) / (alph + 1.0))  # male infects male  
-        J.add_edge(('I.m', 'S.f'), ('I.m', 'L.f'), rate = (tau * 2.0) / (alph + 1.0))         # male infects female   
-        J.add_edge(('I.f', 'S.m'), ('I.f', 'L.m'), rate = (tau * 2.0 * alph) / (alph + 1.0))  # female infects male      
+        J.add_edge(('I.m', 'S.m'), ('I.m', 'L.m'), rate = (tau * 2.0 * alph) / (alph + 1.0))  # male infects male
+        J.add_edge(('I.m', 'S.f'), ('I.m', 'L.f'), rate = (tau * 2.0) / (alph + 1.0))         # male infects female
+        J.add_edge(('I.f', 'S.m'), ('I.f', 'L.m'), rate = (tau * 2.0 * alph) / (alph + 1.0))  # female infects male
 
         #I->R recover to R
-        H.add_edge('I.f', 'R.f', rate = Gam)  # female  
+        H.add_edge('I.f', 'R.f', rate = Gam)  # female
         H.add_edge('I.m', 'R.m', rate = Gam)  # male
 
     elif alph_type == "TRA":
         #S->L I infects S
         J.add_edge(('I.f', 'S.f'), ('I.f', 'L.f'), rate = (tau * 2.0) / (alph + 1.0))         # female infects female
-        J.add_edge(('I.m', 'S.m'), ('I.m', 'L.m'), rate = (tau * 2.0 * alph) / (alph + 1.0))  # male infects male  
-        J.add_edge(('I.m', 'S.f'), ('I.m', 'L.f'), rate = (tau * 2.0 * alph) / (alph + 1.0))  # male infects female   
-        J.add_edge(('I.f', 'S.m'), ('I.f', 'L.m'), rate = (tau * 2.0) / (alph + 1.0))         # female infects male      
+        J.add_edge(('I.m', 'S.m'), ('I.m', 'L.m'), rate = (tau * 2.0 * alph) / (alph + 1.0))  # male infects male
+        J.add_edge(('I.m', 'S.f'), ('I.m', 'L.f'), rate = (tau * 2.0 * alph) / (alph + 1.0))  # male infects female
+        J.add_edge(('I.f', 'S.m'), ('I.f', 'L.m'), rate = (tau * 2.0) / (alph + 1.0))         # female infects male
 
         #I->R recover to R
-        H.add_edge('I.f', 'R.f', rate = Gam)  # female  
+        H.add_edge('I.f', 'R.f', rate = Gam)  # female
         H.add_edge('I.m', 'R.m', rate = Gam)  # male
 
     else: # alph_type=="INF_PER"
         #S->L I infects S
         J.add_edge(('I.f', 'S.f'), ('I.f', 'L.f'), rate = tau)  # female infects female
-        J.add_edge(('I.m', 'S.m'), ('I.m', 'L.m'), rate = tau)  # male infects male  
-        J.add_edge(('I.m', 'S.f'), ('I.m', 'L.f'), rate = tau)  # male infects female   
-        J.add_edge(('I.f', 'S.m'), ('I.f', 'L.m'), rate = tau)  # female infects male      
+        J.add_edge(('I.m', 'S.m'), ('I.m', 'L.m'), rate = tau)  # male infects male
+        J.add_edge(('I.m', 'S.f'), ('I.m', 'L.f'), rate = tau)  # male infects female
+        J.add_edge(('I.f', 'S.m'), ('I.f', 'L.m'), rate = tau)  # female infects male
 
         #I->R recover to R
-        H.add_edge('I.f', 'R.f', rate = (Gam * (alph + 1))/2)         # female  
+        H.add_edge('I.f', 'R.f', rate = (Gam * (alph + 1))/2)         # female
         H.add_edge('I.m', 'R.m', rate = (Gam * (alph + 1))/(2*alph))  # male
-           
+
     ###### SET INITIAL CONDITIONS ######
     # note: len(IC) needs to be = # of nodes
-    
+
     IC = defaultdict(lambda: "S.f") # initialize all susceptible women
 
     for i in range(len(G)):
@@ -104,7 +103,7 @@ def process_file(f):
             if np.random.uniform(0,1,1)[0] < i0:
                 IC["n"+str(i)] = 'I.m'
         else:
-            IC["n"+str(i)] = 'S.f' 
+            IC["n"+str(i)] = 'S.f'
             if np.random.uniform(0,1,1)[0] < i0:
                 IC["n"+str(i)] = 'I.f' # set some susceptible f to infected f
 
@@ -123,7 +122,7 @@ def process_file(f):
         s.append(row[5] + row[6]) # time series of infecteds
 
     peak = max(s)
-    
+
     end = zip(*sim)[-1] # ending values for SSLLIIRR
 
     sim_dur = end[0] # duration of simulation
@@ -136,7 +135,8 @@ def process_file(f):
 
     results = [failed, n, r, tau, alph, alph_type, delt, psi, y,
                type_net, clus, path_len, deg_assort, 
-               peak, sim_dur, m_rec_rat, f_rec_rat, m_inf_rat, f_inf_rat, lat]
+               peak, sim_dur, m_rec_rat,f_rec_rat, m_inf_rat,f_inf_rat, lat]
+    return results
 
 ##### SET UP #####
 
@@ -172,7 +172,5 @@ sim_results = p.map(process_file, var_grid) # perform the calculations
 
 with open("SLIRS-res/"+"rewired_res_100.csv",'wb') as out:
     csv_out=csv.writer(out)
-    csv_out.writerow(["n", "r", "tau", "alph_val", "alph_type", "reactivation_rate", "reversion_rate", "rep",
-                      "type_net", "net_clustering", "net_path_len", "net_deg_assort", 
-                      "peak", "duration", "mf_r_ratio", "mf_i_ratio", "latent_prev", "recovered_prev", "infected_prev"])
+    csv_out.writerow(["failed", "net_size", "r", "tau", "alph_val", "alph_type", "delt", "psi", "rep","type_net", "net_clus", "net_path_len", "net_deg_assort", "peak", "sim_dur", "m_rec", "f_rec", "m_inf","f_inf", "tot_lat"])
     csv_out.writerows(sim_results)
