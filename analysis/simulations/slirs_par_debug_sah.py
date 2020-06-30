@@ -99,7 +99,7 @@ def process_file(f):
 
     ###### SET INITIAL CONDITIONS ######
     # note: len(IC) needs to be = # of nodes
-    G.nodes()
+    #G.nodes()
     
     IC = defaultdict(lambda: "S.m") 
     for i in range(len(G)):

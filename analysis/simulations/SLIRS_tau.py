@@ -1,6 +1,8 @@
 ###### SLIRS_tau.py simulates SLIRS model with varying baseline transmission rates to determine R0 across models ###### 
 ###### Current version takes roughly X hours ######
 
+import random_modular_generator_variable_modules as rmg
+import sequence_generator as sg
 import networkx as nx
 import EoN
 import random
@@ -13,38 +15,14 @@ import csv
 from sklearn.model_selection import ParameterGrid
 from collections import defaultdict
 from collections import Counter
+import multiprocessing 
 
-#os.chdir('/Users/paigemiller/Documents/phd/research-projects/miller-tb-assortativity/analysis/simulations-rewiring')
-
-
-###### Model parameters ######
-
-N = [1000]           # Network Size
-R = [0, 0.6]         #Assortativity coefficient (Newman)
-Tau = [0.0001, 0.001, 0.005, 0.01, 0.015, 0.03, 0.06, 0.12, .24, 0.36]    #  S->L Baseline transmission rate 
-Del = [100000, 1./4.]     # L->I Reactivation rate; 10000=>SIR, del~0=SLIR
-Gam = 1./2.          # I->R Recovery rate
-Psi = [0, 0.1]       # R->S Reversion rate; 0=SIR, sig>0=SIRS
-i0 = 0.01            # proportion initially infected 
-tsteps = 200         # set max time steps to run model for
-
-# Male:female differences to explain male bias
-Alph_i = [1.0]   # Ratio of male:female susceptibility
-
-var_grid = list(ParameterGrid({'N' : N, 'R' : R, 'Tau': Tau,
-                               'Psi' : Psi, 'Del' : Del,
-                               'Alph_i': Alph_i}))
-
-reps = 1 + 10 # Number of reps
-
-for x in range(0, len(var_grid)):
-    n=var_grid[x]["N"]
-    r=var_grid[x]["R"]
-    tau=var_grid[x]["Tau"]
-    alph_i=var_grid[x]["Alph_i"]
-
-    delt=var_grid[x]["Del"]
-    psi=var_grid[x]["Psi"]
+def process_file(f):
+    n=f["N"]
+    r=f["R"]
+    tau=f["Tau"]
+    delt=f["Del"]
+    psi=f["Psi"]
 
     ###### Model transitions ######
 
@@ -56,8 +34,8 @@ for x in range(0, len(var_grid)):
     H.add_edge('L.m', 'I.m', rate = delt)  # male
 
     #I->R recover to R
-    H.add_edge('I.f', 'R.f', rate = (Gam * (alph_i + 1))/2)  # female  
-    H.add_edge('I.m', 'R.m', rate = (Gam * (alph_i + 1))/(2*alph_i))  # male
+    H.add_edge('I.f', 'R.f', rate = Gam)  # female  
+    H.add_edge('I.m', 'R.m', rate = Gam)  # male
 
     #R->S revert to S
     H.add_edge('R.f', 'S.f', rate = psi)   # female
@@ -75,46 +53,77 @@ for x in range(0, len(var_grid)):
     J.add_edge(('I.m', 'S.m'), ('I.m', 'L.m'), rate = tau)  # male infects male  
     J.add_edge(('I.m', 'S.f'), ('I.m', 'L.f'), rate = tau)  # male infects female   
     J.add_edge(('I.f', 'S.m'), ('I.f', 'L.m'), rate = tau)  # female infects male      
-               
-
-    for y in range(1, reps):
+    
+    # ###### READ GRAPH ######
+    # 
+    # G = nx.read_graphml(path="networks3/G_"+str(r)+"N"+str(n)+"rep"+str(y)+".graphml")
         
-        ###### READ GRAPH ######
+    ###### make GRAPH ######
+    failed="no"
+    try: 
+        G = rmg.generate_modular_networks(n, sg.geometric_sequence, sg.regular_sequence, r, 2, 10)
+    except (RuntimeError, TypeError, NameError):
+        failed="yes"
+        G = nx.gnp_random_graph(n, .1) 
+
+    ###### SET INITIAL CONDITIONS ######
+    # note: len(IC) needs to be = # of nodes
         
-        G = nx.read_graphml(path="networks3/G_"+str(r)+"N"+str(n)+"rep"+str(y)+".graphml")
+    IC = defaultdict(lambda: "S.m") 
+    for i in range(len(G)):
+        if i < 500: 
+            IC[i] = 'S.f' # first 500 nodes women
+            if np.random.uniform(0,1,1)[0] < i0:
+                IC[i] = 'I.f'
+        else:
+            IC[i] = 'S.m' 
+            if np.random.uniform(0,1,1)[0] < i0:
+                IC[i] = 'I.m' # set some susceptible f to infected f
 
-        ###### SET INITIAL CONDITIONS ######
-        # note: len(IC) needs to be = # of nodes
-        
-        IC = defaultdict(lambda: "S.f") # initialize all susceptible women
-
-        for i in range(len(G)):
-            if G.node["n"+str(i)]['sex'] == 1.0: # but if sex=1, they are male
-                IC["n"+str(i)] = 'S.m'
-                if np.random.uniform(0,1,1)[0] < i0:
-                    IC["n"+str(i)] = 'I.m'
-            else:
-                IC["n"+str(i)] = 'S.f' 
-                if np.random.uniform(0,1,1)[0] < i0:
-                    IC["n"+str(i)] = 'I.f' # set some susceptible f to infected f
-
-        # Set state variables to return
-        return_statuses = ('S.f', 'S.m', 'L.f', 'L.m',
+    # Set state variables to return
+    return_statuses = ('S.f', 'S.m', 'L.f', 'L.m',
                            'I.f', 'I.m', 'R.f', 'R.m')
 
-        ###### RUN SIMULATION ######
+    ###### RUN SIMULATION ######
         
-        sim = EoN.Gillespie_Arbitrary(G, H, J, IC, return_statuses, tmax = tsteps)
+    sim = EoN.Gillespie_Arbitrary(G, H, J, IC, return_statuses, tmax = tsteps)
 
-        ###### SAVE SIMULATION ######
+    ###### GET SIMULATION RESULTS ######
+    end = zip(*sim)[-1] # ending values for SSLLIIRR
+
+    sim_dur = end[0] # duration of simulation
+
+    m_rec = end[8] # males rec
+    f_rec = end[7] # females rec
+
+    results = [failed, n, r, tau, delt, psi, y, sim_dur, m_rec, f_rec]
+    return results
         
-        tots = sim
-        with open("SLIRS-sensitivity/SLIRS_TAU_R"+str(r)+"_tau"+str(tau)+"_del"+str(delt)+
-                  "_alph_i"+str(alph_i)+
-                  "_psi"+str(psi)+"_rep"+str(y)+".csv",'wb') as out:
-            csv_out=csv.writer(out)
-            csv_out.writerow(['t','S.f','S.m',
-                              'L.f', 'L.m','I.f',
-                              'I.m', 'R.f', 'R.m'])
-            csv_out.writerows(zip(*tots))
+###### Model parameters ######
+N = [1000]           # Network Size
+R = [0, 0.3]         # (modularity if using Sah)
+Tau = [0.0001, 0.001, 0.005, 0.01, 0.015, 0.03, 0.06, 0.12, 0.24, 0.36]    #  S->L Baseline transmission rate 
+Del = [100000, 1./4.]     # L->I Reactivation rate; 10000=>SIR, del~0=SLIR
+Gam = 1./2.          # I->R Recovery rate
+Psi = [0]       # R->S Reversion rate; 0=SIR, sig>0=SIRS
+i0 = 0.01            # proportion initially infected 
+tsteps = 200         # set max time steps to run model for
+
+var_grid = list(ParameterGrid({'N' : N, 'R' : R, 'Tau': Tau,
+                               'Psi' : Psi, 'Del' : Del}))
+
+reps = range(0,26) # Number of reps
+
+var_grid = list(ParameterGrid({'N' : N, 'R' : R, 'Tau': Tau,
+                               'Psi' : Psi, 'Del' : Del,
+                               'rep': reps}))
+
+p = multiprocessing.Pool(31) # create a pool of 2 workers
+
+sim_results = p.map(process_file, var_grid) # perform the calculations
+
+with open("SLIRS-res/"+"sah_res_tau_25.csv",'wb') as out:
+    csv_out=csv.writer(out)
+    csv_out.writerow(['failed', 'n', 'q', 'tau', 'delt', 'psi', 'y','sim_dur', 'm_rec', 'f_rec'])
+    csv_out.writerows(sim_results)
 
