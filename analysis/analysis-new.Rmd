@@ -40,7 +40,7 @@ txs <- 14 # text size
 
 # Description of Simulation Study
 
-In this simulation study of pathogens spreading on contact networks, we sex-assortativity (r=0 to 0.6 by 0.2) and sex-trait ratios ($\alpha$) to see how the ratio of male-female cases changes. 
+In this simulation study of pathogens spreading on contact networks, we sex-assortativity (r=0 to 0.6 by 0.1) and sex-trait ratios ($\alpha$) to see how the ratio of male-female cases changes. 
 
 Assorted networks were generated in two ways: with  methods in Sah et al. (2019) and with a re-wiring algorithm which selectively re-wires same-sex edges until the desired level of assortativity is reached (within a small value, $\epsilon=0.05$). All networks had mean degree of 10. 
 
@@ -89,36 +89,48 @@ Response variables:
 
 # Structure of Assorted Networks
 
-```{r rewired_net_plots, fig.cap="Plots of networks generated with re-wiring algorithm, shown is a  non-assorted network compared with the most assorative network tested here. Node color represents different sexes (modules).  "}
+```{r rewired_net_plots, eval=FALSE, fig.height=3, fig.cap="Plots of networks generated with re-wiring algorithm. Node color represents different sexes (modules).  "}
 # SF network plots
 n0 <- read_graph("simulations/networks4/G_0N100rep1.graphml", format="graphml")
-#n3 <- read_graph("simulations/networks4/G_0.3N100rep1.graphml", format="graphml")
+n3 <- read_graph("simulations/networks4/G_0.3N100rep1.graphml", format="graphml")
 n6 <- read_graph("simulations/networks4/G_0.6N100rep1.graphml", format="graphml")
-#n9 <- read_graph("simulations/networks4/G_0.9N100rep1.graphml", format="graphml")
+n9 <- read_graph("simulations/networks4/G_0.9N100rep1.graphml", format="graphml")
 
-ggraph(n0, 'igraph', algorithm="lgl") + 
-  geom_edge_link(color="darkgrey", alpha=.5) + 
-  geom_node_point(aes(color=factor(sex)), size=1, alpha=.75, 
-                  show.legend = FALSE) +
-  ggtitle("", subtitle = "r=0") +
-  theme(plot.title = element_text(hjust = 0, size=10), 
-        plot.subtitle = element_text(size=10, face="italic", color=assortCols[1])) -> pn0
 
-ggraph(n6, 'igraph', algorithm="lgl") + 
-  geom_edge_link(color="darkgrey", alpha=.5) + 
-  geom_node_point(aes(color=factor(sex)), size=1, alpha=.75, 
-                  show.legend = FALSE) +
-  ggtitle("   ", subtitle = "r=0.6") +
-  theme(plot.title = element_text(hjust = 0, size=10), 
-        plot.subtitle = element_text(size=10, face="italic", color=assortCols[3])) -> pn2
+par(mfrow=c(1,3), mar=c(0,0,4,0),xpd=TRUE)
+plot(n0, vertex.color=ifelse(V(n0)$sex==1, "dodgerblue", "purple"), vertex.label="", 
+     vertex.size=3)
+legend(-.2, 1.5, "r=0", box.col = assortCols[1], bg = assortCols[1], adj = 0.35)
+plot(n3, vertex.color=ifelse(V(n0)$sex==1, "dodgerblue", "purple"), vertex.label="", 
+     vertex.size=3, bg=assortCols[1])
+legend(-.2, 1.5, "r=0.2", box.col = assortCols[2], bg = assortCols[2], adj = 0.35)
+plot(n6, vertex.color=ifelse(V(n0)$sex==1, "dodgerblue", "purple"), vertex.label="", 
+     vertex.size=3)
+legend(-.2, 1.5, "r=0.6", box.col = assortCols[4], bg = assortCols[4], adj = 0.35)
 
-grid.arrange(pn0, pn2, nrow=1) 
+# ggraph(n0, 'igraph', algorithm="lgl") + 
+#   geom_edge_link(color="darkgrey", alpha=.5) + 
+#   geom_node_point(aes(color=factor(sex)), size=1, alpha=.75, 
+#                   show.legend = FALSE) +
+#   ggtitle("", subtitle = "r=0") +
+#   theme(plot.title = element_text(hjust = 0, size=10), 
+#         plot.subtitle = element_text(size=10, face="italic", color=assortCols[1])) -> pn0
+# 
+# ggraph(n6, 'igraph', algorithm="lgl") + 
+#   geom_edge_link(color="darkgrey", alpha=.5) + 
+#   geom_node_point(aes(color=factor(sex)), size=1, alpha=.75, 
+#                   show.legend = FALSE) +
+#   ggtitle("   ", subtitle = "r=0.6") +
+#   theme(plot.title = element_text(hjust = 0, size=10), 
+#         plot.subtitle = element_text(size=10, face="italic", color=assortCols[3])) -> pn2
+# 
+# grid.arrange(pn0, pn2, nrow=1) 
 
 ```
 
 We see from the plot below that, with the exception of the Sah algorithm, important network statistics change as assortativity increases. This is not surprising given that the Sah algorithm is designed to hold other parameters constant. This is something to keep in mind as other results are interpreted. 
 
-```{r net_structure, fig.cap="Changes in network statistics using the re-wiring algorithm to make networks of varying assortativity.", fig.width=5, fig.height=8}
+```{r net_structure, fig.cap="Changes in network statistics using the re-wiring algorithm to make networks of varying assortativity.", fig.width=7, fig.height=5}
 
 # laod simulations on rewired networks
 rewiredRes <- read.csv("simulations/SLIRS-res/rewired_res_100.csv") %>% 
@@ -141,15 +153,13 @@ nets <- bind_rows(rewiredNets, sahNets) %>%
   mutate(stat=factor(stat,labels=c("Clustering",
                                     "Degree Assortativity",
                                     "Path Length")),
-         type_net=factor(type_net, labels=c("RW Scale Free",
-                                            "SAH Geometric",
+         type_net=factor(type_net, labels=c( "SAH Geometric","RW Scale Free",
                                             "RW Small World")))
-nets$type_net=factor(nets$type_net, levels=c("RW Scale Free", "RW Small World", "SAH Geometric"))
 
 
 nets %>%
   filter(stat=="Clustering") %>%
-  ggplot(aes(r, val, color=factor(r))) + 
+  ggplot(aes(factor(r), val, color=factor(r))) + 
   geom_boxplot() +  
   facet_grid(type_net~stat) +
   theme_gray() +
@@ -171,7 +181,7 @@ nets %>%
 
 nets %>%
   filter(stat=="Path Length") %>%
-  ggplot(aes(r, val, color=factor(r))) + 
+  ggplot(aes(factor(r), val, color=factor(r))) + 
   geom_boxplot() +  
   facet_grid(type_net~stat) +
   theme_gray() +
@@ -193,7 +203,7 @@ nets %>%
 
 nets %>%
   filter(stat=="Degree Assortativity") %>%
-  ggplot(aes(r, val, color=factor(r))) + 
+  ggplot(aes(factor(r), val, color=factor(r))) + 
   geom_boxplot() +  
   facet_grid(type_net~stat) +
   theme_gray() +
@@ -213,7 +223,7 @@ nets %>%
         #panel.grid.minor = element_blank(), 
         strip.text = element_text(size = 10, color="Black"))   -> p4
 
-grid.arrange(p2, p3, p4, nrow=2)
+grid.arrange(p2, p3, p4, nrow=1)
 ```
 
 ```{r join_data}
@@ -274,7 +284,7 @@ resTau$modName[resTau$modNameLatent&resTau$modNameRecover] <- "SLIRS"
 resTau$modName <- factor(resTau$modName, levels= c("SIR", "SLIR", "SIRS", "SLIRS")) 
 
 resTau %>% 
-  filter(psi==0) %>% 
+  filter(psi==0, failed=="no") %>% 
   select(tot_inf, r0, tau, modName, r) %>%
   gather("stat", "val", 1:2) -> foo
 
@@ -291,15 +301,15 @@ foo %>%
   scale_color_manual(values=c("#F3E79AFF",  "#CF63A6FF")) +
   scale_x_continuous(trans="log10") + 
   labs(x=expression(tau), y="", color="Assortativity") +
-  theme_light() +
-  theme(axis.text=element_text(size=18),
+  theme_bw() +
+  theme(axis.text=element_text(size=txs),
         axis.text.x = element_text(hjust=1, angle=45),
-        axis.title=element_text(size=18,face="bold"),
-        legend.title = element_text(size=18),
-        legend.text = element_text(size=18), 
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(), 
-        strip.text = element_text(size = 18, color="Black"))
+        axis.title=element_text(size=txs,face="bold"),
+        legend.title = element_text(size=txs),
+        legend.text = element_text(size=txs), 
+        # panel.grid.major = element_blank(),
+        # panel.grid.minor = element_blank(), 
+        strip.text = element_text(size = txs, color="Black"))
 ```
 
 We see that the threshold matches up with simulated results (i.e., where $R_0=1$) epidemics are possible (i.e., outbreak size > $I_0$).   
@@ -324,7 +334,8 @@ While the problem investigated with these models is inspired by TB, the models t
 
 
 res %>% 
-  filter(mod_name=="SLIRS", !is.infinite(tot_lat), type_net=="SAH Geometric") %>%
+  filter(mod_name=="SLIRS", !is.infinite(tot_lat), type_net=="SAH Geometric",
+         r%in%c(0.2, 0.4)) %>%
   ggplot(aes(x=tot_lat/1000, y=mf_i_ratio, color=as.factor(tau))) +
   geom_hline(yintercept=1.8, linetype="dashed", 
                 color = "red", size=.75) +    
@@ -332,17 +343,17 @@ res %>%
                 color = "red", size=.75) +    
   geom_point(aes(shape=as.factor(alph_val))) + 
   scale_y_log10() + 
-  facet_grid(alph_type ~ r) + 
+  facet_grid(r ~ alph_type) + 
   scale_color_discrete_sequential(palette = "Burg") +
-  labs(x="Equilibrium latent", y="Case ratio", color=expression(tau), shape=expression(alpha)) +
-  theme_light() +
+  labs(x="Equilibrium latent", y="M:F case bias", color=expression(tau), shape=expression(alpha)) +
+  theme_bw() +
   theme(axis.text=element_text(size=txs),
         axis.text.x = element_text(hjust=1, angle=45),
         axis.title=element_text(size=txs,face="bold"),
         legend.title = element_text(size=txs),
         legend.text = element_text(size=txs), 
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(), 
+        # panel.grid.major = element_blank(),
+        # panel.grid.minor = element_blank(), 
         strip.text = element_text(size = txs, color="Black"))
 
 ```
@@ -644,6 +655,34 @@ res %>%
 
 The above plot shows possible combinations that lead to male-bias. Any combinations without color lead to male:female case ratios < 1.25.
 
+### Effects of network structures other than assortativity on male-bias (using SW networks)
+
+What if sex-assortativity has the effect of reducing clustering, path length, and increasing degree-assortativity in the real-world? Here we use rewired small-world networks, which have much different structures compared with basic small-world networks, to see how these differences are related to male-bias.
+
+```{r assort_stats_sw_slir, fig.height=3}
+
+res %>%
+  filter(mod_name=="SLIR", tau==0.075, alph_val==3, alph_type=="SUS") %>%
+  select(mf_r_ratio, net_clus, net_deg_assort, net_path_len, alph_val, r, type_net) %>%
+  gather("stat", "val", 2:4) %>%
+  mutate(stat=factor(stat, labels=c("Clustering", "Degree Assortativity", "Path Length"))) %>%
+  ggplot(aes(x=val, y= mf_r_ratio, color=as.factor(r))) +
+  geom_point() + 
+  scale_y_log10() + 
+  facet_grid(type_net ~ stat, scales="free") + 
+  scale_color_discrete_sequential(palette="Sunset") +
+  labs(x="", y="M:F case bias", color="Assortativity") +
+  theme_light() +
+  theme(axis.text=element_text(size=txs),
+        axis.text.x = element_text(hjust=1, angle=45),
+        axis.title=element_text(size=txs,face="bold"),
+        legend.title = element_text(size=txs),
+        legend.text = element_text(size=txs), 
+        strip.text = element_text(size = 12, color="Black"))
+
+```
+
+
 # Epidemic dynamics on assorted networks
 
 ### SIR & SLIR
@@ -800,19 +839,19 @@ epiDyn <- res %>%
 
 epiDyn %>%
   mutate(stat=factor(stat, labels=c("Peak Size", "Final Size", "Duration"))) %>%
-  ggplot(aes(factor(alph_val), val, color=factor(r))) + 
+  ggplot(aes(factor(alph_val), val, fill=factor(r))) + 
   geom_boxplot() +  
   facet_grid(stat~alph_type, scales="free") +
   theme_gray() +
   theme(legend.position = "none")  +
-  scale_color_discrete_sequential(palette="Sunset") +
-  labs(x=expression(alpha), y="", color="Assortativity", title = "Sah Networks, SIR, R0=2.5") +
+  scale_fill_discrete_sequential(palette="Sunset") +
+  labs(x="Strength of sex trait", y="", fill="Assortativity", title = "") +
   theme_bw() +
     guides(colour=FALSE) +
   theme(plot.title = element_text(face="bold", size=txs), 
     axis.text=element_text(size=txs),
-        axis.text.x = element_text(hjust=1, angle=45),
-        axis.title=element_text(size=txs),
+        axis.text.x = element_text(hjust=1, angle=0),
+        axis.title=element_text(size=txs, face="bold"),
         legend.title = element_text(size=txs),
         legend.text = element_text(size=txs), 
         strip.text = element_text(size = txs, color="Black")) -> sir
@@ -825,19 +864,19 @@ epiDyn <- res %>%
 
 epiDyn %>%
   mutate(stat=factor(stat, labels=c("Peak Size", "Final Size", "Duration"))) %>%
-  ggplot(aes(factor(alph_val), val, color=factor(r))) + 
+  ggplot(aes(factor(alph_val), val, fill=factor(r))) + 
   geom_boxplot() +  
   facet_grid(stat~alph_type, scales="free") +
   theme_gray() +
   theme(legend.position = "none")  +
-  scale_color_discrete_sequential(palette="Sunset") +
-  labs(x=expression(alpha), y="", color="Assortativity", title = "Sah Networks, SLIR, R0=2.5") +
+  scale_fill_discrete_sequential(palette="Sunset") +
+  labs(x="Strength of sex trait", y="", fill="Assortativity", title = "") +
   theme_bw() +
     guides(colour=FALSE) +
   theme(plot.title = element_text(face="bold", size=txs), 
     axis.text=element_text(size=txs),
-        axis.text.x = element_text(hjust=1, angle=45),
-        axis.title=element_text(size=txs),
+        axis.text.x = element_text(hjust=1, angle=0),
+        axis.title=element_text(size=txs, face="bold"),
         legend.title = element_text(size=txs),
         legend.text = element_text(size=txs), 
         strip.text = element_text(size = txs, color="Black")) -> slir
