@@ -121,8 +121,15 @@ ilo.who <- full_join(country.ilo, country.who, by="country")
 ilo.who <- full_join(ilo.who, health, by="country")
 ilo.who <- full_join(ilo.who, smoke, by="country")
 
-### plots
 
+# stats
+country.who %>%
+  filter(!is.na(mf_inc), !is.infinite(mf_inc)) %>%
+  summarise(meanRat=mean(mf_inc), 
+            sdRat=sd(mf_inc), 
+            se=sdRat/n())
+
+### plots
 country.who %>% 
   ggplot(aes(mf_inc, fill=region)) +
   geom_histogram(bins = 20, show.legend=FALSE) +

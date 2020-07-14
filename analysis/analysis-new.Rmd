@@ -40,7 +40,7 @@ txs <- 14 # text size
 
 # Description of Simulation Study
 
-In this simulation study of pathogens spreading on contact networks, we sex-assortativity (r=0 to 0.6 by 0.1) and sex-trait ratios ($\alpha$) to see how the ratio of male-female cases changes. 
+In this simulation study of pathogens spreading on contact networks, we sex-assortativity (r=0 to 0.6 by 0.1) and sex-trait ratios ($\alpha$) to see how the ratio of male-female cases changes. All simulation-parameter combinations show results from 250 replicates. Note: Sah network simulations finished for r=0, 0.6 by 0.1 but rewired networks currently running. Rewired results currently showing r=0, 0.6 by 0.2. Will update results when simulations finished.
 
 Assorted networks were generated in two ways: with  methods in Sah et al. (2019) and with a re-wiring algorithm which selectively re-wires same-sex edges until the desired level of assortativity is reached (within a small value, $\epsilon=0.05$). All networks had mean degree of 10. 
 
@@ -128,8 +128,65 @@ legend(-.2, 1.5, "r=0.6", box.col = assortCols[4], bg = assortCols[4], adj = 0.3
 
 ```
 
-We see from the plot below that, with the exception of the Sah algorithm, important network statistics change as assortativity increases. This is not surprising given that the Sah algorithm is designed to hold other parameters constant. This is something to keep in mind as other results are interpreted. 
 
+The sex assortativity coefficient is not reported in many studies. In the Kampala network study, we found sex assortativity coefficient to be 0.26. Horton et al. compared mixing by sex in 20 studies. They measured within-sex contact for adults and children. For adults, the IQR for men was .54 to .58 and for women was .57 to .63. The plot below shows the range .54 to .63 to represent what we feel the overall range could be for adults. For children, girls had sex assorted contact while boys did not probably showing the primarily female role of taking care of children. 
+
+We think these results, both the sex assortative coefficient from Kampala and Horton's meta analysis, show that realistic levels of sex-assortativity in populations is from 0.2 to 0.4 and we will focus our attention on these parameter ranges. 
+
+```{r propWithinSex}
+
+prop_within_sex <- function(net){
+  
+  el <- data.frame(as_edgelist(net, names = TRUE)) 
+  sexes <- data.frame(sex=V(net)$sex, X1=as.numeric(V(net)))
+  el %<>% full_join(sexes,by="X1") %>% rename(sex1=sex)
+  sexes <- rename(sexes, X2=X1)
+  el %<>% full_join(sexes,by="X2") %>% rename(sex2=sex)
+  return(nrow(filter(el, sex1==sex2))/nrow(el))
+
+}
+
+# vars <- expand.grid(r=seq(0,0.6, length.out = 7),
+#                     rep=1:250)
+# for(i in 1:nrow(vars)){
+#   r <- vars[i, "r"]
+#   rep <- vars[i, "rep"]
+#   G <- read_graph(paste0("simulations/networks4/G_", r, "N1000rep",rep,".graphml"), format = "graphml")
+#   netData[i, ] <- c(r, rep, prop_within_sex(G))
+# }
+# 
+# write_rds(netData, "simulations/networks4/netData.rds")
+netData <- read_rds("simulations/networks4/netData.rds")
+
+netData %>%
+  ggplot(aes((r), prop_within, fill=factor(r))) + 
+  geom_boxplot() +  
+  geom_hline(yintercept=.54, linetype="dashed", 
+               color = "grey", size=.75) + 
+    geom_hline(yintercept=.63, linetype="dashed", 
+               color = "grey", size=.75) + 
+  annotate("text", x = .1, y = .63, label = "Proportion within-sex mixing \n (Upper IQR, Horton et al. 2020)") +
+  annotate("text", x = .1, y = .54, label = "Proportion within-sex mixing \n (Lower IQR, Horton et al. 2020)") +
+  geom_vline(xintercept=.26, linetype="dashed", 
+               color = "grey", size=.75) + 
+  annotate("text", x = .26, y = .7, label = "Sex-assortativity coefficient \n (Newman's r, Miller et al. 2020)", angle=90) +
+
+  scale_fill_discrete_sequential(palette="Sunset") +
+  labs(x="Assortativity  (r)", y="Proportion contacts within sex") +
+  theme_bw() +
+  theme(legend.position="none", plot.title = element_text(face="bold", size=10), 
+    axis.text=element_text(size=txs),
+        axis.text.x = element_text(hjust=1, angle=45),
+        axis.title=element_text(size=txs,face="bold"),
+        legend.title = element_text(size=txs),
+        legend.text = element_text(size=txs), 
+        # panel.grid.major = element_blank(),
+        # panel.grid.minor = element_blank(), 
+        strip.text = element_text(size = txs, color="Black"))  
+
+```
+
+We see from the plot below that, with the exception of the Sah algorithm, important network statistics change as assortativity increases. This is not surprising given that the Sah algorithm is designed to hold other parameters constant. This is something to keep in mind as other results are interpreted. 
 ```{r net_structure, fig.cap="Changes in network statistics using the re-wiring algorithm to make networks of varying assortativity.", fig.width=7, fig.height=5}
 
 # laod simulations on rewired networks
@@ -140,7 +197,7 @@ rewiredNets <- rewiredRes %>% select(type_net, net_size, rep, r, net_deg_assort,
                              net_clus, net_path_len)
 
 # load sah results
-sahRes <- read.csv("simulations/SLIRS-res/sah_res_100.csv") %>% 
+sahRes <- read.csv("simulations/SLIRS-res/sah_res_250_full.csv") %>% 
   filter(failed=="no") %>% # sometimes the algorithm failed to converge (take these out)
   select(-failed) %>%
   mutate(r=r*2)
@@ -225,6 +282,7 @@ nets %>%
 
 grid.arrange(p2, p3, p4, nrow=1)
 ```
+
 
 ```{r join_data}
 
@@ -328,20 +386,21 @@ resTau %>%
 
 # Model parameters: Equilibrium of latent infections and sex-bias
 
-While the problem investigated with these models is inspired by TB, the models themselves are very simple, and not parameterized to any specific dataset. A marked trait of TB is that, globally, 25% of the world's population has latent infection. Here, we investigate the equilibrium latent infections and case ratio for different infection rates and strengths of sex traits. We think these data points give an idea of the parameters that we should be focusing on with these models specifically for investigating male-bias in TB. 
+While the problem investigated with these models is inspired by TB, the models themselves are very simple, and not parameterized to any specific dataset. A marked trait of TB is that, globally, 25% of the world's population has latent infection. Here, we investigate the equilibrium latent infections and case ratio for different infection rates and strengths of sex traits. We think these data points give an idea of the parameters that we should be focusing on with these models specifically for investigating male-bias in TB. The horizontal panels are faceted by assortativity level, and in between r=0.2, 0.3 is the level of sex-assortativity observed in a previous analysis of the urban social network studied by Dr Whalen and Dr Kiwanuka (and their teams) in Uganda. 
 
 ```{r latent_sah, fig.cap="Latent equilibrium and case-ratio on Sah networks. "}
 
 
 res %>% 
   filter(mod_name=="SLIRS", !is.infinite(tot_lat), type_net=="SAH Geometric",
-         r%in%c(0.2, 0.4)) %>%
+         r%in%c(0.2, 0.3), alph_val%in%c(1,2,3)) %>%
   ggplot(aes(x=tot_lat/1000, y=mf_i_ratio, color=as.factor(tau))) +
   geom_hline(yintercept=1.8, linetype="dashed", 
                 color = "red", size=.75) +    
   geom_vline(xintercept=0.25, linetype="dashed", 
                 color = "red", size=.75) +    
   geom_point(aes(shape=as.factor(alph_val))) + 
+  stat_ellipse(color="black") +
   scale_y_log10() + 
   facet_grid(r ~ alph_type) + 
   scale_color_discrete_sequential(palette = "Burg") +
@@ -406,8 +465,6 @@ res %>%
         axis.title=element_text(size=txs,face="bold"),
         legend.title = element_text(size=txs),
         legend.text = element_text(size=txs), 
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(), 
         strip.text = element_text(size = txs, color="Black"))
 
 ```
@@ -425,7 +482,7 @@ First, we show results for simulated male-bias with $\tau=.075$ on SAH networks 
 ```{r assort_tau_075_sah}
 
 res %>%
-  filter(tau==0.075, type_net=="SAH Geometric") %>%
+  filter(tau==0.075, type_net=="SAH Geometric", r%in%c(0, 0.2, 0.4, 0.6), alph_val%in%c(1,2,3)) %>%
   select(r, alph_val, alph_type, mod_name, mf_i_ratio, mf_r_ratio) %>%
   gather("stat", "val", 5:6) %>%
   ggplot(aes(factor(alph_val), val, fill=factor(r))) + 
@@ -444,8 +501,6 @@ res %>%
         axis.title=element_text(size=txs,face="bold"),
         legend.title = element_text(size=txs),
         legend.text = element_text(size=txs), 
-        # panel.grid.major = element_blank(),
-        # panel.grid.minor = element_blank(), 
         strip.text = element_text(size = txs, color="Black"))
 ```
 
@@ -520,7 +575,7 @@ res %>%
 ```{r assort_tau_075_all}
 
 res %>%
-  filter(tau==0.075, mod_name=="SLIR") %>%
+  filter(tau==0.075, mod_name=="SLIR", r%in%c(0, 0.2, 0.4, 0.6), alph_val%in%c(1,2,3)) %>%
   select(r, alph_val, alph_type, type_net, mf_i_ratio, mf_r_ratio) %>%
   gather("stat", "val",5:6) %>%
   ggplot(aes(factor(alph_val), val, fill=factor(r))) + 
@@ -557,7 +612,7 @@ Here we show the sensitivity of these results to different $\tau$ values for SLI
 ```{r assort_tau_sah_slir}
 
 res %>%
-  filter(mod_name=="SLIR", type_net=="SAH Geometric") %>%
+  filter(mod_name=="SLIR", type_net=="SAH Geometric", r%in%c(0, 0.2, 0.4, 0.6), alph_val%in%c(1,2,3)) %>%
   select(r, tau, alph_val, alph_type, mf_i_ratio, mf_r_ratio) %>%
   gather("stat", "val",5:6) %>%
   ggplot(aes(factor(alph_val), val, fill=factor(r))) + 
@@ -587,7 +642,7 @@ And here we show the sensitivity of these results to different $\tau$ values for
 ```{r assort_tau_sah_slirs}
 
 res %>%
-  filter(mod_name=="SLIRS", type_net=="SAH Geometric") %>%
+  filter(mod_name=="SLIRS", type_net=="SAH Geometric", r%in%c(0, 0.2, 0.4, 0.6), alph_val%in%c(1,2,3)) %>%
   select(r, tau, alph_val, alph_type, mf_i_ratio, mf_r_ratio) %>%
   gather("stat", "val",5:6) %>%
   ggplot(aes(factor(alph_val), val, fill=factor(r))) + 
@@ -618,25 +673,41 @@ Faster spreading pathogens typically result in lower male-bias than slower sprea
 
 The heat plots below show which parameter combinations lead to male:female case ratios greater than 1.25 given our best guess $\tau$ estimate of 0.075. 
 
-```{r heat_tau_075_sah, fig.cap="The effects of sex-traits and assortativity on male-bias in simulations on SAH-networks. Results shown for low transmissability pathogen. Only ratios above 1.25 are shown to visualize which parameter combinations in which models can lead to male-bias."}
+```{r heat_tau_075_sah, fig.cap="The effects of sex-traits and assortativity on male-bias in simulations on SAH-networks. Results shown for low transmissability pathogen. Only ratios above 1.35 are shown to visualize which parameter combinations in which models can lead to male-bias. In WHO TB report, mean M:F case report ratio is 1.77 (+/- 1 SD 0.42, range 1.35, 2.19). "}
 
-res %>%
-  filter(tau==0.075, type_net=="SAH Geometric") %>%
-  group_by(mod_name, alph_type, alph_val, r) %>%
-  summarise(mean_i_ratio=mean(mf_i_ratio), 
-            mean_r_ratio=mean(mf_r_ratio)) %>%
+
+pts <- res %>% 
+  filter(tau==0.075, type_net=="SAH Geometric", mod_name%in%c("SIR", "SIRS")) %>%
   arrange(mod_name) %>%
+  group_by(mod_name, alph_type, alph_val, r) %>%
+  summarise(mean_i_ratio=median(mf_i_ratio), 
+            mean_r_ratio=median(mf_r_ratio)) %>%
   mutate(mean_ratio=case_when(
     mod_name%in%c("SIRS", "SLIRS") ~ mean_i_ratio,
     TRUE ~ mean_r_ratio
   )) %>%
-  ggplot(aes(x=factor(r), y=factor(alph_val))) +
+  mutate(in_interval=case_when(mean_ratio<1.7 ~ "no",
+                               mean_ratio>1.9 ~ "no", 
+                               T ~ "yes")) %>%
+  filter(in_interval=="yes")
+  
+
+res %>%
+  filter(tau==0.075, type_net=="SAH Geometric", mod_name%in%c("SIR", "SIRS")) %>%
+  arrange(mod_name) %>%
+  group_by(mod_name, alph_type, alph_val, r) %>%
+  summarise(mean_i_ratio=median(mf_i_ratio), 
+            mean_r_ratio=median(mf_r_ratio)) %>%
+  mutate(mean_ratio=case_when(
+    mod_name%in%c("SIRS", "SLIRS") ~ mean_i_ratio,
+    TRUE ~ mean_r_ratio
+  )) %>%
+  ggplot(aes(x=factor(r), y=factor(alph_val), z=mean_ratio)) +
   geom_tile(aes(fill=mean_ratio)) + 
+  geom_point(data=pts, aes(x=factor(r), y=factor(alph_val)), shape=0, color="white", size=6) + 
   scale_fill_gradient2(midpoint=log10(1.8), trans="log10", 
                                      low="red4", mid = "dodgerblue",
-                       high="black", limits=c(1.25,5), na.value = "white") +
-  # geom_point(data=foo2, aes(x=factor(r), y=alphVal), 
-  #            shape=17, color="white") +
+                       high="black", limits=c(1.1,6), na.value = "white") +
   facet_grid(mod_name ~ alph_type) +
   labs(x="Assortativity", y="Strength of sex trait", 
        fill="Mean \nCase \nRatio", title="Sah Networks, R0=2.5") +
@@ -653,7 +724,59 @@ res %>%
 
 ```
 
-The above plot shows possible combinations that lead to male-bias. Any combinations without color lead to male:female case ratios < 1.25.
+
+```{r heat_tau_04_sah, fig.cap="The effects of sex-traits and assortativity on male-bias in simulations on SAH-networks. Results shown for low transmissability pathogen. Only ratios above 1.35 are shown to visualize which parameter combinations in which models can lead to male-bias. In WHO TB report, mean M:F case report ratio is 1.77 (+/- 1 SD 0.42, range 1.35, 2.19). "}
+
+
+pts <- res %>% 
+  filter(tau==0.04, type_net=="SAH Geometric", mod_name%in%c("SIR", "SIRS")) %>%
+  arrange(mod_name) %>%
+  group_by(mod_name, alph_type, alph_val, r) %>%
+  summarise(mean_i_ratio=median(mf_i_ratio), 
+            mean_r_ratio=median(mf_r_ratio)) %>%
+  mutate(mean_ratio=case_when(
+    mod_name%in%c("SIRS", "SLIRS") ~ mean_i_ratio,
+    TRUE ~ mean_r_ratio
+  )) %>%
+  mutate(in_interval=case_when(mean_ratio<1.7 ~ "no",
+                               mean_ratio>1.9 ~ "no", 
+                               T ~ "yes")) %>%
+  filter(in_interval=="yes")
+  
+
+res %>%
+  filter(tau==0.04, type_net=="SAH Geometric", mod_name%in%c("SIR", "SIRS")) %>%
+  arrange(mod_name) %>%
+  group_by(mod_name, alph_type, alph_val, r) %>%
+  summarise(mean_i_ratio=median(mf_i_ratio), 
+            mean_r_ratio=median(mf_r_ratio)) %>%
+  mutate(mean_ratio=case_when(
+    mod_name%in%c("SIRS", "SLIRS") ~ mean_i_ratio,
+    TRUE ~ mean_r_ratio
+  )) %>%
+  ggplot(aes(x=factor(r), y=factor(alph_val), z=mean_ratio)) +
+  geom_tile(aes(fill=mean_ratio)) + 
+  geom_point(data=pts, aes(x=factor(r), y=factor(alph_val)), shape=0, color="white", size=6) + 
+  scale_fill_gradient2(midpoint=log10(1.8), trans="log10", 
+                                     low="red4", mid = "dodgerblue",
+                       high="black", limits=c(1.1,6), na.value = "white") +
+  facet_grid(mod_name ~ alph_type) +
+  labs(x="Assortativity", y="Strength of sex trait", 
+       fill="Mean \nCase \nRatio", title="Sah Networks, R0=1.5") +
+  theme_bw() +
+  theme(axis.text=element_text(size=txs),
+        axis.text.x = element_text(hjust=1, angle=45),
+        axis.title=element_text(size=txs,face="bold"),
+        legend.title = element_text(size=txs),
+        legend.text = element_text(size=txs), 
+        # panel.grid.major = element_blank(),
+        # panel.grid.minor = element_blank(), 
+        strip.text = element_text(size = txs, color="Black")) 
+
+
+```
+
+The above plot shows possible combinations that lead to male-bias (1.7, 1.9). Any combinations without color lead to male:female case ratios < 1.1.
 
 ### Effects of network structures other than assortativity on male-bias (using SW networks)
 
@@ -690,7 +813,7 @@ res %>%
 ```{r heat_epi_dyn_sah, eval=FALSE}
 
 res %>%
-  filter(mod_name=="SLIR", alph_val==1) %>%
+  filter(mod_name=="SLIR", alph_val==1, type_net=="SAH Geometric") %>%
   select(r, tau, peak, sim_dur, recovered_prev) %>%
   group_by(tau, r) %>%
   summarise(mean_peak=mean(peak),
@@ -753,10 +876,11 @@ epiRes %>%
 grid.arrange(p1, p2, p3)
 ```
 
+The mean peak, duration, and final size does not vary much (heat plots not shown) with assortativity. 
+
 The mean peak, duration, and final size does not vary much (heat plots not shown) with assortativity. To see the distribution of these values and results on different networks, see below box plots which are colored by assortativity values throughout this analysis.
 
 ```{r bxplt_epi_dyn_all, fig.height=8}
-
 epiDyn <- res %>%
   filter(mod_name%in% c("SIR", "SLIR"), alph_val==1) %>%
   select(type_net, r, tau, peak, sim_dur, recovered_prev, mod_name) %>%
@@ -821,31 +945,53 @@ epiDyn %>%
         legend.title = element_text(size=txs),
         legend.text = element_text(size=txs), 
         strip.text = element_text(size = txs, color="Black"))   -> p4
-
 grid.arrange(p2, p3, p4, nrow=2)
+```
+
+The simulations on Sah networks suggest that assortativity does not variables much. But the other networks, which sometimes have increasing or decreasing clustering coefficients with increasing assortativity, sometimes indicate assortativity does affect final size. 
+
+Zooming in on SIR and SIRS specifically, the below plot shows how assortativity affects final size and equilibrium size specifically. 
+
+```{r}
+res %>%
+  mutate(final_size=case_when(mod_name%in%c("SIR", "SLIR") ~ recovered_prev, 
+                              T ~ infected_prev)) %>%
+  filter(mod_name%in%c("SIR", "SIRS"), alph_val==1) %>%
+  ggplot(aes(factor(tau), final_size, fill=factor(r))) + 
+  geom_boxplot() +
+  facet_grid(mod_name~type_net, scales="free") +
+  theme_gray() +
+  theme(legend.position = "none")  +
+  scale_fill_discrete_sequential(palette="Sunset") +
+  labs(x="Transmission rate", y="", fill="Assortativity", title = "Final size (SIR) or equilibrium size (SIRS)") +
+  theme_bw() +
+    guides(colour=FALSE) +
+  theme(plot.title = element_text(face="bold", size=txs), 
+    axis.text=element_text(size=txs),
+        #axis.text.x = element_text(hjust=1, angle=0),
+        axis.title=element_text(size=txs, face="bold"),
+        legend.title = element_text(size=txs),
+        legend.text = element_text(size=txs), 
+        strip.text = element_text(size = txs, color="Black"))
 
 ```
 
-The simulations on Sah networks clearly show that assortativity does not affect peak size, final size, or duration of epidemic. Assortativity within rewired networks, with their changing structures (e.g., decreased clustering in assorted SW networks), does seem to alter epidemic dynamics. However, it's most likely due to the rewired algorithm, especially since these results aren't reproduced on Sah networks. 
+The plot above shows how different conclusions could be reached about the effects of assortativity depending on the characteristics of the network as assorativity is increased. If clustering increases as assortativity increases (SF), then increased assortativity could look to limit outbreak size. The opposite is true if clustering decreases as assortativity increases (SW).
 
 Focusing on outbreaks on Sah networks, below we see whether differences in sex-traits impact epidemic dynamics. 
 
 ```{r bxplt_epi_dyn_alph, fig.height=9, fig.width=8}
 
-epiDyn <- res %>%
-  filter(mod_name%in% c("SIR"), type_net=="SAH Geometric", tau==0.075) %>%
-  select(alph_val, r, tau, peak, sim_dur, recovered_prev, alph_type) %>%
-  gather("stat", "val", 4:6)  
-
-epiDyn %>%
-  mutate(stat=factor(stat, labels=c("Peak Size", "Final Size", "Duration"))) %>%
-  ggplot(aes(factor(alph_val), val, fill=factor(r))) + 
+res %>%
+  filter(mod_name%in% c("SIR"), type_net=="SAH Geometric", tau==0.1, r%in%c(0, 0.2, 0.4, 0.6), alph_val%in%c(1,2,3)) %>%
+  select(alph_val, r, tau, recovered_prev, alph_type) %>%
+  ggplot(aes(factor(alph_val), recovered_prev, fill=factor(r))) + 
   geom_boxplot() +  
-  facet_grid(stat~alph_type, scales="free") +
+  facet_grid(.~alph_type, scales="free") +
   theme_gray() +
   theme(legend.position = "none")  +
   scale_fill_discrete_sequential(palette="Sunset") +
-  labs(x="Strength of sex trait", y="", fill="Assortativity", title = "") +
+  labs(x="Strength of sex trait", y="", fill="Assortativity", title = "Final size (SIR)") +
   theme_bw() +
     guides(colour=FALSE) +
   theme(plot.title = element_text(face="bold", size=txs), 
@@ -854,46 +1000,12 @@ epiDyn %>%
         axis.title=element_text(size=txs, face="bold"),
         legend.title = element_text(size=txs),
         legend.text = element_text(size=txs), 
-        strip.text = element_text(size = txs, color="Black")) -> sir
+        strip.text = element_text(size = txs, color="Black")) 
 
 
-epiDyn <- res %>%
-  filter(mod_name%in% c("SLIR"), type_net=="SAH Geometric", tau==0.075) %>%
-  select(alph_val, r, tau, peak, sim_dur, recovered_prev, alph_type) %>%
-  gather("stat", "val", 4:6)  
-
-epiDyn %>%
-  mutate(stat=factor(stat, labels=c("Peak Size", "Final Size", "Duration"))) %>%
-  ggplot(aes(factor(alph_val), val, fill=factor(r))) + 
-  geom_boxplot() +  
-  facet_grid(stat~alph_type, scales="free") +
-  theme_gray() +
-  theme(legend.position = "none")  +
-  scale_fill_discrete_sequential(palette="Sunset") +
-  labs(x="Strength of sex trait", y="", fill="Assortativity", title = "") +
-  theme_bw() +
-    guides(colour=FALSE) +
-  theme(plot.title = element_text(face="bold", size=txs), 
-    axis.text=element_text(size=txs),
-        axis.text.x = element_text(hjust=1, angle=0),
-        axis.title=element_text(size=txs, face="bold"),
-        legend.title = element_text(size=txs),
-        legend.text = element_text(size=txs), 
-        strip.text = element_text(size = txs, color="Black")) -> slir
-
-
-grid.arrange(sir, slir)
 ```
 
-In the plot above, SIR results are shown on top and SLIR results on bottom. 
-
-It seems infectious period and susceptibility can alter epidemic dynamics more than transmissibility. 
-
-Specifically, higher male susceptibility can lead to smaller overall outbreaks (SIR and SLIR). Peak size and duration was not noticeably changed by higher male susceptibility.
-
-Also, longer male infectious periods can lead to longer, lower peaked SIR epidemics (less so for SLIR epidemics). Longer infectious periods did not have a large effect on final outbreak size. 
-
-Transmissible did not appreciably change peak size, final size, or duration. 
+In the plot above, SIR results are shown on Sah networks. They show increasing susceptibility in males relative to females can lower the overall fraction of the population that gets infected.  
 
 ### SLIRS
 
@@ -902,18 +1014,18 @@ Finally, in SLIRS model, how does assortativity change equilibrium latent preval
 ```{r bxplt_epi_dyn_slirs, fig.height=8}
 
 epiDyn <- res %>%
-  filter(mod_name%in% c("SLIRS"), type_net=="SAH Geometric", tau==0.075) %>%
+  filter(mod_name%in% c("SLIRS"), type_net=="SAH Geometric", tau==0.075, r%in%c(0, 0.2, 0.4, 0.6), alph_val%in%c(1,2,3)) %>%
   select(alph_val, r, tau, tot_lat, alph_type) %>%
   gather("stat", "val", 4)  
 
 epiDyn %>%
-  ggplot(aes(factor(alph_val), val, color=factor(r))) + 
+  ggplot(aes(factor(alph_val), val, fill=factor(r))) + 
   geom_boxplot() +  
   facet_grid(.~alph_type, scales="free") +
   theme_gray() +
   theme(legend.position = "none")  +
-  scale_color_discrete_sequential(palette="Sunset") +
-  labs(x=expression(alpha), y="Equilibrium Latent", 
+  scale_fill_discrete_sequential(palette="Sunset") +
+  labs(x="Strength of sex trait", y="Equilibrium Latent", 
        color="Assortativity", title = "Sah Networks, SLIRS, R0=2.5") +
   theme_bw() +
     guides(colour=FALSE) +
