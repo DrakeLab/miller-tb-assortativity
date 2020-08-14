@@ -202,6 +202,8 @@ def process_rewire(f):
     except (RuntimeError, TypeError, NameError, IOError):
         failed="yes"
         G = nx.gnp_random_graph(n, .1)
+        results = [failed, n, r, tau, alph, alph_type, delt, psi, y,type_net, 0, 0, 0,0, 0, 0,0, 0,0, 0]
+        return results
 
     clus = nx.average_clustering(G)
     path_len = nx.average_shortest_path_length(G)

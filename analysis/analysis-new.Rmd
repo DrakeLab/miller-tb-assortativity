@@ -778,6 +778,58 @@ res %>%
 
 The above plot shows possible combinations that lead to male-bias (1.7, 1.9). Any combinations without color lead to male:female case ratios < 1.1.
 
+```{r heat_tau_04_sah_latent, fig.cap="The effects of sex-traits and assortativity on male-bias in simulations on SAH-networks. Results shown for low transmissability pathogen. Only ratios above 1.35 are shown to visualize which parameter combinations in which models can lead to male-bias. In WHO TB report, mean M:F case report ratio is 1.77 (+/- 1 SD 0.42, range 1.35, 2.19). "}
+
+
+pts <- res %>% 
+  filter(tau==0.04, type_net=="SAH Geometric", mod_name%in%c("SLIR", "SLIRS")) %>%
+  arrange(mod_name) %>%
+  group_by(mod_name, alph_type, alph_val, r) %>%
+  summarise(mean_i_ratio=median(mf_i_ratio), 
+            mean_r_ratio=median(mf_r_ratio)) %>%
+  mutate(mean_ratio=case_when(
+    mod_name%in%c("SIRS", "SLIRS") ~ mean_i_ratio,
+    TRUE ~ mean_r_ratio
+  )) %>%
+  mutate(in_interval=case_when(mean_ratio<1.7 ~ "no",
+                               mean_ratio>1.9 ~ "no", 
+                               T ~ "yes")) %>%
+  filter(in_interval=="yes")
+  
+
+res %>%
+  filter(tau==0.04, type_net=="SAH Geometric", mod_name%in%c("SLIR", "SLIRS")) %>%
+  arrange(mod_name) %>%
+  group_by(mod_name, alph_type, alph_val, r) %>%
+  summarise(mean_i_ratio=median(mf_i_ratio), 
+            mean_r_ratio=median(mf_r_ratio)) %>%
+  mutate(mean_ratio=case_when(
+    mod_name%in%c("SIRS", "SLIRS") ~ mean_i_ratio,
+    TRUE ~ mean_r_ratio
+  )) %>%
+  ggplot(aes(x=factor(r), y=factor(alph_val), z=mean_ratio)) +
+  geom_tile(aes(fill=mean_ratio)) + 
+  geom_point(data=pts, aes(x=factor(r), y=factor(alph_val)), shape=0, color="white", size=6) + 
+  scale_fill_gradient2(midpoint=log10(1.8), trans="log10", 
+                                     low="red4", mid = "dodgerblue",
+                       high="black", limits=c(1.1,6), na.value = "white") +
+  facet_grid(mod_name ~ alph_type) +
+  labs(x="Assortativity", y="Strength of sex trait", 
+       fill="Mean \nCase \nRatio", title="Sah Networks, R0=1.5") +
+  theme_bw() +
+  theme(axis.text=element_text(size=txs),
+        axis.text.x = element_text(hjust=1, angle=45),
+        axis.title=element_text(size=txs,face="bold"),
+        legend.title = element_text(size=txs),
+        legend.text = element_text(size=txs), 
+        # panel.grid.major = element_blank(),
+        # panel.grid.minor = element_blank(), 
+        strip.text = element_text(size = txs, color="Black")) 
+
+
+```
+
+
 ### Effects of network structures other than assortativity on male-bias (using SW networks)
 
 What if sex-assortativity has the effect of reducing clustering, path length, and increasing degree-assortativity in the real-world? Here we use rewired small-world networks, which have much different structures compared with basic small-world networks, to see how these differences are related to male-bias.
