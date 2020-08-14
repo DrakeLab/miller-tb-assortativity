@@ -28,7 +28,7 @@ library(tidyverse)
 library(gridExtra)
 library(ggraph)
 
-knitr::opts_chunk$set(cache=TRUE, fig.path = "male-bias-figs/", 
+knitr::opts_chunk$set(cache=FALSE, fig.path = "male-bias-figs/", 
                       warning = FALSE, message=FALSE, echo=FALSE, fig.height =6, fig.width = 8) 
 
 # plot variables and other options
@@ -190,8 +190,11 @@ We see from the plot below that, with the exception of the Sah algorithm, import
 ```{r net_structure, fig.cap="Changes in network statistics using the re-wiring algorithm to make networks of varying assortativity.", fig.width=7, fig.height=5}
 
 # laod simulations on rewired networks
-rewiredRes <- read.csv("simulations/SLIRS-res/rewired_res_100.csv") %>% 
-  select(-failed) # networks are pregenerated, so the model has already converged
+sf_res <- read.csv("simulations/SLIRS-res/sf_res_250_full.csv")
+sw_res <- read.csv("simulations/SLIRS-res/sw_res_250_full.csv")
+
+rewiredRes <- bind_rows(sf_res, sw_res) %>% 
+  select(-failed, -X) # networks are pregenerated, so the model has already converged
 rewiredRes$type_net <- factor(rewiredRes$type_net, labels=c("Scale-Free", "Small-World"))  
 rewiredNets <- rewiredRes %>% select(type_net, net_size, rep, r, net_deg_assort, 
                              net_clus, net_path_len)
@@ -518,7 +521,7 @@ Results are similar on re-wired networks (only SLIR results shown below).
 ```{r, assort_tau_075_sf, eval=FALSE}
 
 res %>%
-  filter(tau==0.075, type_net=="RW Scale Free") %>%
+  filter(tau==0.075, type_net=="RW Scale Free", r%in%c(0, 0.2, 0.4, 0.6)) %>%
   select(r, alph_val, alph_type, mod_name, mf_i_ratio, mf_r_ratio) %>%
   gather("stat", "val",5:6) %>%
   ggplot(aes(factor(alph_val), val, fill=factor(r))) + 
@@ -546,7 +549,7 @@ res %>%
 
 ```{r assort_tau_075_sw, eval=FALSE}
 res %>%
-  filter(tau==0.075, type_net=="RW Small World") %>%
+  filter(tau==0.075, type_net=="RW Small World", r%in%c(0, 0.2, 0.4, 0.6)) %>%
   select(r, alph_val, alph_type, mod_name, mf_i_ratio, mf_r_ratio) %>%
   gather("stat", "val",5:6) %>%
   ggplot(aes(factor(alph_val), val, fill=factor(r))) + 
@@ -575,7 +578,7 @@ res %>%
 ```{r assort_tau_075_all}
 
 res %>%
-  filter(tau==0.075, mod_name=="SLIR", r%in%c(0, 0.2, 0.4, 0.6), alph_val%in%c(1,2,3)) %>%
+  filter(tau==0.075, mod_name=="SLIR", r%in%c(0, 0.2, 0.4, 0.6), alph_val%in%c(1,2,3),  r%in%c(0, 0.2, 0.4, 0.6)) %>%
   select(r, alph_val, alph_type, type_net, mf_i_ratio, mf_r_ratio) %>%
   gather("stat", "val",5:6) %>%
   ggplot(aes(factor(alph_val), val, fill=factor(r))) + 
