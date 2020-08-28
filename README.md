@@ -1,10 +1,3 @@
----
-header-includes:
-- \usepackage{physics}
-- \usepackage{sectsty} \sectionfont{\centering}
-output: pdf_document
----
-
 # Data and Code to Reproduce Results in "Effects of assortative mixing and sex-traits on male-bias in tuberculosis: A modelling study" 
 
 ## Authors: 
@@ -15,7 +8,16 @@ output: pdf_document
 
 ### Summary: 
 
-Globally, Tuberculosis disease (TB) is more common among males than females. Recent research proposesthat differences in preferential social mixing by sex, or sex-assortativity, can alter infection patterns in TB. Weconducted a simulation study to see whether sex-assorted mixing patterns can explain the global ratio ofmale:female TB cases and what factors might cause sex-disparities in infectious diseases to be sensitive toassortative mixing. Simulations showed sex-assortativity alone cannot cause sex-bias in TB. However, we findan effect of interaction between assortativity and sex-traits that suggests a role for behaviour to influence sex-specific epidemiology of infectious diseases. In our study, the role of sex-assortativity was especially apparentfor slower spreading infectious diseases, like TB. We also examined how assortativity and sex-traits affect thefinal outbreak size and other epidemic dynamics. These results are important for understanding when sex-assortativity, a common feature across human populations, can change epidemiological patterns.
+Globally, Tuberculosis disease (TB) is more common among males than females. Recent research proposes
+that differences in preferential social mixing by sex, or sex-assortativity, can alter infection patterns in TB. We
+conducted a simulation study to see whether sex-assorted mixing patterns can explain the global ratio of
+male:female TB cases and what factors might cause sex-disparities in infectious diseases to be sensitive to
+assortative mixing. Simulations showed sex-assortativity alone cannot cause sex-bias in TB. However, we find
+an effect of interaction between assortativity and sex-traits that suggests a role for behaviour to influence sex-
+specific epidemiology of infectious diseases. In our study, the role of sex-assortativity was especially apparent
+for slower spreading infectious diseases, like TB. We also examined how assortativity and sex-traits affect the
+final outbreak size and other epidemic dynamics. These results are important for understanding when sex-
+assortativity, a common feature across human populations, can change epidemiological patterns.
 
 ### Contents: 
 
