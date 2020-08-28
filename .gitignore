@@ -8,7 +8,4 @@
 *.icloud
 *~$
 *.xlsx
-analysis.pdf
-sirsTrajectories-1.pdf
-sirsSex-1.pdf
-WHO-TB-2018.pdf
+/misc
