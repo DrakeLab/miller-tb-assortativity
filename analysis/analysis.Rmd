@@ -12,7 +12,9 @@ editor_options:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(cache=TRUE, fig.path = "male-bias-figs/", 
+                      warning = FALSE, message=FALSE, echo=FALSE, 
+                      fig.height =6, fig.width = 8) 
                      ### Versions ##
 library(magrittr)    # 1.5
 library(tidyr)       # 1.1.0
@@ -26,8 +28,6 @@ library(ggraph)      # 2.0.3
 library(dplyr)       # 1.0.0 
 library(readr)       # 1.3.1
 
-knitr::opts_chunk$set(cache=FALSE, fig.path = "male-bias-figs/", 
-                      warning = FALSE, message=FALSE, echo=FALSE, fig.height =6, fig.width = 8) 
 
 # plot variables and other options
 options(scipen = 999)
@@ -611,7 +611,7 @@ With some assortativity, male bias increases with longer male infectious periods
 
 Here we show the sensitivity of these results to different $\tau$ values for SLIR model.
 
-```{r assort_tau_sah_slir}
+```{r assort_tau_sah_slir, fig.height=12, fig.width=10}
 
 # comparison of mean male bias values for text supporting claim about transmission rate & interaction of assortativity
 res %>%
@@ -635,7 +635,7 @@ res %>%
                 color = "red", size=.75) +    
   geom_hline(yintercept=1, linetype="dashed", 
                 color = "grey", size=.5)   +
-  scale_y_continuous(trans="log10", limits = c(.3, 5)) + 
+  scale_y_continuous(trans="log10", limits = c(.7, 5)) + 
   scale_fill_discrete_sequential(palette="Sunset") +
   labs(x="Strength of sex trait", y="M:F case bias", 
        fill="Assortativity", title = "SLIR models, R0 varied") +
@@ -901,7 +901,7 @@ res %>%
   
 ```
 
-```{r sus_epi_dyn, fig.width=6, fig.height=4}
+```{r sus_epi_dyn, fig.width=12, fig.height=8}
 res %>%
   filter(mod_name=="SLIR", type_net=="SAH Geometric", 
          alph_val%in%c(1,2,3), r%in%c(0, 0.2, 0.4, 0.6)) %>%
