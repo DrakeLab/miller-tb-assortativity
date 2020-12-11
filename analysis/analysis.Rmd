@@ -419,6 +419,26 @@ res %>%
 
 ```
 
+```{r latent_tau}
+res %>% 
+  filter(mod_name=="SLIRS", !is.infinite(tot_lat), type_net=="SAH Geometric",
+         r==0, alph_val==1) %>%
+  ggplot(aes(y=tot_lat/1000, x=as.factor(tau))) +
+  geom_boxplot() + 
+  scale_color_discrete_sequential(palette = "Burg") +
+  labs(y="Equilibrium latent", x=expression(tau)) +
+  theme_bw() +
+  theme(axis.text=element_text(size=txs),
+        axis.title=element_text(size=txs,face="bold"),
+        legend.title = element_text(size=txs),
+        legend.text = element_text(size=txs), 
+        # panel.grid.major = element_blank(),
+        # panel.grid.minor = element_blank(), 
+        strip.text = element_text(size = txs, color="Black"))
+
+```
+
+
 ```{r latent_sf, eval=FALSE, fig.cap="Latent equilibrium and case-ratio on SF networks."}
 
 
