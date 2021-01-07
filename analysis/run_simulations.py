@@ -22,6 +22,7 @@ def process_sah(f):
     type_net = f["net_type"]
     delt=f["Del"]
     psi=f["Psi"]
+    omeg=f["Omeg"]
     y=f["rep"]
     alph=f["Alph_vals"]
     alph_type=f["Alph_types"]
@@ -151,7 +152,7 @@ def process_sah(f):
 
 ## Model parameters ##
 N = [1000]           # Network Size
-R = [0.1] #[0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3] # Q=r/2 (Newman)
+R = [0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3] # Q=r/2 (Newman)
 Tau = [0.04, 0.075, 0.1]         #  S->L Baseline transmission rate
 Del = [100000, 1./10.]     # L->I Incubation; 10000=>SIR, del~0=SLIR
 Gam = 1./6.          # I->R Recovery rate (6 months)
@@ -160,16 +161,16 @@ Psi =  [0, 1./(12), 1./(12*10)]       # R->S Reversion rate; 0=SIR, sig>0=SIRS
 tsteps = 300         # set max time steps to run model for
 
 # Male:female differences to explain male bias
-Alph_vals =  [1.5] #[1.0, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5, 2.75, 3.0, 3.25, 3.5]   # Ratio of male:female susceptibility
+Alph_vals =  [1.0, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5, 2.75, 3.0, 3.25, 3.5]   # Ratio of male:female susceptibility
 Alph_types = ["SUS", "TRA", "INF_PER"]
 
 # Network parameters
 nt = ["SAH"]
 
-reps = range(1,2) # Number of reps
+reps = range(1,251) # Number of reps
 
 var_grid = list(ParameterGrid({'N' : N, 'R' : R, 'Tau': Tau,
-                               'Psi' : Psi, 'Del' : Del,
+                               'Psi' : Psi, 'Omeg' : Omeg, 'Del' : Del,
                                'Alph_vals': Alph_vals,'Alph_types': Alph_types,
                                'net_type' : nt,
                                'rep': reps}))
@@ -180,7 +181,7 @@ sim_results = p.map(process_sah, var_grid) # perform the calculations
 
 #print(sim_results)
 
-with open("SLIRS-res/sah_res_resubmit_test.csv",'wb') as out:
+with open("SLIRS-res/sah_res_resubmit_250.csv",'wb') as out:
     csv_out=csv.writer(out)
     csv_out.writerow(["failed", "net_size", "r", "tau", "alph_val", "alph_type", "delt", "psi", "omeg", "rep","type_net", "net_clus", "net_path_len", "net_deg_assort", "peak", "sim_dur", "m_rec", "f_rec", "m_inf","f_inf", "tot_lat"])
     csv_out.writerows(sim_results)
@@ -192,6 +193,7 @@ with open("SLIRS-res/sah_res_resubmit_test.csv",'wb') as out:
 #     type_net = f["net_type"]
 #     delt=f["Del"]
 #     psi=f["Psi"]
+#     omeg=f["Omeg"]
 #     y=f["rep"]
 #     alph=f["Alph_vals"]
 #     alph_type=f["Alph_types"]
@@ -333,7 +335,7 @@ with open("SLIRS-res/sah_res_resubmit_test.csv",'wb') as out:
 # reps = range(1,251)
 # 
 # var_grid = list(ParameterGrid({'N' : N, 'R' : R, 'Tau': Tau,
-#                                'Psi' : Psi, 'Del' : Del,
+#                                'Psi' : Psi, 'Omeg' : Omeg, 'Del' : Del,
 #                                'Alph_vals': Alph_vals,'Alph_types': Alph_types,
 #                                'net_type' : nt,
 #                                'rep': reps}))
