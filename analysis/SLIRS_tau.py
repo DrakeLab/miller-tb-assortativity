@@ -106,7 +106,7 @@ def process_file(f):
 ###### Model parameters ######
 N = [1000]           # Network Size
 R = [0, 0.3]         # (modularity if using Sah)
-Tau = [0.0001, 0.001, 0.005, 0.01, 0.015, 0.03, 0.04, 0.06, 0.075, 0.1, 0.12, 0.24, 0.36]    #  S->L Baseline transmission rate 
+Tau = [0.0001, 0.001, 0.005, 0.01, 0.02, 0.03, 0.04, 0.06, 0.075, 0.1, 0.3]    #  S->L Baseline transmission rate 
 Del = [100000, 1./4.]     # L->I Reactivation rate; 10000=>SIR, del~0=SLIR
 Gam = 1./2.          # I->R Recovery rate
 Psi = [0]       # R->S Reversion rate; 0=SIR, sig>0=SIRS
@@ -126,7 +126,7 @@ p = multiprocessing.Pool(31) # create a pool of 2 workers
 
 sim_results = p.map(process_file, var_grid) # perform the calculations
 
-with open("SLIRS-res/"+"sah_res_tau_25.csv",'wb') as out:
+with open("SLIRS-res/"+"sah_res_tau_resubmit_test.csv",'wb') as out:
     csv_out=csv.writer(out)
     csv_out.writerow(['failed', 'n', 'q', 'tau', 'delt', 'psi', 'y','net_mean_k', 'net_var_k','sim_dur', 'm_rec', 'f_rec'])
     csv_out.writerows(sim_results)
